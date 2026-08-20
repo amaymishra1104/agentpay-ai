@@ -1,0 +1,317 @@
+import json
+import logging
+from functools import lru_cache
+from pathlib import Path
+
+from app.schemas.catalog import (
+	AgentCatalogProduct,
+	AvailabilityView,
+	CatalogQueryParams,
+	MerchantRecord,
+	OfferSummary,
+	PriceView,
+	ProductComparisonItem,
+	ProductComparisonResponse,
+	ProductRecord,
+	ProductSearchResponse,
+	RatingView,
+	RelatedProductsResponse,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class ProductNotFoundError(ValueError):
+	"""Raised when a product does not exist in the catalog."""
+
+
+class CatalogDataError(RuntimeError):
+	"""Raised when catalog seed data is malformed or inconsistent."""
+
+
+def _data_dir() -> Path:
+	return Path(__file__).resolve().parents[3] / "data"
+
+
+def _load_json(filename: str) -> list[dict]:
+	filepath = _data_dir() / filename
+	with filepath.open("r", encoding="utf-8") as file:
+		payload = json.load(file)
+	if not isinstance(payload, list):
+		raise CatalogDataError(f"{filename} must contain a JSON array")
+	return payload
+
+
+@lru_cache(maxsize=1)
+def _load_merchants() -> dict[str, MerchantRecord]:
+	records = [MerchantRecord.model_validate(item) for item in _load_json("merchants.json")]
+	return {record.id: record for record in records}
+
+
+@lru_cache(maxsize=1)
+def _load_products() -> dict[str, ProductRecord]:
+	records = [ProductRecord.model_validate(item) for item in _load_json("products.json")]
+	products_by_id = {record.id: record for record in records}
+
+	for product in records:
+		for related_id in product.complementary_product_ids + product.upsell_product_ids:
+			if related_id not in products_by_id:
+				raise CatalogDataError(
+					f"Product {product.id} references missing related product {related_id}"
+				)
+		if product.available and product.inventory_quantity <= 0:
+			raise CatalogDataError(
+				f"Product {product.id} marked available with non-positive inventory"
+			)
+		if not product.available and product.inventory_quantity > 0:
+			logger.warning(
+				"Product %s has stock but is marked unavailable; honoring explicit unavailable flag",
+				product.id,
+			)
+
+	return products_by_id
+
+
+@lru_cache(maxsize=1)
+def _load_offers_by_product() -> dict[str, list[OfferSummary]]:
+	offers_by_product: dict[str, list[OfferSummary]] = {}
+	products_by_id = _load_products()
+	offer_ids: set[str] = set()
+
+	for offer in _load_json("offers.json"):
+		offer_ids.add(offer["id"])
+		product_ids = offer.get("product_ids", [])
+		if not isinstance(product_ids, list):
+			raise CatalogDataError(f"Offer {offer.get('id', 'unknown')} has invalid product_ids")
+
+		for product_id in product_ids:
+			if product_id not in products_by_id:
+				raise CatalogDataError(
+					f"Offer {offer.get('id', 'unknown')} references missing product {product_id}"
+				)
+
+			offers_by_product.setdefault(product_id, []).append(
+				OfferSummary(
+					offer_id=offer["id"],
+					title=offer["title"],
+					type=offer["type"],
+					discount_percent=offer["discount_percent"],
+				)
+			)
+
+	for product in products_by_id.values():
+		for offer_id in product.eligible_offers:
+			if offer_id not in offer_ids:
+				raise CatalogDataError(
+					f"Product {product.id} references missing offer {offer_id}"
+				)
+
+	return offers_by_product
+
+
+def _to_public_product(product: ProductRecord) -> AgentCatalogProduct:
+	offers = _load_offers_by_product().get(product.id, [])
+
+	return AgentCatalogProduct(
+		product_id=product.id,
+		name=product.name,
+		category=product.category,
+		subcategory=product.subcategory,
+		description=product.description,
+		brand=product.brand,
+		price=PriceView(amount=product.price_inr, currency=product.currency),
+		availability=AvailabilityView(
+			in_stock=product.available and product.inventory_quantity > 0,
+			quantity=product.inventory_quantity,
+		),
+		rating=RatingView(score=product.rating, reviews=product.review_count),
+		features=product.features,
+		specifications=product.specifications,
+		shipping=product.shipping,
+		return_policy=product.return_policy,
+		offers=offers,
+		recommended_with=product.complementary_product_ids,
+		better_alternative=product.upsell_product_ids[0] if product.upsell_product_ids else None,
+		image_url=product.image_url,
+	)
+
+
+def _normalize(text: str) -> str:
+	return " ".join(text.lower().split())
+
+
+def _search_text(product: ProductRecord) -> str:
+	fields = [
+		product.name,
+		product.category,
+		product.subcategory,
+		product.description,
+		product.brand,
+		" ".join(product.tags),
+		" ".join(product.features),
+	]
+	return _normalize(" ".join(fields))
+
+
+def _relevance_score(product: ProductRecord, query: str | None) -> int:
+	if not query:
+		return 0
+
+	normalized_query = _normalize(query)
+	haystack = _search_text(product)
+	terms = [term for term in normalized_query.split(" ") if term]
+	if not terms:
+		return 0
+
+	score = 0
+	if normalized_query in haystack:
+		score += 8
+
+	for term in terms:
+		if term in haystack:
+			score += 2
+		if term in _normalize(product.name):
+			score += 3
+		if term in _normalize(product.category):
+			score += 2
+
+	return score
+
+
+def _price_fit_score(product: ProductRecord, params: CatalogQueryParams) -> float:
+	if params.max_price is not None and params.max_price > 0:
+		if product.price_inr > params.max_price:
+			return 0.0
+		return 1 - (product.price_inr / params.max_price)
+
+	return 1 / (product.price_inr + 1)
+
+
+def _matches_filters(product: ProductRecord, params: CatalogQueryParams) -> bool:
+	if params.category and _normalize(product.category) != _normalize(params.category):
+		return False
+
+	if params.min_price is not None and product.price_inr < params.min_price:
+		return False
+
+	if params.max_price is not None and product.price_inr > params.max_price:
+		return False
+
+	if params.min_rating is not None and product.rating < params.min_rating:
+		return False
+
+	if params.in_stock is True and not (product.available and product.inventory_quantity > 0):
+		return False
+
+	if params.in_stock is False and (product.available and product.inventory_quantity > 0):
+		return False
+
+	if params.query and _relevance_score(product, params.query) <= 0:
+		return False
+
+	return True
+
+
+def search_products(params: CatalogQueryParams) -> ProductSearchResponse:
+	products = list(_load_products().values())
+	filtered = [product for product in products if _matches_filters(product, params)]
+
+	ranked = sorted(
+		filtered,
+		key=lambda product: (
+			_relevance_score(product, params.query),
+			1 if (product.available and product.inventory_quantity > 0) else 0,
+			product.rating,
+			_price_fit_score(product, params),
+			product.review_count,
+			-product.price_inr,
+		),
+		reverse=True,
+	)
+
+	items = [_to_public_product(product) for product in ranked[: params.limit]]
+	return ProductSearchResponse(items=items, total=len(filtered))
+
+
+def get_product(product_id: str) -> AgentCatalogProduct:
+	product = _load_products().get(product_id)
+	if product is None:
+		raise ProductNotFoundError(f"Product not found: {product_id}")
+	return _to_public_product(product)
+
+
+def get_related_products(product_id: str, limit: int = 6) -> RelatedProductsResponse:
+	source = _load_products().get(product_id)
+	if source is None:
+		raise ProductNotFoundError(f"Product not found: {product_id}")
+
+	products_by_id = _load_products()
+
+	complementary = [
+		_to_public_product(products_by_id[pid])
+		for pid in source.complementary_product_ids
+		if pid in products_by_id
+	][:limit]
+
+	upsell = [
+		_to_public_product(products_by_id[pid]) for pid in source.upsell_product_ids if pid in products_by_id
+	][:limit]
+
+	alternatives: list[AgentCatalogProduct] = []
+	for product in products_by_id.values():
+		if product.id == source.id:
+			continue
+		if product.category != source.category:
+			continue
+		if product.price_inr < source.price_inr * 0.85 or product.price_inr > source.price_inr * 1.15:
+			continue
+		alternatives.append(_to_public_product(product))
+
+	alternatives = sorted(
+		alternatives,
+		key=lambda item: (item.rating.score, item.availability.in_stock, -item.price.amount),
+		reverse=True,
+	)[:limit]
+
+	return RelatedProductsResponse(
+		product_id=product_id,
+		complementary=complementary,
+		upsell=upsell,
+		alternatives=alternatives,
+	)
+
+
+def list_categories() -> list[str]:
+	categories = {_normalize(product.category): product.category for product in _load_products().values()}
+	return sorted(categories.values())
+
+
+def compare_products(product_ids: list[str]) -> ProductComparisonResponse:
+	if not product_ids:
+		return ProductComparisonResponse(items=[])
+
+	products_by_id = _load_products()
+	missing = [product_id for product_id in product_ids if product_id not in products_by_id]
+	if missing:
+		raise ProductNotFoundError(f"Products not found: {', '.join(missing)}")
+
+	items = [
+		ProductComparisonItem(
+			product_id=product.id,
+			name=product.name,
+			category=product.category,
+			price=PriceView(amount=product.price_inr, currency=product.currency),
+			rating=RatingView(score=product.rating, reviews=product.review_count),
+			availability=AvailabilityView(
+				in_stock=product.available and product.inventory_quantity > 0,
+				quantity=product.inventory_quantity,
+			),
+			features=product.features,
+			shipping=product.shipping,
+			return_policy=product.return_policy,
+			offers=_load_offers_by_product().get(product.id, []),
+		)
+		for product in [products_by_id[pid] for pid in product_ids]
+	]
+
+	return ProductComparisonResponse(items=items)

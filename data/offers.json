@@ -1,0 +1,94 @@
+[
+  {
+    "id": "offer_shoe_socks_combo",
+    "merchant_id": "m_urbanrun",
+    "title": "Shoe + Socks Combo",
+    "type": "cross_sell",
+    "discount_percent": 12,
+    "product_ids": [
+      "ur_shoe_001",
+      "ur_shoe_002",
+      "ur_shoe_003",
+      "ur_shoe_004",
+      "ur_shoe_005",
+      "ur_shoe_006",
+      "ur_sock_001",
+      "ur_sock_002",
+      "ur_sock_003"
+    ]
+  },
+  {
+    "id": "offer_trail_kit",
+    "merchant_id": "m_urbanrun",
+    "title": "Trail Running Kit",
+    "type": "bundle",
+    "discount_percent": 15,
+    "product_ids": [
+      "ur_trail_001",
+      "ur_trail_002",
+      "ur_trail_003",
+      "ur_trail_004",
+      "ur_trail_005",
+      "ur_hyd_003",
+      "ur_belt_002"
+    ]
+  },
+  {
+    "id": "offer_watch_upgrade",
+    "merchant_id": "m_urbanrun",
+    "title": "Sports Watch Upgrade",
+    "type": "upsell",
+    "discount_percent": 8,
+    "product_ids": [
+      "ur_watch_001",
+      "ur_watch_002",
+      "ur_watch_003",
+      "ur_watch_004",
+      "ur_watch_005"
+    ]
+  },
+  {
+    "id": "offer_hydration_week",
+    "merchant_id": "m_urbanrun",
+    "title": "Hydration Week",
+    "type": "seasonal",
+    "discount_percent": 10,
+    "product_ids": [
+      "ur_hyd_001",
+      "ur_hyd_002",
+      "ur_hyd_003",
+      "ur_hyd_004",
+      "ur_belt_001",
+      "ur_belt_002"
+    ]
+  },
+  {
+    "id": "offer_recovery_bundle",
+    "merchant_id": "m_urbanrun",
+    "title": "Recovery Essentials",
+    "type": "cross_sell",
+    "discount_percent": 14,
+    "product_ids": [
+      "ur_acc_001",
+      "ur_acc_002",
+      "ur_acc_003",
+      "ur_acc_005",
+      "ur_acc_006",
+      "ur_acc_007"
+    ]
+  },
+  {
+    "id": "offer_marathon_prep",
+    "merchant_id": "m_urbanrun",
+    "title": "Marathon Prep Pack",
+    "type": "bundle",
+    "discount_percent": 11,
+    "product_ids": [
+      "ur_shoe_005",
+      "ur_sock_003",
+      "ur_watch_003",
+      "ur_belt_003",
+      "ur_hyd_002"
+    ]
+  }
+]
