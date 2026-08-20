@@ -1,9 +1,13 @@
+import os
+os.environ["DATABASE_URL"] = "sqlite:///./agentpay.db"
+
 import json
 from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 from app.services.catalog_service import _load_products, ProductRecord
+
 
 client = TestClient(app)
 
