@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import operator
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Annotated, Any
 
 
 @dataclass(slots=True)
@@ -22,7 +23,10 @@ class BuyerAgentState:
 
     cart_id: str | None = None
 
-    messages: list[dict[str, Any]] = field(default_factory=list)
+    messages: Annotated[
+        list[dict[str, Any]],
+        operator.add,
+    ] = field(default_factory=list)
 
     tool_history: list[dict[str, Any]] = field(default_factory=list)
 
