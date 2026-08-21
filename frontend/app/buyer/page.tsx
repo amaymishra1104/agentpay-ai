@@ -17,8 +17,7 @@ import {
   X,
 } from "lucide-react";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+import { API_BASE_URL } from "../../lib/api";
 
 const CUSTOMER_ID = "demo-customer-001";
 const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
@@ -83,9 +82,10 @@ type CartItem = {
 
 type AppliedOffer = {
   offer_id?: string;
-  title?: string;
-  type?: string;
-  discount_percent?: number;
+  name?: string;
+  discount_type?: string;
+  discount_amount_inr?: number;
+  reason?: string;
 };
 
 type Cart = {
@@ -174,7 +174,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/cart/${storedCartId}`,
+        `${API_BASE_URL}/cart/${storedCartId}`,
       );
 
       if (!response.ok) {
@@ -191,13 +191,18 @@ export default function BuyerPage() {
 
   async function refreshCart(cartId: string) {
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/cart/${cartId}`,
+      `${API_BASE_URL}/cart/${cartId}`,
     );
 
     if (!response.ok) {
-      throw new Error(
-        `Unable to load cart (${response.status}).`,
-      );
+      let errorMessage = `Unable to load cart (${response.status}).`;
+      try {
+        const errData = await response.json();
+        if (errData && errData.detail) {
+          errorMessage = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+        }
+      } catch {}
+      throw new Error(errorMessage);
     }
 
     const updatedCart: Cart = await response.json();
@@ -230,7 +235,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}`,
         {
           method: "PATCH",
           headers: {
@@ -243,11 +248,14 @@ export default function BuyerPage() {
       );
 
       if (!response.ok) {
-        const text = await response.text();
-
-        throw new Error(
-          `Unable to update cart item: ${text}`,
-        );
+        let errorMessage = `Unable to update cart item (${response.status})`;
+        try {
+          const errData = await response.json();
+          if (errData && errData.detail) {
+            errorMessage = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errorMessage);
       }
 
       const updatedCart: Cart = await response.json();
@@ -256,7 +264,9 @@ export default function BuyerPage() {
       console.error("AgentPay cart update failed:", error);
 
       setErrorMessage(
-        error instanceof Error
+        error instanceof TypeError
+          ? "Connection Failed: Unable to reach the backend to update cart."
+          : error instanceof Error
           ? error.message
           : "Unable to update the cart.",
       );
@@ -275,18 +285,21 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}`,
         {
           method: "DELETE",
         },
       );
 
       if (!response.ok) {
-        const text = await response.text();
-
-        throw new Error(
-          `Unable to remove cart item: ${text}`,
-        );
+        let errorMessage = `Unable to remove cart item (${response.status})`;
+        try {
+          const errData = await response.json();
+          if (errData && errData.detail) {
+            errorMessage = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errorMessage);
       }
 
       const updatedCart: Cart = await response.json();
@@ -295,7 +308,9 @@ export default function BuyerPage() {
       console.error("AgentPay remove-from-cart failed:", error);
 
       setErrorMessage(
-        error instanceof Error
+        error instanceof TypeError
+          ? "Connection Failed: Unable to reach the backend to remove item."
+          : error instanceof Error
           ? error.message
           : "Unable to remove the item.",
       );
@@ -314,18 +329,21 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/cart/${cart.cart_id}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}`,
         {
           method: "DELETE",
         },
       );
 
       if (!response.ok) {
-        const text = await response.text();
-
-        throw new Error(
-          `Unable to clear cart: ${text}`,
-        );
+        let errorMessage = `Unable to clear cart (${response.status})`;
+        try {
+          const errData = await response.json();
+          if (errData && errData.detail) {
+            errorMessage = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errorMessage);
       }
 
       const updatedCart: Cart = await response.json();
@@ -334,7 +352,9 @@ export default function BuyerPage() {
       console.error("AgentPay clear-cart failed:", error);
 
       setErrorMessage(
-        error instanceof Error
+        error instanceof TypeError
+          ? "Connection Failed: Unable to reach the backend to clear cart."
+          : error instanceof Error
           ? error.message
           : "Unable to clear the cart.",
       );
@@ -363,7 +383,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/agent/chat`,
+        `${API_BASE_URL}/agent/chat`,
         {
           method: "POST",
           headers: {
@@ -378,11 +398,30 @@ export default function BuyerPage() {
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
+        if (response.status === 429) {
+          throw new Error("Agent service is temporarily unavailable. The AI provider may be rate-limited. Please try again shortly.");
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("Authentication Failed: The AgentPay backend is unauthorized or credentials are invalid.");
+        }
+        if (response.status === 500) {
+          throw new Error("The AgentPay backend encountered an internal error. Please check backend logs and try again.");
+        }
 
-        throw new Error(
-          `Agent API returned ${response.status}: ${errorText}`,
-        );
+        let errorMessage = `Agent API returned status ${response.status}`;
+        try {
+          const errData = await response.json();
+          if (errData && errData.detail) {
+            if (typeof errData.detail === "string") {
+              errorMessage = errData.detail;
+            } else if (Array.isArray(errData.detail)) {
+              errorMessage = errData.detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ");
+            } else {
+              errorMessage = JSON.stringify(errData.detail);
+            }
+          }
+        } catch {}
+        throw new Error(errorMessage);
       }
 
       const data: AgentApiResponse = await response.json();
@@ -466,7 +505,9 @@ export default function BuyerPage() {
       );
 
       setErrorMessage(
-        error instanceof Error
+        error instanceof TypeError
+          ? "Connection Failed: Unable to reach the AgentPay backend. Please verify that the backend server is running and accessible."
+          : error instanceof Error
           ? error.message
           : "Unable to reach the AgentPay backend.",
       );
@@ -526,17 +567,7 @@ export default function BuyerPage() {
             <button
               type="button"
               onClick={() => {
-                setCartOpen(true);
-                if (cart?.cart_id) {
-                  void refreshCart(cart.cart_id).catch(
-                    (error) => {
-                      console.error(
-                        "Failed to refresh cart:",
-                        error,
-                      );
-                    },
-                  );
-                }
+                window.location.href = "/cart";
               }}
               className="relative rounded-xl border border-slate-200 bg-white p-2.5 transition hover:bg-slate-50"
               aria-label="Open shopping cart"
@@ -1160,11 +1191,9 @@ export default function BuyerPage() {
                             }
                             className="mt-1 text-xs text-emerald-700"
                           >
-                            {offer.title ??
-                              "Eligible offer"}
-                            {offer.discount_percent
-                              ? ` · ${offer.discount_percent}% off`
-                              : ""}
+                            <span className="font-semibold">{offer.name ?? "Eligible offer"}</span>
+                            {offer.discount_amount_inr ? ` (Saved ₹${offer.discount_amount_inr.toLocaleString("en-IN")})` : ""}
+                            {offer.reason ? <div className="text-[10px] text-emerald-600 mt-0.5">{offer.reason}</div> : null}
                           </div>
                         ),
                       )}

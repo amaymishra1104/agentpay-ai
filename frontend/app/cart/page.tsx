@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Cart } from "../../lib/types";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+import { API_BASE_URL } from "../../lib/api";
 
 type ValidationIssue = {
   type: string;
@@ -22,44 +20,62 @@ export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [validating, setValidating] = useState(false);
+
+  function getErrorMessage(err: unknown, defaultMsg: string): string {
+    if (err instanceof TypeError) {
+      return "Connection Failed: Unable to reach the AgentPay backend. Please check that the server is running and accessible.";
+    }
+    if (err instanceof Error) {
+      return err.message;
+    }
+    return defaultMsg;
+  }
+
+  const dummyEmptyCart = (cartId: string | null): Cart => ({
+    cart_id: cartId || "",
+    merchant_id: "m_urbanrun",
+    customer_id: "c_demo_001",
+    currency: "INR",
+    items: [],
+    subtotal_inr: 0,
+    discount_inr: 0,
+    shipping_inr: 0,
+    total_inr: 0,
+    applied_offers: [],
+    status: "active",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
 
   // Initialize or load cart on mount
   useEffect(() => {
     async function initCart() {
       try {
-        let storedId = localStorage.getItem("agentpay_cart_id");
+        const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
+        const sessionId = typeof window !== "undefined" ? window.sessionStorage.getItem(SESSION_STORAGE_KEY) : null;
+        const storageKey = sessionId ? `agentpay_cart_id:${sessionId}` : "agentpay_cart_id";
+
+        const storedId = localStorage.getItem(storageKey);
         if (!storedId) {
-          // Create a new cart
-          const res = await fetch(`${API_BASE_URL}/cart`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              merchant_id: "m_urbanrun",
-              customer_id: "c_demo_001",
-            }),
-          });
-          if (!res.ok) throw new Error("Failed to create cart");
-          const data = (await res.json()) as Cart;
-          localStorage.setItem("agentpay_cart_id", data.cart_id);
-          storedId = data.cart_id;
-          setCart(data);
+          // Instead of creating a database record immediately, show a clean client empty cart
+          setCart(dummyEmptyCart(null));
         } else {
           // Fetch existing cart
           const res = await fetch(`${API_BASE_URL}/cart/${storedId}`);
           if (!res.ok) {
-            // If stored cart ID is invalid/expired on server, clear and recreate
-            localStorage.removeItem("agentpay_cart_id");
-            initCart();
+            // If stored cart ID is invalid/expired on server, clear from storage and fallback to empty
+            localStorage.removeItem(storageKey);
+            setCart(dummyEmptyCart(null));
             return;
           }
           const data = (await res.json()) as Cart;
           setCart(data);
         }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Failed to load cart";
-        setError(message);
+      } catch (err: unknown) {
+        setError(getErrorMessage(err, "Failed to load cart"));
       } finally {
         setLoading(false);
       }
@@ -70,67 +86,117 @@ export default function CartPage() {
   const updateQuantity = async (productId: string, newQty: number) => {
     if (!cart) return;
     if (newQty <= 0) {
-      removeItem(productId);
+      await removeItem(productId);
       return;
     }
 
+    setActionError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}`, {
+      // If the cart doesn't exist on server yet (dummy empty cart), create it first
+      let activeCartId = cart.cart_id;
+      const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
+      const sessionId = typeof window !== "undefined" ? window.sessionStorage.getItem(SESSION_STORAGE_KEY) : null;
+      const storageKey = sessionId ? `agentpay_cart_id:${sessionId}` : "agentpay_cart_id";
+
+      if (!activeCartId) {
+        const createRes = await fetch(`${API_BASE_URL}/cart`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            merchant_id: "m_urbanrun",
+            customer_id: "c_demo_001",
+          }),
+        });
+        if (!createRes.ok) throw new Error("Failed to initialize server-side cart");
+        const createdData = (await createRes.json()) as Cart;
+        localStorage.setItem(storageKey, createdData.cart_id);
+        activeCartId = createdData.cart_id;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: newQty }),
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        alert(errorData.detail || "Failed to update quantity");
-        return;
+        let errMsg = `Failed to update quantity (status ${res.status})`;
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) {
+            errMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errMsg);
       }
 
       const updated = (await res.json()) as Cart;
       setCart(updated);
       setValidation(null); // Reset validation on change
-    } catch {
-      alert("Error updating item quantity");
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Error updating item quantity"));
     }
   };
 
   const removeItem = async (productId: string) => {
-    if (!cart) return;
+    if (!cart || !cart.cart_id) return;
+    setActionError(null);
 
     try {
       const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}`, {
         method: "DELETE",
       });
 
-      if (!res.ok) throw new Error("Failed to remove item");
+      if (!res.ok) {
+        let errMsg = `Failed to remove item (status ${res.status})`;
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) {
+            errMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errMsg);
+      }
+
       const updated = (await res.json()) as Cart;
       setCart(updated);
       setValidation(null);
-    } catch {
-      alert("Error removing item");
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Error removing item"));
     }
   };
 
   const clearCart = async () => {
-    if (!cart) return;
+    if (!cart || !cart.cart_id) return;
+    setActionError(null);
 
     try {
       const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}`, {
         method: "DELETE",
       });
 
-      if (!res.ok) throw new Error("Failed to clear cart");
+      if (!res.ok) {
+        let errMsg = `Failed to clear cart (status ${res.status})`;
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) {
+            errMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errMsg);
+      }
+
       const updated = (await res.json()) as Cart;
       setCart(updated);
       setValidation(null);
-    } catch {
-      alert("Error clearing cart");
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Error clearing cart"));
     }
   };
 
   const validateCart = async () => {
-    if (!cart) return;
+    if (!cart || !cart.cart_id) return;
+    setActionError(null);
     setValidating(true);
 
     try {
@@ -138,11 +204,21 @@ export default function CartPage() {
         method: "POST",
       });
 
-      if (!res.ok) throw new Error("Validation check failed");
+      if (!res.ok) {
+        let errMsg = `Validation check failed (status ${res.status})`;
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) {
+            errMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errMsg);
+      }
+
       const result = (await res.json()) as ValidationResult;
       setValidation(result);
-    } catch {
-      alert("Error validating cart");
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Error validating cart"));
     } finally {
       setValidating(false);
     }
@@ -160,8 +236,8 @@ export default function CartPage() {
     return (
       <main className="mx-auto max-w-4xl px-6 py-16 text-center">
         <p className="text-red-600">Error: {error || "Cart not initialized"}</p>
-        <Link href="/catalog" className="mt-4 inline-block text-sky-600 hover:underline">
-          Return to Catalog
+        <Link href="/buyer" className="mt-4 inline-block text-sky-600 hover:underline">
+          Return to Buyer Page
         </Link>
       </main>
     );
@@ -172,12 +248,19 @@ export default function CartPage() {
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Shopping Cart</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Cart ID: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{cart.cart_id}</code>
-          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-1.5 text-sm text-muted-foreground">
+            <span>Cart ID:</span>
+            <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">{cart.cart_id || "Unsaved"}</code>
+            <span className="text-slate-300">|</span>
+            <span>Status:</span>
+            <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 capitalize border border-emerald-100">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {cart.status}
+            </span>
+          </div>
         </div>
         <Link
-          href="/catalog"
+          href="/buyer"
           className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
         >
           &larr; Continue Shopping
@@ -187,7 +270,7 @@ export default function CartPage() {
       {cart.items.length === 0 ? (
         <div className="mt-12 text-center text-muted-foreground">
           <p>Your shopping cart is empty.</p>
-          <Link href="/catalog" className="mt-4 inline-block text-sky-600 hover:underline">
+          <Link href="/buyer" className="mt-4 inline-block text-sky-600 hover:underline">
             Browse products &rarr;
           </Link>
         </div>
@@ -195,6 +278,18 @@ export default function CartPage() {
         <div className="mt-8 grid gap-8 md:grid-cols-3">
           {/* Items Section */}
           <div className="md:col-span-2 space-y-4">
+            {actionError && (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-center justify-between">
+                <span>{actionError}</span>
+                <button
+                  onClick={() => setActionError(null)}
+                  className="text-xs font-bold text-red-600 hover:text-red-800"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
             {cart.items.map((item) => (
               <article
                 key={item.product_id}
