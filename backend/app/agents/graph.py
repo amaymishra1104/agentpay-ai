@@ -7,7 +7,7 @@ from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
-from app.agents.model import BuyerModel, MockBuyerModel
+from app.agents.model import BuyerModel, MockBuyerModel, ToolCall
 from app.agents.state import BuyerAgentState
 from app.agents.tool_registry import get_buyer_tool_definitions
 from app.agents.tools import run_tool
@@ -421,6 +421,36 @@ def _compact_historical_tool_message(
 
     # Safety ceiling only after structural compaction.
     if len(serialized) > MAX_HISTORICAL_TOOL_CHARS:
+        if isinstance(compacted_result, dict) and "items" in compacted_result and isinstance(compacted_result["items"], list):
+            items = list(compacted_result["items"])
+            while items and len(serialized) > MAX_HISTORICAL_TOOL_CHARS:
+                items.pop()
+                compacted_result["items"] = items
+                try:
+                    serialized = json.dumps(
+                        compacted_result,
+                        ensure_ascii=False,
+                        default=_json_default,
+                    )
+                except (TypeError, ValueError):
+                    serialized = str(compacted_result)
+                    break
+        elif isinstance(compacted_result, list):
+            items = list(compacted_result)
+            while items and len(serialized) > MAX_HISTORICAL_TOOL_CHARS:
+                items.pop()
+                compacted_result = items
+                try:
+                    serialized = json.dumps(
+                        compacted_result,
+                        ensure_ascii=False,
+                        default=_json_default,
+                    )
+                except (TypeError, ValueError):
+                    serialized = str(compacted_result)
+                    break
+
+    if len(serialized) > MAX_HISTORICAL_TOOL_CHARS:
         serialized = (
             serialized[
                 :MAX_HISTORICAL_TOOL_CHARS
@@ -580,10 +610,26 @@ def _inject_trusted_tool_arguments(
             state.customer_id
         )
 
-        # Merchant identity is application-owned.
-        safe_arguments["merchant_id"] = (
-            DEFAULT_MERCHANT_ID
-        )
+        # Match merchant ID against merchants.json
+        from app.services.catalog_service import _load_merchants
+        model_merchant_id = arguments.get("merchant_id")
+        merchants = _load_merchants()
+        matched_merchant_id = DEFAULT_MERCHANT_ID
+
+        if model_merchant_id:
+            normalized_model_mid = str(model_merchant_id).lower().strip()
+            if normalized_model_mid.startswith("m_"):
+                normalized_model_mid = normalized_model_mid[2:]
+
+            for k in merchants:
+                norm_k = k.lower().strip()
+                if norm_k.startswith("m_"):
+                    norm_k = norm_k[2:]
+                if norm_k == normalized_model_mid:
+                    matched_merchant_id = k
+                    break
+
+        safe_arguments["merchant_id"] = matched_merchant_id
 
     elif tool_name in {
         "add_to_cart",
@@ -591,6 +637,9 @@ def _inject_trusted_tool_arguments(
         "update_cart_item",
         "remove_from_cart",
         "validate_cart",
+        "checkout_cart",
+        "get_order",
+        "get_order_tracking",
     }:
 
         # Never allow the LLM to select another customer's cart.
@@ -598,6 +647,18 @@ def _inject_trusted_tool_arguments(
             safe_arguments["cart_id"] = (
                 state.cart_id
             )
+
+    # Inject customer_id securely only into tools that support it
+    if tool_name in {
+        "checkout_cart",
+        "get_order",
+        "get_order_tracking",
+        "cancel_order",
+        "request_return",
+    }:
+        safe_arguments["customer_id"] = (
+            state.customer_id
+        )
 
     return safe_arguments
 
@@ -752,6 +813,21 @@ def _select_product_from_history(
     return None
 
 
+def _has_tool_result_after_latest_user(
+    messages: list[dict[str, Any]],
+    tool_name: str,
+) -> bool:
+    latest_user = max(
+        (index for index, message in enumerate(messages) if message.get("role") == "user"),
+        default=-1,
+    )
+    return any(
+        (message.get("role") == "tool" or message.get("type") == "tool_result")
+        and message.get("tool_name") == tool_name
+        for message in messages[latest_user + 1 :]
+    )
+
+
 def _build_deterministic_cart_action(
     state: BuyerAgentState,
 ) -> dict[str, Any] | None:
@@ -765,6 +841,9 @@ def _build_deterministic_cart_action(
     text = _latest_user_text(state)
 
     if _is_cart_view_request(text):
+        if _has_tool_result_after_latest_user(state.messages, "get_cart"):
+            return None
+
         if state.cart_id:
             return {
                 "tool_calls": [
@@ -794,6 +873,9 @@ def _build_deterministic_cart_action(
         }
 
     if not _is_add_to_cart_request(text):
+        return None
+
+    if _has_tool_result_after_latest_user(state.messages, "add_to_cart"):
         return None
 
     product = _select_product_from_history(state)
@@ -989,10 +1071,17 @@ def tool_node(
                 "before creating a cart."
             )
 
+        # Resolve merchant_id from actual product record
+        from app.services.catalog_service import _load_products
+        product_id = arguments.get("product_id")
+        products = _load_products()
+        product = products.get(product_id)
+        merchant_id = product.merchant_id if product else DEFAULT_MERCHANT_ID
+
         created_cart = run_tool(
             "create_cart",
             {
-                "merchant_id": DEFAULT_MERCHANT_ID,
+                "merchant_id": merchant_id,
                 "customer_id": state.customer_id,
             },
         )
@@ -1021,7 +1110,7 @@ def tool_node(
         create_history_item = {
             "tool_name": "create_cart",
             "arguments": {
-                "merchant_id": DEFAULT_MERCHANT_ID,
+                "merchant_id": merchant_id,
                 "customer_id": state.customer_id,
             },
             "result": created_cart,

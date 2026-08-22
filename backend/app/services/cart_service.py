@@ -2,7 +2,7 @@
 
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy.orm import Session
 
@@ -182,7 +182,7 @@ def recalculate_cart(cart: Cart) -> None:
     cart.discount_inr = round(discount_paise / 100.0)
     cart.shipping_inr = shipping_inr
     cart.total_inr = round(total_paise / 100.0)
-    cart.updated_at = datetime.utcnow()
+    cart.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def create_cart(merchant_id: str, customer_id: str, db: Session) -> Cart:
@@ -211,28 +211,12 @@ def create_cart(merchant_id: str, customer_id: str, db: Session) -> Cart:
         shipping_inr=0,
         total_inr=0,
         applied_offers_json="[]",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     db.add(cart)
     recalculate_cart(cart)
-    db.commit()
-    db.refresh(cart)
-    return cart
 
-
-def get_cart(cart_id: str, db: Session) -> Cart | None:
-    """Retrieves a cart by ID."""
-    return db.query(Cart).filter(Cart.id == cart_id).first()
-
-
-def add_item_to_cart(cart_id: str, product_id: str, quantity: int, db: Session) -> Cart:
-    """Adds a product to the cart or increments its quantity if it already exists."""
-    cart = get_cart(cart_id, db)
-    if not cart:
-        raise CartNotFoundError(f"Cart {cart_id} not found")
-
-    if cart.status != "active":
         raise ValueError("Cart is not active")
 
     if quantity <= 0:
@@ -358,7 +342,12 @@ def clear_cart(cart_id: str, db: Session) -> Cart:
     return cart
 
 
-def validate_cart(cart_id: str, db: Session) -> dict:
+def validate_cart(
+    cart_id: str,
+    db: Session,
+    customer_id: str | None = None,
+    merchant_id: str | None = None,
+) -> dict:
     """
     Validates a cart against the current state of products, inventory, and status.
     Returns a dict with 'valid' and a list of 'issues'.
@@ -375,6 +364,24 @@ def validate_cart(cart_id: str, db: Session) -> dict:
             "message": "Cart is not active.",
         })
         return {"valid": False, "issues": issues}
+
+    if not cart.items or len(cart.items) == 0:
+        issues.append({
+            "type": "CART_EMPTY",
+            "message": "Cart is empty.",
+        })
+
+    if customer_id and cart.customer_id != customer_id:
+        issues.append({
+            "type": "CUSTOMER_MISMATCH",
+            "message": "Customer ID does not match cart.",
+        })
+
+    if merchant_id and cart.merchant_id != merchant_id:
+        issues.append({
+            "type": "MERCHANT_MISMATCH",
+            "message": "Merchant ID does not match cart.",
+        })
 
     products = _load_products()
 
@@ -414,3 +421,4 @@ def validate_cart(cart_id: str, db: Session) -> dict:
         "valid": len(issues) == 0,
         "issues": issues,
     }
+

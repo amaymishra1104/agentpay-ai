@@ -14,6 +14,9 @@ from app.schemas.cart import (
 )
 from app.services import cart_service
 from app.services.catalog_service import ProductNotFoundError
+from app.schemas.order import OrderSchema, CheckoutRequest
+from app.services import checkout_service
+from app.api.routes.checkout import map_order_to_schema
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 
@@ -174,3 +177,24 @@ def validate_cart_endpoint(cart_id: str, db: Session = Depends(get_db)) -> CartV
         return CartValidationResponse(**res)
     except cart_service.CartNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/{cart_id}/checkout", response_model=OrderSchema)
+def checkout_cart_endpoint(
+    cart_id: str,
+    req: CheckoutRequest,
+    db: Session = Depends(get_db),
+) -> OrderSchema:
+    try:
+        order = checkout_service.checkout_cart(
+            cart_id=cart_id,
+            payment_method=req.payment_method,
+            db=db,
+            customer_id=req.customer_id,
+        )
+        return map_order_to_schema(order)
+    except cart_service.CartNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+

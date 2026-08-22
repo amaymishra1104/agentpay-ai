@@ -4,5 +4,11 @@
     "name": "UrbanRun",
     "category": "running_and_fitness",
     "city": "Bengaluru"
+  },
+  {
+    "id": "m_gadgetworld",
+    "name": "GadgetWorld",
+    "category": "electronics",
+    "city": "Mumbai"
   }
 ]

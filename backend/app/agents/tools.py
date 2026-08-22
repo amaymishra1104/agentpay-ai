@@ -16,6 +16,14 @@ from app.tools.cart_tools import (
     update_cart_item,
     validate_cart,
 )
+from app.tools.payment_tools import (
+    checkout_cart,
+    get_order,
+    get_order_tracking,
+    cancel_order,
+    request_return,
+)
+
 
 
 class BuyerToolError(Exception):
@@ -39,6 +47,11 @@ def run_tool(
         "update_cart_item": update_cart_item,
         "remove_from_cart": remove_from_cart,
         "validate_cart": validate_cart,
+        "checkout_cart": checkout_cart,
+        "get_order": get_order,
+        "get_order_tracking": get_order_tracking,
+        "cancel_order": cancel_order,
+        "request_return": request_return,
     }
 
     tool = tools.get(tool_name)

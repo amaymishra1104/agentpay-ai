@@ -22,6 +22,9 @@ from app.schemas.agent import (
     AgentChatResponse,
     AgentToolResult,
 )
+import logging
+
+logger = logging.getLogger("agentpay")
 
 
 router = APIRouter(
@@ -253,6 +256,24 @@ def chat_with_buyer_agent(
         ) from exc
 
     except Exception as exc:
+        # Check if this is an upstream rate-limit exception
+        is_429 = False
+        class_name = exc.__class__.__name__
+        if "RateLimit" in class_name:
+            is_429 = True
+        elif getattr(exc, "status_code", None) == 429:
+            is_429 = True
+        elif "429" in str(exc) or "too many requests" in str(exc).lower():
+            is_429 = True
+
+        if is_429:
+            logger.error("Upstream Groq rate-limit occurred: %s", str(exc))
+            raise HTTPException(
+                status_code=429,
+                detail="Agent service is temporarily unavailable. The AI provider may be rate-limited. Please try again shortly.",
+            ) from exc
+
+        logger.exception("Unhandled error in buyer agent: %s", str(exc))
         raise HTTPException(
             status_code=500,
             detail=(

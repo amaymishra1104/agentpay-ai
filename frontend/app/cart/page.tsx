@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Cart } from "../../lib/types";
+import type { Cart, Order } from "../../lib/types";
 import { API_BASE_URL } from "../../lib/api";
 
 type ValidationIssue = {
@@ -23,6 +23,78 @@ export default function CartPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [validating, setValidating] = useState(false);
+
+  // New checkout state variables
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "review" | "success">("cart");
+  const [paymentMethod, setPaymentMethod] = useState<"mock_upi" | "mock_card">("mock_upi");
+  const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  const handleProceedToCheckout = async () => {
+    if (!cart) return;
+    setActionError(null);
+    setValidating(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Validation check failed.");
+      const result = (await res.json()) as ValidationResult;
+      setValidation(result);
+      if (!result.valid) {
+        setActionError("Please resolve validation issues before checking out.");
+        return;
+      }
+      setCheckoutStep("review");
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Failed to validate cart."));
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!cart || !cart.cart_id) return;
+    setActionError(null);
+    setCheckingOut(true);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          payment_method: paymentMethod,
+          customer_id: cart.customer_id
+        }),
+      });
+
+      if (!res.ok) {
+        let errMsg = `Checkout failed (status ${res.status})`;
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) {
+            errMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errMsg);
+      }
+
+      const orderData = (await res.json()) as Order;
+      setPlacedOrder(orderData);
+
+      // Clear localStorage cart reference so next session starts fresh
+      const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
+      const sessionId = typeof window !== "undefined" ? window.sessionStorage.getItem(SESSION_STORAGE_KEY) : null;
+      const storageKey = sessionId ? `agentpay_cart_id:${sessionId}` : "agentpay_cart_id";
+      localStorage.removeItem(storageKey);
+
+      setCheckoutStep("success");
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Error placing order"));
+    } finally {
+      setCheckingOut(false);
+    }
+  };
 
   function getErrorMessage(err: unknown, defaultMsg: string): string {
     if (err instanceof TypeError) {
@@ -73,6 +145,20 @@ export default function CartPage() {
           }
           const data = (await res.json()) as Cart;
           setCart(data);
+
+          // Handle checked_out carts on page refresh/initial load
+          if (data.status === "checked_out") {
+            try {
+              const orderRes = await fetch(`${API_BASE_URL}/checkout/order/by-cart/${data.cart_id}?customer_id=${data.customer_id}`);
+              if (orderRes.ok) {
+                const orderData = (await orderRes.json()) as Order;
+                setPlacedOrder(orderData);
+                setCheckoutStep("success");
+              }
+            } catch (orderErr) {
+              console.error("Failed to recover checked out order details:", orderErr);
+            }
+          }
         }
       } catch (err: unknown) {
         setError(getErrorMessage(err, "Failed to load cart"));
@@ -223,6 +309,174 @@ export default function CartPage() {
       setValidating(false);
     }
   };
+
+  if (checkoutStep === "success" && placedOrder) {
+    return (
+      <main className="mx-auto w-full max-w-md px-6 py-16 text-center">
+        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-border p-8 shadow-sm">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-4">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Order placed successfully ✓</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Thank you for your purchase! Your order details are below:
+          </p>
+
+          <div className="w-full mt-6 border-t border-b border-border py-4 text-left space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Order ID:</span>
+              <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">{placedOrder.order_id}</code>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total:</span>
+              <span className="font-semibold">₹{placedOrder.total}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Payment:</span>
+              <span>{placedOrder.payment_method === "mock_card" ? "Mock Card" : "Mock UPI"} — Successful</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Items:</span>
+              <span>{placedOrder.items.reduce((acc, x) => acc + x.quantity, 0)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Estimated delivery:</span>
+              <span>3–4 days</span>
+            </div>
+          </div>
+
+          <div className="mt-8 flex w-full gap-4">
+            <Link
+              href="/buyer"
+              className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition text-center"
+            >
+              Continue Shopping
+            </Link>
+            <Link
+              href={`/tracking/${placedOrder.order_id}`}
+              className="flex-1 rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-slate-50 transition text-center flex items-center justify-center"
+            >
+              Track Shipment
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (checkoutStep === "review" && cart) {
+    return (
+      <main className="mx-auto w-full max-w-xl px-6 py-10">
+        <div className="border-b border-border pb-4 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Order Review</h1>
+          <p className="text-sm text-muted-foreground mt-1">Review your details before completing your order.</p>
+        </div>
+
+        {actionError && (
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 flex items-center justify-between">
+            <span>{actionError}</span>
+            <button onClick={() => setActionError(null)} className="text-xs font-bold text-red-600 hover:text-red-800">Dismiss</button>
+          </div>
+        )}
+
+        <div className="mt-6 space-y-6">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Order Details</h2>
+            <div className="divide-y divide-border">
+              {cart.items.map((item) => (
+                <div key={item.product_id} className="flex justify-between py-3 text-sm">
+                  <div>
+                    <p className="font-medium text-slate-950">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">₹{item.unit_price_inr} × {item.quantity}</p>
+                  </div>
+                  <span className="font-medium text-slate-950">₹{item.line_total_inr}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 border-t border-border pt-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>₹{cart.subtotal_inr}</span>
+              </div>
+              {cart.discount_inr > 0 && (
+                <div className="flex justify-between text-emerald-700">
+                  <span>Discount</span>
+                  <span>-₹{cart.discount_inr}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Shipping</span>
+                <span>{cart.shipping_inr === 0 ? "FREE" : `₹${cart.shipping_inr}`}</span>
+              </div>
+              <div className="flex justify-between border-t border-border pt-3 font-semibold text-base text-slate-950">
+                <span>TOTAL</span>
+                <span>₹{cart.total_inr}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Payment</h2>
+            <p className="text-2xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 mb-3 font-medium">
+              ⚠️ DEMO ENVIRONMENT: This is a sandboxed payment layer. No real money or real card details will be collected or processed.
+            </p>
+            <div className="space-y-2.5">
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-slate-50 transition">
+                <input
+                  type="radio"
+                  name="payment"
+                  value="mock_upi"
+                  checked={paymentMethod === "mock_upi"}
+                  onChange={() => setPaymentMethod("mock_upi")}
+                  className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">Mock UPI</p>
+                  <p className="text-2xs text-muted-foreground">Simulate instant UPI sandbox payment</p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-slate-50 transition">
+                <input
+                  type="radio"
+                  name="payment"
+                  value="mock_card"
+                  checked={paymentMethod === "mock_card"}
+                  onChange={() => setPaymentMethod("mock_card")}
+                  className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">Mock Card</p>
+                  <p className="text-2xs text-muted-foreground">Simulate card sandbox credit/debit transaction</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => setCheckoutStep("cart")}
+              disabled={checkingOut}
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold hover:bg-slate-50 transition disabled:opacity-50"
+            >
+              Back
+            </button>
+            <button
+              onClick={handlePlaceOrder}
+              disabled={checkingOut}
+              className="flex-1 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:bg-indigo-400"
+            >
+              {checkingOut ? "Processing..." : "Place Order"}
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (loading) {
     return (
@@ -413,6 +667,14 @@ export default function CartPage() {
                 </span>
               </div>
             </div>
+
+            <button
+              onClick={handleProceedToCheckout}
+              disabled={cart.items.length === 0}
+              className="mt-6 w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition disabled:bg-indigo-400 disabled:cursor-not-allowed"
+            >
+              Proceed to Checkout
+            </button>
 
             {/* Offers applied */}
             {cart.applied_offers.length > 0 && (

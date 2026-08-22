@@ -11,7 +11,7 @@ from app.agents.state import BuyerAgentState
 load_dotenv()
 
 
-@pytest.mark.live
+@pytest.mark.live_groq
 def test_groq_buyer_graph_executes_catalog_tool():
 
     if not os.getenv("GROQ_API_KEY"):

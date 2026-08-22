@@ -45,6 +45,21 @@ type Product = {
     quantity: number;
   };
   image_url?: string;
+  shipping?: {
+    free_shipping: boolean;
+    estimated_days: number;
+  };
+  return_policy?: {
+    days: number;
+    eligible: boolean;
+  };
+  offers?: {
+    offer_id: string;
+    title: string;
+    type: string;
+    discount_percent: number;
+  }[];
+  features?: string[];
 };
 
 type Message = {
@@ -105,9 +120,9 @@ type Cart = {
 };
 
 const starterPrompts = [
-  "Find running shoes under ₹5,000",
-  "Compare the best running shoes",
-  "Build me a running kit under ₹7,000",
+  "Find wireless headphones under ₹5,000",
+  "Find a laptop for coding under ₹70,000",
+  "Build me a fitness kit under ₹10,000",
 ];
 
 export default function BuyerPage() {
@@ -131,9 +146,11 @@ export default function BuyerPage() {
   const [selectedProduct, setSelectedProduct] =
     useState<Product | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [addingIds, setAddingIds] = useState<Record<string, boolean>>({});
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
 
   const cartCount = useMemo(() => {
-    if (!cart) {
+    if (!cart || cart.status === "checked_out") {
       return 0;
     }
 
@@ -183,6 +200,11 @@ export default function BuyerPage() {
       }
 
       const data: Cart = await response.json();
+      if (data.status === "checked_out") {
+        window.localStorage.removeItem(cartStorageKey(activeSessionId));
+        setCart(null);
+        return;
+      }
       setCart(data);
     } catch (error) {
       console.error("Failed to restore AgentPay cart:", error);
@@ -441,22 +463,7 @@ export default function BuyerPage() {
             )
           : [];
 
-      const shoeProducts = returnedProducts.filter(
-        (product) => {
-          const category =
-            product.category?.toLowerCase() ?? "";
-
-          return (
-            category.includes("shoe") ||
-            category.includes("footwear")
-          );
-        },
-      );
-
-      const displayProducts =
-        shoeProducts.length > 0
-          ? shoeProducts
-          : returnedProducts;
+      const displayProducts = returnedProducts;
 
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
@@ -533,8 +540,98 @@ export default function BuyerPage() {
     void sendMessage();
   }
 
-  function handleAddToCart(product: Product) {
-    void sendMessage(`Add ${product.name} to my cart`);
+  async function handleAddToCartDirectly(product: Product) {
+    const productId = product.product_id;
+    setAddingIds(prev => ({ ...prev, [productId]: true }));
+    setCardErrors(prev => ({ ...prev, [productId]: "" }));
+
+    try {
+      let activeCartId = cart?.cart_id;
+      if (cart?.status === "checked_out") {
+        activeCartId = undefined;
+      }
+      
+      if (!activeCartId) {
+        const storedCartId = window.localStorage.getItem(cartStorageKey(sessionId));
+        if (storedCartId) {
+          activeCartId = storedCartId;
+        }
+      }
+
+      if (!activeCartId) {
+        const createRes = await fetch(`${API_BASE_URL}/cart`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            merchant_id: "m_urbanrun",
+            customer_id: CUSTOMER_ID,
+          }),
+        });
+
+        if (!createRes.ok) {
+          throw new Error("Failed to initialize shopping cart.");
+        }
+
+        const newCartData: Cart = await createRes.json();
+        activeCartId = newCartData.cart_id;
+        setCart(newCartData);
+        window.localStorage.setItem(
+          cartStorageKey(sessionId),
+          newCartData.cart_id,
+        );
+      }
+
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          product_id: productId,
+          quantity: 1,
+        }),
+      });
+
+      if (!res.ok) {
+        let errMsg = "Failed to add item to cart.";
+        try {
+          const errData = await res.json();
+          if (errData?.detail) {
+            errMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+          }
+        } catch {}
+        throw new Error(errMsg);
+      }
+
+      const updatedCart: Cart = await res.json();
+      setCart(updatedCart);
+    } catch (error) {
+      console.error("Direct add to cart failed:", error);
+      setCardErrors(prev => ({
+        ...prev,
+        [productId]: error instanceof Error ? error.message : "Failed to add item.",
+      }));
+    } finally {
+      setAddingIds(prev => ({ ...prev, [productId]: false }));
+    }
+  }
+
+  function cleanMessageContent(content: string, hasProducts: boolean): string {
+    if (!hasProducts) return content;
+    const lines = content.split("\n");
+    const filteredLines = lines.filter((line) => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("|") || trimmed.endsWith("|")) {
+        return false;
+      }
+      if (trimmed.startsWith(":-") || trimmed.startsWith("-:") || trimmed.startsWith("---")) {
+        return false;
+      }
+      return true;
+    });
+    return filteredLines.join("\n").trim();
   }
 
   return (
@@ -586,6 +683,16 @@ export default function BuyerPage() {
               className="hidden rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium sm:block"
             >
               Buyer
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/orders";
+              }}
+              className="hidden rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium sm:block transition hover:bg-slate-50"
+            >
+              Orders
             </button>
           </div>
         </div>
@@ -643,7 +750,7 @@ export default function BuyerPage() {
                           : "rounded-bl-md border border-slate-200 bg-white text-slate-700 shadow-sm"
                       }`}
                     >
-                      {message.content}
+                      {cleanMessageContent(message.content, !!message.products)}
 
                       {message.products &&
                         message.products.length > 0 && (
@@ -659,10 +766,17 @@ export default function BuyerPage() {
                                     )
                                   }
                                   onAdd={() =>
-                                    handleAddToCart(
+                                    handleAddToCartDirectly(
                                       product,
                                     )
                                   }
+                                  onCompare={() =>
+                                    void sendMessage(`Compare ${product.name} with the other matching products`)
+                                  }
+                                  adding={!!addingIds[product.product_id]}
+                                  added={cart?.items.some(item => item.product_id === product.product_id) ?? false}
+                                  cartQty={cart?.items.find(item => item.product_id === product.product_id)?.quantity ?? 0}
+                                  error={cardErrors[product.product_id]}
                                 />
                               ),
                             )}
@@ -857,8 +971,11 @@ export default function BuyerPage() {
                           setSelectedProduct(product)
                         }
                         onAdd={() =>
-                          handleAddToCart(product)
+                          handleAddToCartDirectly(product)
                         }
+                        adding={!!addingIds[product.product_id]}
+                        added={cart?.items.some(item => item.product_id === product.product_id) ?? false}
+                        cartQty={cart?.items.find(item => item.product_id === product.product_id)?.quantity ?? 0}
                       />
                     ))}
                   </div>
@@ -998,18 +1115,24 @@ export default function BuyerPage() {
 
                 <button
                   type="button"
-                  disabled={cartLoading}
-                  onClick={() => {
-                    void sendMessage(
-                      `Add ${selectedProduct.name} to my cart`,
-                    );
+                  disabled={selectedProduct.availability?.in_stock === false || addingIds[selectedProduct.product_id]}
+                  onClick={async () => {
+                    await handleAddToCartDirectly(selectedProduct);
                     setSelectedProduct(null);
                   }}
-                  className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`mt-8 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 ${
+                    cart?.items.some(item => item.product_id === selectedProduct.product_id)
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : selectedProduct.availability?.in_stock === false
+                      ? "bg-slate-300 cursor-not-allowed text-slate-500 hover:bg-slate-300"
+                      : "bg-slate-950 hover:bg-slate-800"
+                  }`}
                 >
                   <ShoppingCart size={16} />
-                  {cartLoading
+                  {addingIds[selectedProduct.product_id]
                     ? "Adding..."
+                    : cart?.items.some(item => item.product_id === selectedProduct.product_id)
+                    ? "Added ✓"
                     : "Add to cart"}
                 </button>
               </div>
@@ -1274,71 +1397,154 @@ function ProductMiniCard({
   product,
   onSelect,
   onAdd,
+  onCompare,
+  adding,
+  added,
+  cartQty,
+  error,
 }: {
   product: Product;
   onSelect: () => void;
   onAdd: () => void;
+  onCompare: () => void;
+  adding: boolean;
+  added: boolean;
+  cartQty: number;
+  error?: string;
 }) {
+  const isOutOfStock = product.availability?.in_stock === false || (product.availability?.quantity ?? 0) <= 0;
+
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-      <button
-        type="button"
-        onClick={onSelect}
-        className="block w-full text-left transition hover:bg-white"
-      >
-        <div className="flex h-28 items-center justify-center bg-slate-100">
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <Package
-              size={30}
-              className="text-slate-300"
-            />
-          )}
-        </div>
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md flex flex-col justify-between">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={onSelect}
+          className="block w-full text-left transition hover:opacity-90"
+        >
+          <div className="flex h-44 items-center justify-center bg-slate-50 border-b border-slate-100 relative">
+            {product.image_url ? (
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <Package size={40} className="text-slate-300" />
+            )}
 
-        <div className="p-3">
-          <div className="text-[10px] font-medium text-slate-400">
-            {product.brand}
+            {product.offers && product.offers.length > 0 && (
+              <span className="absolute top-2 left-2 rounded bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                {product.offers[0].discount_percent}% OFF
+              </span>
+            )}
+          </div>
+        </button>
+      </div>
+
+      <div className="p-4 flex-1 flex flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {product.brand || "UrbanRun"}
+            </span>
+            {product.availability && (
+              <span className={`text-[10px] font-semibold ${isOutOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
+                {isOutOfStock ? "Out of stock" : `✓ In Stock (${product.availability.quantity})`}
+              </span>
+            )}
           </div>
 
-          <div className="mt-0.5 text-xs font-semibold text-slate-800">
+          <button
+            type="button"
+            onClick={onSelect}
+            className="mt-1 block text-left text-sm font-semibold text-slate-800 hover:underline leading-snug line-clamp-2"
+          >
             {product.name}
-          </div>
-
-          {product.price && (
-            <div className="mt-2 text-sm font-semibold">
-              ₹
-              {product.price.amount.toLocaleString(
-                "en-IN",
-              )}
-            </div>
-          )}
+          </button>
 
           {product.rating && (
-            <div className="mt-1 text-[11px] text-slate-500">
-              ★ {product.rating.score} ·{" "}
-              {product.rating.reviews.toLocaleString(
-                "en-IN",
-              )}{" "}
-              reviews
+            <div className="mt-1.5 flex items-center gap-1 text-xs text-slate-500">
+              <span className="text-amber-500">★</span>
+              <span className="font-semibold text-slate-700">{product.rating.score}</span>
+              <span>·</span>
+              <span>{product.rating.reviews} reviews</span>
+            </div>
+          )}
+
+          {product.price && (
+            <div className="mt-2.5 text-lg font-bold text-slate-900">
+              ₹{product.price.amount.toLocaleString("en-IN")}
+            </div>
+          )}
+
+          <div className="mt-3 space-y-1 text-[11px] text-slate-500 border-t border-slate-100 pt-2.5">
+            {product.shipping && (
+              <div className="flex items-center gap-1">
+                <span>🚚</span>
+                <span>
+                  {product.shipping.free_shipping ? "Free shipping" : "Standard shipping"} · {product.shipping.estimated_days} days
+                </span>
+              </div>
+            )}
+            {product.return_policy && (
+              <div className="flex items-center gap-1">
+                <span>🔄</span>
+                <span>
+                  {product.return_policy.eligible ? `${product.return_policy.days}-day returns` : "Final sale"}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {product.features && product.features.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1">
+              {product.features.slice(0, 3).map((feat, idx) => (
+                <span
+                  key={idx}
+                  className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-600 border border-slate-200/50"
+                >
+                  {feat}
+                </span>
+              ))}
             </div>
           )}
         </div>
-      </button>
 
-      <button
-        type="button"
-        onClick={onAdd}
-        className="flex w-full items-center justify-center gap-1.5 border-t border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:bg-white"
-      >
-        <ShoppingCart size={13} />
-        Add
-      </button>
+        <div className="mt-4 border-t border-slate-100 pt-3">
+          {error && (
+            <div className="mb-2 text-[10px] font-semibold text-red-600 bg-red-50 p-1.5 rounded border border-red-100">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onCompare}
+              className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 flex items-center justify-center gap-1"
+            >
+              ⚖️ Compare
+            </button>
+
+            <button
+              type="button"
+              onClick={onAdd}
+              disabled={isOutOfStock || adding}
+              className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold text-white flex items-center justify-center gap-1 transition ${
+                added
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : isOutOfStock
+                  ? "bg-slate-300 cursor-not-allowed text-slate-500"
+                  : "bg-slate-950 hover:bg-slate-800"
+              }`}
+            >
+              <ShoppingCart size={13} />
+              {adding ? "Adding..." : added ? `Added ✓ (${cartQty})` : "Add to Cart"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1347,15 +1553,23 @@ function ProductPanelCard({
   product,
   onSelect,
   onAdd,
+  adding,
+  added,
+  cartQty,
 }: {
   product: Product;
   onSelect: () => void;
   onAdd: () => void;
+  adding: boolean;
+  added: boolean;
+  cartQty: number;
 }) {
+  const isOutOfStock = product.availability?.in_stock === false || (product.availability?.quantity ?? 0) <= 0;
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 hover:shadow-sm">
       <div className="flex gap-3">
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 border border-slate-100">
           {product.image_url ? (
             <img
               src={product.image_url}
@@ -1371,34 +1585,29 @@ function ProductPanelCard({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-medium text-slate-400">
-            {product.brand}
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            {product.brand || "UrbanRun"}
           </div>
 
           <button
             type="button"
             onClick={onSelect}
-            className="mt-0.5 block truncate text-left text-sm font-semibold hover:underline"
+            className="mt-0.5 block truncate text-left text-sm font-semibold hover:underline text-slate-800"
           >
             {product.name}
           </button>
 
           {product.price && (
-            <div className="mt-1 text-sm font-semibold">
-              ₹
-              {product.price.amount.toLocaleString(
-                "en-IN",
-              )}
+            <div className="mt-1 text-sm font-bold text-slate-900">
+              ₹{product.price.amount.toLocaleString("en-IN")}
             </div>
           )}
 
           {product.rating && (
-            <div className="mt-1 text-[11px] text-slate-500">
-              ★ {product.rating.score} ·{" "}
-              {product.rating.reviews.toLocaleString(
-                "en-IN",
-              )}{" "}
-              reviews
+            <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
+              <span className="text-amber-500">★</span>
+              <span className="font-semibold text-slate-700">{product.rating.score}</span>
+              <span>({product.rating.reviews})</span>
             </div>
           )}
         </div>
@@ -1408,7 +1617,7 @@ function ProductPanelCard({
         <button
           type="button"
           onClick={onSelect}
-          className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50"
+          className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
         >
           View
           <ChevronRight size={13} />
@@ -1417,10 +1626,17 @@ function ProductPanelCard({
         <button
           type="button"
           onClick={onAdd}
-          className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-slate-950 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+          disabled={isOutOfStock || adding}
+          className={`flex flex-1 items-center justify-center gap-1 rounded-xl px-3 py-2 text-xs font-bold text-white transition ${
+            added
+              ? "bg-emerald-600 hover:bg-emerald-700"
+              : isOutOfStock
+              ? "bg-slate-300 cursor-not-allowed text-slate-500"
+              : "bg-slate-950 hover:bg-slate-800"
+          }`}
         >
           <ShoppingCart size={13} />
-          Add
+          {adding ? "Adding..." : added ? `Added ✓ (${cartQty})` : "Add"}
         </button>
       </div>
     </div>

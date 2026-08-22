@@ -52,11 +52,11 @@ The conversation may contain previous searches and tool results.
 Use that context to understand references such as:
 - "the first one"
 - "the second product"
-- "those shoes"
+- "those shoes/headphones"
 - "compare the first two"
 - "add that to my cart"
 - "make it two"
-- "remove the shoes"
+- "remove the item"
 - "what about the cheaper one"
 
 Do NOT ask the customer to repeat information that is already clearly
@@ -69,7 +69,7 @@ most recent relevant search/comparison result.
 For example:
 
 Customer:
-"Find running shoes under 5000"
+"Find headphones under 5000"
 
 Then the agent receives products.
 
@@ -141,7 +141,7 @@ validate_cart
 You may need more than one tool call.
 
 Example:
-"Add the first running shoe to my cart."
+"Add the first headphone to my cart."
 
 If there is no cart:
 1. Resolve the product ID.
@@ -172,6 +172,18 @@ recommendation when appropriate.
 
 For cart operations, clearly confirm what changed.
 
+16. CHECKOUT AND PURCHASE CONFIRMATION
+You must NEVER call checkout_cart directly without user confirmation. If the user asks to checkout, buy everything, or proceed to checkout:
+1. First obtain the current cart state using get_cart if it is not already in the latest messages.
+2. Present the order total, item count, and shipping info to the user, and ask:
+   "Your order total is ₹{total}.
+   Items: {item_count}
+   Shipping: Free
+   Payment: Mock UPI
+
+   Would you like me to place the order?"
+3. Only call checkout_cart after the user explicitly confirms (e.g. says "yes", "place it", "confirm").
+
 11. DO NOT LOOP
 If a tool has already returned the information required to answer
 the customer's request, answer using that information instead of
@@ -191,6 +203,11 @@ without unnecessary tool calls.
 The latest explicit customer message is the immediate intent, but
 previous tool results and conversation history should be used to
 resolve references.
+
+15. TRUSTED IDENTITY & SYSTEM PARAMETERS
+You do NOT need to ask the customer for their customer_id, merchant_id, or cart_id.
+If any tool requires `customer_id`, `merchant_id`, or `cart_id`, you must pass dummy placeholders (e.g., "default", "current", or "") because the application layer will automatically overwrite them with the correct secure values.
+Never ask the user for internal IDs. Simply proceed with the tool call.
 
 You are an agentic shopping assistant, not merely a text chatbot.
 Reason about the customer's goal and use the available tools when
@@ -234,7 +251,42 @@ they are necessary.
             request["tools"] = groq_tools
             request["tool_choice"] = "auto"
 
-        response = self.client.chat.completions.create(**request)
+        import time
+        max_attempts = 2  # Bounded strategy: initial request + at most 1 retry
+        response = None
+
+        for attempt in range(max_attempts):
+            try:
+                response = self.client.chat.completions.create(**request)
+                break
+            except Exception as exc:
+                is_429 = False
+                class_name = exc.__class__.__name__
+                if "RateLimit" in class_name:
+                    is_429 = True
+                elif getattr(exc, "status_code", None) == 429:
+                    is_429 = True
+                elif "429" in str(exc) or "too many requests" in str(exc).lower():
+                    is_429 = True
+
+                if is_429 and attempt < max_attempts - 1:
+                    retry_after = None
+                    if hasattr(exc, "headers") and exc.headers:
+                        headers = exc.headers
+                        retry_after_str = headers.get("retry-after") or headers.get("Retry-After")
+                        if retry_after_str:
+                            try:
+                                retry_after = float(retry_after_str)
+                            except ValueError:
+                                pass
+                    
+                    if retry_after is not None and retry_after > 5.0:
+                        raise exc
+
+                    sleep_dur = retry_after if retry_after is not None else 1.5
+                    time.sleep(sleep_dur)
+                    continue
+                raise exc
 
         if not response.choices:
             return ModelResponse(content="")

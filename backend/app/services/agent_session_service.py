@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import func
 
@@ -27,7 +27,7 @@ def get_or_create_session(
                 )
             return session
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         session = AgentSession(
             session_id=session_id,
             customer_id=customer_id,
@@ -82,7 +82,7 @@ def save_message(
             tool_name=tool_name,
             tool_call_id=tool_call_id,
         )
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.add(message)
         db.commit()
         db.refresh(message)
@@ -118,7 +118,7 @@ def update_cart_id(
             raise ValueError(f"Session {session_id} not found.")
 
         session.cart_id = cart_id
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.commit()
         db.refresh(session)
         return session

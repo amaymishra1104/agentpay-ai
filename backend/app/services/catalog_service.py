@@ -315,3 +315,96 @@ def compare_products(product_ids: list[str]) -> ProductComparisonResponse:
 	]
 
 	return ProductComparisonResponse(items=items)
+
+
+import os
+import time
+from contextlib import contextmanager
+
+LOCK_FILE = _data_dir() / "products.json.lock"
+
+
+@contextmanager
+def file_lock(lock_path: Path, timeout: float = 10.0, delay: float = 0.05):
+	"""
+	Cross-platform atomic file lock using O_CREAT and O_EXCL.
+	"""
+	start_time = time.time()
+	while True:
+		try:
+			fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+			os.write(fd, str(os.getpid()).encode())
+			os.close(fd)
+			break
+		except FileExistsError:
+			if time.time() - start_time > timeout:
+				raise TimeoutError(f"Could not acquire lock on {lock_path} within {timeout} seconds")
+			time.sleep(delay)
+	try:
+		yield
+	finally:
+		try:
+			os.unlink(str(lock_path))
+		except FileNotFoundError:
+			pass
+
+
+def decrement_inventory(items_to_decrement: dict[str, int]) -> None:
+	"""
+	Safely decrement inventory for multiple products in products.json.
+	"""
+	with file_lock(LOCK_FILE):
+		filepath = _data_dir() / "products.json"
+		with filepath.open("r", encoding="utf-8") as file:
+			products = json.load(file)
+
+		# Verify inventory first before making any changes
+		for p in products:
+			pid = p.get("id")
+			if pid in items_to_decrement:
+				qty_to_dec = items_to_decrement[pid]
+				if p.get("inventory_quantity", 0) < qty_to_dec:
+					raise ValueError(f"Insufficient inventory for product {pid}")
+
+		# Apply decrement
+		for p in products:
+			pid = p.get("id")
+			if pid in items_to_decrement:
+				qty_to_dec = items_to_decrement[pid]
+				p["inventory_quantity"] = max(0, p.get("inventory_quantity", 0) - qty_to_dec)
+				if p["inventory_quantity"] == 0:
+					p["available"] = False
+
+		with filepath.open("w", encoding="utf-8") as file:
+			json.dump(products, file, indent=2, ensure_ascii=False)
+
+		# Clear LRU caches
+		_load_products.cache_clear()
+		_load_offers_by_product.cache_clear()
+
+
+def increment_inventory(items_to_increment: dict[str, int]) -> None:
+	"""
+	Safely increment inventory for multiple products in products.json (e.g. on rollback).
+	"""
+	with file_lock(LOCK_FILE):
+		filepath = _data_dir() / "products.json"
+		with filepath.open("r", encoding="utf-8") as file:
+			products = json.load(file)
+
+		# Apply increment
+		for p in products:
+			pid = p.get("id")
+			if pid in items_to_increment:
+				qty_to_inc = items_to_increment[pid]
+				p["inventory_quantity"] = p.get("inventory_quantity", 0) + qty_to_inc
+				if qty_to_inc > 0:
+					p["available"] = True
+
+		with filepath.open("w", encoding="utf-8") as file:
+			json.dump(products, file, indent=2, ensure_ascii=False)
+
+		# Clear LRU caches
+		_load_products.cache_clear()
+		_load_offers_by_product.cache_clear()
+

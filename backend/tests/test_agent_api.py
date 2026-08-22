@@ -289,3 +289,92 @@ def test_buyer_agent_requires_session_id():
     )
 
     assert response.status_code == 422
+
+
+def test_buyer_agent_handles_rate_limit_cleanly(monkeypatch):
+    class MockRateLimitedModel:
+        def invoke(self, messages, tools):
+            class DummyRateLimitError(Exception):
+                status_code = 429
+            raise DummyRateLimitError("Rate limit reached for TPD")
+
+    import app.api.routes.agent
+    monkeypatch.setattr(app.api.routes.agent, "_build_model", lambda: MockRateLimitedModel())
+
+    response = client.post(
+        "/api/v1/agent/chat",
+        json={
+            "session_id": "test-session-rate-limit",
+            "customer_id": "c_demo_001",
+            "message": "hello",
+        },
+    )
+
+    assert response.status_code == 429
+    assert "rate-limited" in response.json()["detail"]
+
+
+def test_groq_buyer_model_bounded_retry(monkeypatch):
+    from app.agents.model_provider import GroqBuyerModel
+    from app.config import Settings
+    monkeypatch.setattr("app.config.get_settings", lambda: Settings(groq_api_key="dummy_key", groq_model="dummy_model"))
+
+    call_count = 0
+
+    class DummyHeaders(dict):
+        pass
+
+    class DummyRateLimitError(Exception):
+        status_code = 429
+        def __init__(self, message, headers=None):
+            super().__init__(message)
+            self.headers = headers
+
+    def mock_create(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        headers = DummyHeaders()
+        headers["retry-after"] = "0.01"
+        raise DummyRateLimitError("Rate Limit", headers=headers)
+
+    model = GroqBuyerModel()
+    monkeypatch.setattr(model.client.chat.completions, "create", mock_create)
+
+    try:
+        model.invoke([{"role": "user", "content": "hi"}], [])
+    except Exception as exc:
+        assert call_count == 2
+        assert exc.__class__.__name__ == "DummyRateLimitError"
+
+
+def test_groq_buyer_model_fail_fast_long_wait(monkeypatch):
+    from app.agents.model_provider import GroqBuyerModel
+    from app.config import Settings
+    monkeypatch.setattr("app.config.get_settings", lambda: Settings(groq_api_key="dummy_key", groq_model="dummy_model"))
+
+    call_count = 0
+
+    class DummyHeaders(dict):
+        pass
+
+    class DummyRateLimitError(Exception):
+        status_code = 429
+        def __init__(self, message, headers=None):
+            super().__init__(message)
+            self.headers = headers
+
+    def mock_create(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        headers = DummyHeaders()
+        headers["retry-after"] = "10.0"
+        raise DummyRateLimitError("Rate Limit", headers=headers)
+
+    model = GroqBuyerModel()
+    monkeypatch.setattr(model.client.chat.completions, "create", mock_create)
+
+    try:
+        model.invoke([{"role": "user", "content": "hi"}], [])
+    except Exception as exc:
+        assert call_count == 1
+        assert exc.__class__.__name__ == "DummyRateLimitError"

@@ -256,6 +256,110 @@ BUYER_TOOL_DEFINITIONS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    {
+        "name": "checkout_cart",
+        "description": (
+            "Checkout the shopping cart and place the order. "
+            "This will validate the cart, charge mock payment, and deduct inventory. "
+            "Requires explicit confirmation from the user before executing."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "cart_id": {
+                    "type": "string",
+                    "description": "The shopping cart ID to checkout.",
+                },
+                "payment_method": {
+                    "type": "string",
+                    "description": "The mock payment method ('mock_upi' or 'mock_card').",
+                    "default": "mock_upi",
+                },
+            },
+            "required": ["cart_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "get_order",
+        "description": (
+            "Retrieve details of a placed order using order ID or cart ID. "
+            "If neither is provided, retrieves the latest order for the session."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The order ID.",
+                },
+                "cart_id": {
+                    "type": "string",
+                    "description": "The cart ID associated with the order.",
+                },
+            },
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "get_order_tracking",
+        "description": "Retrieve structured tracking details and event timeline for a placed order.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the order to track.",
+                },
+            },
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "cancel_order",
+        "description": "Cancel a placed order if it is in an eligible cancellation state (placed, confirmed, packed).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The unique identifier of the order to cancel.",
+                },
+            },
+            "required": ["order_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "request_return",
+        "description": "Submit a return request for a delivered product item.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The order ID.",
+                },
+                "product_id": {
+                    "type": "string",
+                    "description": "The product ID to return.",
+                },
+                "quantity": {
+                    "type": "integer",
+                    "description": "The quantity to return.",
+                    "default": 1,
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "The reason for the return.",
+                },
+            },
+            "required": ["order_id", "product_id"],
+            "additionalProperties": False,
+        },
+    },
 ]
 
 

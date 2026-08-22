@@ -130,3 +130,78 @@ class AgentMessage(Base):
         back_populates="messages",
     )
 
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    order_id: Mapped[str] = mapped_column(String(100), primary_key=True, index=True)
+    cart_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    customer_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    merchant_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), default="INR")
+    subtotal: Mapped[int] = mapped_column(Integer, nullable=False)
+    discount: Mapped[int] = mapped_column(Integer, default=0)
+    shipping: Mapped[int] = mapped_column(Integer, default=0)
+    total: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="placed")
+    payment_status: Mapped[str] = mapped_column(String(50), default="successful")
+    payment_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    transaction_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Fulfillment step timestamps
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    packed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    shipped_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem", back_populates="order", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    order_id: Mapped[str] = mapped_column(String(100), ForeignKey("orders.order_id"), nullable=False)
+    product_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    sku: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price: Mapped[int] = mapped_column(Integer, nullable=False)
+    line_total: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    order: Mapped["Order"] = relationship("Order", back_populates="items")
+
+
+class ReturnRequest(Base):
+    __tablename__ = "return_requests"
+
+    return_id: Mapped[str] = mapped_column(String(100), primary_key=True, index=True)
+    order_id: Mapped[str] = mapped_column(String(100), ForeignKey("orders.order_id"), nullable=False)
+    customer_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="requested")  # requested, approved, rejected, completed
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    items: Mapped[list["ReturnItem"]] = relationship(
+        "ReturnItem", back_populates="return_request", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class ReturnItem(Base):
+    __tablename__ = "return_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    return_id: Mapped[str] = mapped_column(String(100), ForeignKey("return_requests.return_id"), nullable=False)
+    product_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    return_request: Mapped["ReturnRequest"] = relationship("ReturnRequest", back_populates="items")
+
+

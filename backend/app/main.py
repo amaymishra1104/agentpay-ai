@@ -41,9 +41,17 @@ app = FastAPI(
 )
 
 
+origins = [o.strip() for o in settings.frontend_origin.split(",") if o.strip()]
+if settings.app_env.lower() == "development":
+    for port in ("3000", "3001"):
+        for host in ("localhost", "127.0.0.1"):
+            url = f"http://{host}:{port}"
+            if url not in origins:
+                origins.append(url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

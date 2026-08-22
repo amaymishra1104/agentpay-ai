@@ -50,7 +50,216 @@ class MockBuyerModel(BuyerModel):
         tools: list[dict[str, Any]],
     ) -> ModelResponse:
         user_message = self._latest_user_message(messages)
+        user_message_clean = user_message.strip().lower()
 
+        # Resolve ambiguous order selection from conversation history
+        latest_assistant_content = ""
+        for msg in reversed(messages):
+            if msg.get("role") == "assistant" and msg.get("type") == "final":
+                latest_assistant_content = msg.get("content", "")
+                break
+
+        is_tracking_context = "track" in latest_assistant_content
+        is_inspect_context = "inspect" in latest_assistant_content or "Which order would you like" in latest_assistant_content
+
+        if is_tracking_context or is_inspect_context:
+            prev_order_ids = re.findall(r"ord_[a-zA-Z0-9]+", latest_assistant_content)
+            if prev_order_ids:
+                resolved_choice_order_id = None
+
+                # Check for explicit order ID match
+                explicit_match = re.search(r"ord_[a-zA-Z0-9]+", user_message_clean)
+                if explicit_match:
+                    resolved_choice_order_id = explicit_match.group(0)
+                # Check for "first" reference
+                elif any(phrase in user_message_clean for phrase in ("first one", "first order", "first option", "the first", "number one", "first")):
+                    resolved_choice_order_id = prev_order_ids[0]
+                # Check for "second" reference
+                elif any(phrase in user_message_clean for phrase in ("second one", "second order", "second option", "the second", "number two", "second")) and len(prev_order_ids) > 1:
+                    resolved_choice_order_id = prev_order_ids[1]
+
+                if resolved_choice_order_id:
+                    target_tool_name = "get_order_tracking" if is_tracking_context else "get_order"
+                    if not self._has_tool_result_after_latest_user(messages, target_tool_name):
+                        return ModelResponse(
+                            tool_calls=[
+                                ToolCall(
+                                    tool_name=target_tool_name,
+                                    arguments={"order_id": resolved_choice_order_id},
+                                )
+                            ]
+                        )
+
+        # 1. Checkout confirmation flow
+        # Check if the assistant asked for confirmation in the last assistant message
+        asked_confirmation = False
+        for msg in reversed(messages):
+            if msg.get("role") == "assistant" and msg.get("type") == "final":
+                last_assistant_msg = msg.get("content", "")
+                if "Would you like me to place the order?" in last_assistant_msg:
+                    asked_confirmation = True
+                break
+
+        is_yes = any(word in user_message_clean for word in ("yes", "place it", "place the order", "confirm", "ok", "sure", "yep", "do it"))
+
+        if asked_confirmation and is_yes:
+            if self._has_tool_result_after_latest_user(messages, "checkout_cart"):
+                tool_res = self._latest_tool_result(messages, "checkout_cart")
+                order_id = tool_res.get("order_id", "ord_mock") if tool_res else "ord_mock"
+                total = tool_res.get("total", 0) if tool_res else 0
+                return ModelResponse(
+                    content=f"Order placed successfully ✓\n\nOrder ID: {order_id}\nTotal: ₹{total}\nPayment: Mock UPI — Successful\nEstimated delivery: 3–4 days"
+                )
+            return ModelResponse(
+                tool_calls=[
+                    ToolCall(
+                        tool_name="checkout_cart",
+                        arguments={},
+                    )
+                ]
+            )
+
+        if any(phrase in user_message_clean for phrase in ("checkout", "buy everything", "place the order", "proceed to checkout", "place order")):
+            if self._has_tool_result_after_latest_user(messages, "get_cart"):
+                cart_res = self._latest_tool_result(messages, "get_cart")
+                total = cart_res.get("total_inr", 0) if cart_res else 0
+                items_count = sum(item.get("quantity", 0) for item in cart_res.get("items", [])) if cart_res else 0
+                return ModelResponse(
+                    content=f"Your order total is ₹{total}.\nItems: {items_count}\nShipping: Free\nPayment: Mock UPI\n\nWould you like me to place the order?"
+                )
+            else:
+                return ModelResponse(
+                    tool_calls=[
+                        ToolCall(
+                            tool_name="get_cart",
+                            arguments={},
+                        )
+                    ]
+                )
+
+        # Resolve order_id from tool history if available
+        def get_latest_order_id() -> str | None:
+            for m in reversed(messages):
+                if m.get("type") == "tool_result" or m.get("role") == "tool":
+                    try:
+                        content = m.get("content", "")
+                        if isinstance(content, str):
+                            import json
+                            parsed = json.loads(content)
+                        else:
+                            parsed = content
+                        if isinstance(parsed, dict):
+                            if "order_id" in parsed:
+                                return parsed["order_id"]
+                            if "orders" in parsed and isinstance(parsed["orders"], list) and parsed["orders"]:
+                                return parsed["orders"][0]["order_id"]
+                    except Exception:
+                        pass
+            return None
+
+        latest_order_id = get_latest_order_id()
+
+        # Identify latest assistant response content
+        latest_assistant_content = ""
+        for m in reversed(messages):
+            if m.get("role") == "assistant" or m.get("type") == "assistant":
+                latest_assistant_content = str(m.get("content", "")).lower()
+                break
+
+        # 2. Order query flow (items, status, tracking, cancellation, return)
+        is_tracking_query = any(phrase in user_message_clean for phrase in ("where is my", "track", "tracking", "arrive", "shipped", "delivery", "delivered"))
+        is_cancel_query = any(phrase in user_message_clean for phrase in ("cancel", "cancellation"))
+        is_return_query = any(phrase in user_message_clean for phrase in ("return", "refund"))
+        is_items_query = any(phrase in user_message_clean for phrase in ("what did i buy", "what did i just buy", "what did i purchase", "purchased items"))
+        is_status_query = any(phrase in user_message_clean for phrase in ("status of my", "order status", "my order status", "what is my order"))
+
+        # Cancellation confirmation check
+        if is_cancel_query and any(word in user_message_clean for word in ("yes", "confirm", "proceed", "cancel it")) and "cancel" in latest_assistant_content:
+            if latest_order_id:
+                return ModelResponse(
+                    tool_calls=[ToolCall(tool_name="cancel_order", arguments={"order_id": latest_order_id})]
+                )
+
+        # Return confirmation check
+        if is_return_query and any(word in user_message_clean for word in ("yes", "confirm", "proceed", "return it")) and "return" in latest_assistant_content:
+            if latest_order_id:
+                return ModelResponse(
+                    tool_calls=[ToolCall(tool_name="request_return", arguments={"order_id": latest_order_id, "product_id": "ur_audio_001", "quantity": 1})]
+                )
+
+        if is_cancel_query:
+            if self._has_tool_result_after_latest_user(messages, "cancel_order"):
+                tool_res = self._latest_tool_result(messages, "cancel_order")
+                if tool_res and tool_res.get("status") == "cancelled":
+                    return ModelResponse(content=f"Your order {tool_res.get('order_id')} has been successfully cancelled and refunded.")
+                else:
+                    return ModelResponse(content="I was unable to cancel your order.")
+            
+            if self._has_tool_result_after_latest_user(messages, "get_order"):
+                order_res = self._latest_tool_result(messages, "get_order")
+                if order_res:
+                    status = order_res.get("status", "placed")
+                    if status in ("placed", "confirmed", "packed"):
+                        return ModelResponse(content=f"Your order {order_res.get('order_id')} is currently in status '{status}' and is eligible for cancellation. Would you like me to cancel it?")
+                    else:
+                        return ModelResponse(content=f"Your order {order_res.get('order_id')} is in status '{status}', which is not eligible for cancellation (only placed, confirmed, or packed orders can be cancelled).")
+            
+            return ModelResponse(tool_calls=[ToolCall(tool_name="get_order", arguments={})])
+
+        if is_return_query:
+            if self._has_tool_result_after_latest_user(messages, "request_return"):
+                tool_res = self._latest_tool_result(messages, "request_return")
+                if tool_res and tool_res.get("return_id"):
+                    return ModelResponse(content=f"Return request submitted successfully ✓. Return ID: {tool_res.get('return_id')}.")
+                else:
+                    return ModelResponse(content="I was unable to submit a return request.")
+
+            if self._has_tool_result_after_latest_user(messages, "get_order"):
+                order_res = self._latest_tool_result(messages, "get_order")
+                if order_res:
+                    status = order_res.get("status", "placed")
+                    if status == "delivered":
+                        return ModelResponse(content=f"Your order {order_res.get('order_id')} is delivered and eligible for return. Would you like me to submit a return request?")
+                    else:
+                        return ModelResponse(content=f"Your order {order_res.get('order_id')} is in status '{status}'. Only delivered orders can be returned.")
+            
+            return ModelResponse(tool_calls=[ToolCall(tool_name="get_order", arguments={})])
+
+        if is_tracking_query:
+            if self._has_tool_result_after_latest_user(messages, "get_order_tracking"):
+                tool_res = self._latest_tool_result(messages, "get_order_tracking")
+                if tool_res:
+                    if tool_res.get("multiple_orders"):
+                        orders_list = "\n".join(f"- Order ID: {o.get('order_id')} (Date: {o.get('date')[:10]}, Total: ₹{o.get('total')})" for o in tool_res.get("orders", []))
+                        return ModelResponse(content=f"I found multiple orders for you. Which order would you like me to track?\n\n{orders_list}")
+                    
+                    status = tool_res.get("status", "placed")
+                    est = tool_res.get("estimated_delivery", "")
+                    num = tool_res.get("tracking_number", "")
+                    carrier = tool_res.get("carrier", "")
+                    return ModelResponse(content=f"Your order status is '{status}'.\n- Carrier: {carrier}\n- Tracking Number: {num}\n- Estimated Delivery: {est}")
+            
+            return ModelResponse(tool_calls=[ToolCall(tool_name="get_order_tracking", arguments={})])
+
+        if is_items_query or is_status_query:
+            if self._has_tool_result_after_latest_user(messages, "get_order"):
+                order_res = self._latest_tool_result(messages, "get_order")
+                if order_res:
+                    if order_res.get("multiple_orders"):
+                        orders_list = "\n".join(f"- Order ID: {o.get('order_id')} (Date: {o.get('date')[:10]}, Total: ₹{o.get('total')})" for o in order_res.get("orders", []))
+                        return ModelResponse(content=f"I found multiple orders for you. Which order would you like to inspect?\n\n{orders_list}")
+                    
+                    order_id = order_res.get("order_id", "ord_mock")
+                    status = order_res.get("status", "placed")
+                    items_desc = ", ".join(f"{item.get('name')} x{item.get('quantity')}" for item in order_res.get("items", []))
+                    if is_status_query:
+                        return ModelResponse(content=f"Your order {order_id} is currently in status '{status}'.")
+                    else:
+                        return ModelResponse(content=f"You bought the following items: {items_desc}. (Order ID: {order_id})")
+            
+            return ModelResponse(tool_calls=[ToolCall(tool_name="get_order", arguments={})])
+
+        # 3. Existing mock flows
         if "cart" in user_message and any(
             phrase in user_message
             for phrase in ("what", "show", "view", "see", "check")
@@ -114,31 +323,68 @@ class MockBuyerModel(BuyerModel):
         # If the graph has already executed a tool, the model
         # should produce a final response rather than repeatedly
         # requesting another tool.
+        # Identify search keywords from user message dynamically
+        keywords = ["shoes", "shoe", "headphones", "headphone", "backpack", "backpacks", "laptop", "laptops", "phone", "smartphone", "smartwatches", "smartwatch", "yoga", "bottle", "product"]
+        matched_keyword = None
+        for kw in keywords:
+            if kw in user_message:
+                matched_keyword = kw
+                break
+
+        # If the graph has already executed a tool, the model
+        # should produce a final response rather than repeatedly
+        # requesting another tool.
         if any(
             message.get("type") == "tool_result"
             for message in messages
         ):
-            return ModelResponse(
-                content=(
-                    "I found matching running shoes "
-                    "from the UrbanRun catalog."
+            # If the tool was checkout_cart, handle final response here too
+            if self._has_tool_result_after_latest_user(messages, "checkout_cart"):
+                tool_res = self._latest_tool_result(messages, "checkout_cart")
+                order_id = tool_res.get("order_id", "ord_mock") if tool_res else "ord_mock"
+                total = tool_res.get("total", 0) if tool_res else 0
+                return ModelResponse(
+                    content=f"Order placed successfully ✓\n\nOrder ID: {order_id}\nTotal: ₹{total}\nPayment: Mock UPI — Successful\nEstimated delivery: 3–4 days"
                 )
+            if self._has_tool_result_after_latest_user(messages, "get_order"):
+                order_res = self._latest_tool_result(messages, "get_order")
+                if order_res:
+                    order_id = order_res.get("order_id", "ord_mock")
+                    status = order_res.get("status", "placed")
+                    items_desc = ", ".join(f"{item.get('name')} x{item.get('quantity')}" for item in order_res.get("items", []))
+                    return ModelResponse(
+                        content=f"Your order {order_id} is in status '{status}'. You bought: {items_desc}."
+                    )
+
+            tool_res = self._latest_tool_result(messages, "search_products")
+            category_name = "products"
+            if tool_res and tool_res.get("items"):
+                first_item = tool_res["items"][0]
+                category_name = first_item.get("category", "products").replace("_", " ")
+
+            return ModelResponse(
+                content=f"I found matching {category_name} from the catalog."
             )
 
         # Simulate the model deciding that a catalog search
         # is required.
-        if (
-            "running shoes" in user_message
-            or "shoes" in user_message
-            or "product" in user_message
-        ):
+        if matched_keyword or "under" in user_message:
+            query = matched_keyword if matched_keyword else "products"
+            if "shoes" in user_message or "shoe" in user_message:
+                query = "running shoes"
+
+            max_price = 5000
+            price_match = re.search(r"under\s*(?:₹|rs\.?)?\s*(\d+)", user_message)
+            if price_match:
+                max_price = int(price_match.group(1))
+
             return ModelResponse(
                 tool_calls=[
                     ToolCall(
                         tool_name="search_products",
                         arguments={
-                            "query": "running shoes",
-                            "max_price": 5000,
+                            "query": query,
+                            "max_price": max_price,
                         },
                     )
                 ]

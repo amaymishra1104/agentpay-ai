@@ -32,7 +32,7 @@ dev = [
 
 [tool.pytest.ini_options]
 markers = [
-  "live: tests that make real external API calls"
+  "live_groq: tests that make real external API calls to Groq"
 ]
 testpaths = ["tests"]
 

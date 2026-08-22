@@ -16,6 +16,11 @@ EXPECTED_TOOLS = {
     "update_cart_item",
     "remove_from_cart",
     "validate_cart",
+    "checkout_cart",
+    "get_order",
+    "get_order_tracking",
+    "cancel_order",
+    "request_return",
 }
 
 

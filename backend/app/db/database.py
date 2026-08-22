@@ -27,7 +27,22 @@ from app.db import models  # noqa: F401,E402
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
-
+    
+    # Safely alter database to add columns if they don't exist
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        for col, col_type in [
+            ("confirmed_at", "DATETIME"),
+            ("packed_at", "DATETIME"),
+            ("shipped_at", "DATETIME"),
+            ("delivered_at", "DATETIME"),
+            ("cancelled_at", "DATETIME"),
+        ]:
+            try:
+                conn.execute(text(f"ALTER TABLE orders ADD COLUMN {col} {col_type}"))
+            except Exception:
+                # Column already exists, ignore
+                pass
 
 init_db()
 
