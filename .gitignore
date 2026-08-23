@@ -34,3 +34,5 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+*.lock
+*.db
