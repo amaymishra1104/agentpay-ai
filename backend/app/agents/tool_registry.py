@@ -122,6 +122,24 @@ BUYER_TOOL_DEFINITIONS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "get_cross_sell_recommendations",
+        "description": (
+            "Get deterministic, explainable cross-sell recommendations "
+            "for a product. Explains why each item is suggested."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "string",
+                    "description": "The product ID to get cross-sell recommendations for.",
+                },
+            },
+            "required": ["product_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "create_cart",
         "description": (
             "Create a new shopping cart for the current buyer "

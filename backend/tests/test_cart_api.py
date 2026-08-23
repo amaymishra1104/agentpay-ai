@@ -9,7 +9,35 @@ from app.main import app
 from app.services.catalog_service import _load_products, ProductRecord
 
 
-client = TestClient(app)
+class ClientWrapper:
+    def __init__(self, client):
+        self.client = client
+
+    def get(self, url, *args, **kwargs):
+        if "/api/v1/cart/" in url and "customer_id" not in url:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id=c_demo_001"
+        return self.client.get(url, *args, **kwargs)
+
+    def post(self, url, *args, **kwargs):
+        if "/api/v1/cart/" in url and "customer_id" not in url:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id=c_demo_001"
+        return self.client.post(url, *args, **kwargs)
+
+    def patch(self, url, *args, **kwargs):
+        if "/api/v1/cart/" in url and "customer_id" not in url:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id=c_demo_001"
+        return self.client.patch(url, *args, **kwargs)
+
+    def delete(self, url, *args, **kwargs):
+        if "/api/v1/cart/" in url and "customer_id" not in url:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id=c_demo_001"
+        return self.client.delete(url, *args, **kwargs)
+
+client = ClientWrapper(TestClient(app))
 
 
 def test_1_create_cart() -> None:

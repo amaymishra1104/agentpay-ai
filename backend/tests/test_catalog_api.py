@@ -1,4 +1,4 @@
-īimport os
+import os
 os.environ["DATABASE_URL"] = "sqlite:///./agentpay.db"
 
 import json

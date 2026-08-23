@@ -15,6 +15,11 @@ def test_customer_isolation_and_missing_id():
     init_db()
     db_session = SessionLocal()
     try:
+        # Clean up existing test records if any to prevent UNIQUE constraint errors
+        db_session.query(Order).filter(Order.order_id == "ord_cust_a").delete()
+        db_session.query(Cart).filter(Cart.id == "cart_cust_a").delete()
+        db_session.commit()
+
         # Create test data for Customer A
         cart_a = Cart(
             id="cart_cust_a",

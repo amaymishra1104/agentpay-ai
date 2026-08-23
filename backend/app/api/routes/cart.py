@@ -75,20 +75,28 @@ def create_cart_endpoint(req: CartCreateRequest, db: Session = Depends(get_db)) 
 
 
 @router.get("/{cart_id}", response_model=CartSchema)
-def get_cart_endpoint(cart_id: str, db: Session = Depends(get_db)) -> CartSchema:
-    cart = cart_service.get_cart(cart_id=cart_id, db=db)
-    if not cart:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Cart with ID {cart_id} not found",
-        )
-    return map_cart_to_schema(cart)
+def get_cart_endpoint(
+    cart_id: str,
+    customer_id: str,
+    db: Session = Depends(get_db),
+) -> CartSchema:
+    try:
+        cart = cart_service.get_cart(cart_id=cart_id, db=db, customer_id=customer_id)
+        if not cart:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cart with ID {cart_id} not found",
+            )
+        return map_cart_to_schema(cart)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
 
 
 @router.post("/{cart_id}/items", response_model=CartSchema)
 def add_item_endpoint(
     cart_id: str,
     req: CartItemAddRequest,
+    customer_id: str,
     db: Session = Depends(get_db),
 ) -> CartSchema:
     try:
@@ -97,8 +105,11 @@ def add_item_endpoint(
             product_id=req.product_id,
             quantity=req.quantity,
             db=db,
+            customer_id=customer_id,
         )
         return map_cart_to_schema(cart)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except cart_service.CartNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ProductNotFoundError as exc:
@@ -117,6 +128,7 @@ def update_item_endpoint(
     cart_id: str,
     product_id: str,
     req: CartItemUpdateRequest,
+    customer_id: str,
     db: Session = Depends(get_db),
 ) -> CartSchema:
     try:
@@ -125,8 +137,11 @@ def update_item_endpoint(
             product_id=product_id,
             quantity=req.quantity,
             db=db,
+            customer_id=customer_id,
         )
         return map_cart_to_schema(cart)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except cart_service.CartNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ProductNotFoundError as exc:
@@ -142,6 +157,7 @@ def update_item_endpoint(
 def remove_item_endpoint(
     cart_id: str,
     product_id: str,
+    customer_id: str,
     db: Session = Depends(get_db),
 ) -> CartSchema:
     try:
@@ -149,8 +165,11 @@ def remove_item_endpoint(
             cart_id=cart_id,
             product_id=product_id,
             db=db,
+            customer_id=customer_id,
         )
         return map_cart_to_schema(cart)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except cart_service.CartNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ProductNotFoundError as exc:
@@ -160,10 +179,16 @@ def remove_item_endpoint(
 
 
 @router.delete("/{cart_id}", response_model=CartSchema)
-def clear_cart_endpoint(cart_id: str, db: Session = Depends(get_db)) -> CartSchema:
+def clear_cart_endpoint(
+    cart_id: str,
+    customer_id: str,
+    db: Session = Depends(get_db),
+) -> CartSchema:
     try:
-        cart = cart_service.clear_cart(cart_id=cart_id, db=db)
+        cart = cart_service.clear_cart(cart_id=cart_id, db=db, customer_id=customer_id)
         return map_cart_to_schema(cart)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except cart_service.CartNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -171,10 +196,16 @@ def clear_cart_endpoint(cart_id: str, db: Session = Depends(get_db)) -> CartSche
 
 
 @router.post("/{cart_id}/validate", response_model=CartValidationResponse)
-def validate_cart_endpoint(cart_id: str, db: Session = Depends(get_db)) -> CartValidationResponse:
+def validate_cart_endpoint(
+    cart_id: str,
+    customer_id: str,
+    db: Session = Depends(get_db),
+) -> CartValidationResponse:
     try:
-        res = cart_service.validate_cart(cart_id=cart_id, db=db)
+        res = cart_service.validate_cart(cart_id=cart_id, db=db, customer_id=customer_id)
         return CartValidationResponse(**res)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except cart_service.CartNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -193,6 +224,8 @@ def checkout_cart_endpoint(
             customer_id=req.customer_id,
         )
         return map_order_to_schema(order)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except cart_service.CartNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

@@ -191,7 +191,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${storedCartId}`,
+        `${API_BASE_URL}/cart/${storedCartId}?customer_id=${CUSTOMER_ID}`,
       );
 
       if (!response.ok) {
@@ -213,7 +213,7 @@ export default function BuyerPage() {
 
   async function refreshCart(cartId: string) {
     const response = await fetch(
-      `${API_BASE_URL}/cart/${cartId}`,
+      `${API_BASE_URL}/cart/${cartId}?customer_id=${CUSTOMER_ID}`,
     );
 
     if (!response.ok) {
@@ -257,7 +257,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}?customer_id=${CUSTOMER_ID}`,
         {
           method: "PATCH",
           headers: {
@@ -307,7 +307,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}?customer_id=${CUSTOMER_ID}`,
         {
           method: "DELETE",
         },
@@ -351,7 +351,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${CUSTOMER_ID}`,
         {
           method: "DELETE",
         },
@@ -420,17 +420,7 @@ export default function BuyerPage() {
       );
 
       if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error("Agent service is temporarily unavailable. The AI provider may be rate-limited. Please try again shortly.");
-        }
-        if (response.status === 401 || response.status === 403) {
-          throw new Error("Authentication Failed: The AgentPay backend is unauthorized or credentials are invalid.");
-        }
-        if (response.status === 500) {
-          throw new Error("The AgentPay backend encountered an internal error. Please check backend logs and try again.");
-        }
-
-        let errorMessage = `Agent API returned status ${response.status}`;
+        let errorMessage = `Agent service error (${response.status})`;
         try {
           const errData = await response.json();
           if (errData && errData.detail) {
@@ -583,7 +573,7 @@ export default function BuyerPage() {
         );
       }
 
-      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items?customer_id=${CUSTOMER_ID}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

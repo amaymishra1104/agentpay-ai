@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 from app.tools.catalog_tools import (
     compare_products,
+    get_cross_sell_recommendations,
     get_product,
     get_related_products,
     search_products,
@@ -40,6 +41,7 @@ def run_tool(
         "search_products": search_products,
         "get_product": get_product,
         "get_related_products": get_related_products,
+        "get_cross_sell_recommendations": get_cross_sell_recommendations,
         "compare_products": compare_products,
         "create_cart": create_cart,
         "get_cart": get_cart,

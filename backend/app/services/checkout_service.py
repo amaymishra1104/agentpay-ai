@@ -18,8 +18,8 @@ def checkout_cart(
     Checkout the cart, deduct inventory, record deterministic payment details, and create the order.
     Returns the created/existing order.
     """
-    # 1. Retrieve cart
-    cart = cart_service.get_cart(cart_id, db)
+    # 1. Retrieve cart with ownership check
+    cart = cart_service.get_cart(cart_id, db, customer_id=customer_id)
     if not cart:
         raise cart_service.CartNotFoundError(f"Cart {cart_id} not found")
 

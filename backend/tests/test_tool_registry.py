@@ -9,6 +9,7 @@ EXPECTED_TOOLS = {
     "search_products",
     "get_product",
     "get_related_products",
+    "get_cross_sell_recommendations",
     "compare_products",
     "create_cart",
     "get_cart",

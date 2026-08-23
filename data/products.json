@@ -11,20 +11,47 @@
     "compare_at_price_inr": 5999,
     "cost_inr": 2200,
     "currency": "INR",
-    "inventory_quantity": 48,
+    "inventory_quantity": 15,
     "available": true,
     "rating": 4.7,
     "review_count": 842,
     "brand": "UrbanRun",
-    "tags": ["running", "road", "lightweight"],
-    "features": ["breathable_mesh", "eva_midsole", "heel_lock"],
-    "specifications": {"weight_g": "245", "drop_mm": "8", "terrain": "road"},
+    "tags": [
+      "running",
+      "road",
+      "lightweight"
+    ],
+    "features": [
+      "breathable_mesh",
+      "eva_midsole",
+      "heel_lock"
+    ],
+    "specifications": {
+      "weight_g": "245",
+      "drop_mm": "8",
+      "terrain": "road"
+    },
     "image_url": "https://images.urbanrun.example/aerorun-x1.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo"],
-    "complementary_product_ids": ["ur_sock_001", "ur_belt_001", "ur_hyd_001"],
-    "upsell_product_ids": ["ur_shoe_002", "ur_watch_001"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_001",
+      "ur_belt_001",
+      "ur_hyd_001"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_002",
+      "ur_watch_001"
+    ],
     "created_at": "2026-06-01T09:00:00Z"
   },
   {
@@ -44,15 +71,42 @@
     "rating": 4.8,
     "review_count": 610,
     "brand": "UrbanRun",
-    "tags": ["running", "road", "tempo"],
-    "features": ["energy_return", "carbon_blend_plate", "breathable_upper"],
-    "specifications": {"weight_g": "232", "drop_mm": "8", "terrain": "road"},
+    "tags": [
+      "running",
+      "road",
+      "tempo"
+    ],
+    "features": [
+      "energy_return",
+      "carbon_blend_plate",
+      "breathable_upper"
+    ],
+    "specifications": {
+      "weight_g": "232",
+      "drop_mm": "8",
+      "terrain": "road"
+    },
     "image_url": "https://images.urbanrun.example/aerorun-x2.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 2},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo"],
-    "complementary_product_ids": ["ur_sock_003", "ur_watch_003", "ur_belt_003"],
-    "upsell_product_ids": ["ur_shoe_005", "ur_watch_005"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_003",
+      "ur_watch_003",
+      "ur_belt_003"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_005",
+      "ur_watch_005"
+    ],
     "created_at": "2026-06-02T09:00:00Z"
   },
   {
@@ -72,15 +126,42 @@
     "rating": 4.4,
     "review_count": 920,
     "brand": "UrbanRun",
-    "tags": ["running", "beginner", "daily"],
-    "features": ["soft_cushioning", "wide_toe_box", "durable_outsole"],
-    "specifications": {"weight_g": "268", "drop_mm": "10", "terrain": "road"},
+    "tags": [
+      "running",
+      "beginner",
+      "daily"
+    ],
+    "features": [
+      "soft_cushioning",
+      "wide_toe_box",
+      "durable_outsole"
+    ],
+    "specifications": {
+      "weight_g": "268",
+      "drop_mm": "10",
+      "terrain": "road"
+    },
     "image_url": "https://images.urbanrun.example/citystride-pro.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo"],
-    "complementary_product_ids": ["ur_sock_002", "ur_hyd_001", "ur_acc_005"],
-    "upsell_product_ids": ["ur_shoe_001", "ur_watch_004"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_002",
+      "ur_hyd_001",
+      "ur_acc_005"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_001",
+      "ur_watch_004"
+    ],
     "created_at": "2026-06-03T09:00:00Z"
   },
   {
@@ -100,15 +181,40 @@
     "rating": 4.3,
     "review_count": 311,
     "brand": "UrbanRun",
-    "tags": ["running", "neutral", "knit"],
-    "features": ["adaptive_knit", "midfoot_lock", "abrasion_resistant"],
-    "specifications": {"weight_g": "252", "drop_mm": "8", "terrain": "road"},
+    "tags": [
+      "running",
+      "neutral",
+      "knit"
+    ],
+    "features": [
+      "adaptive_knit",
+      "midfoot_lock",
+      "abrasion_resistant"
+    ],
+    "specifications": {
+      "weight_g": "252",
+      "drop_mm": "8",
+      "terrain": "road"
+    },
     "image_url": "https://images.urbanrun.example/velocity-knit.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo"],
-    "complementary_product_ids": ["ur_sock_001", "ur_belt_001"],
-    "upsell_product_ids": ["ur_shoe_002"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_001",
+      "ur_belt_001"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_002"
+    ],
     "created_at": "2026-06-04T09:00:00Z"
   },
   {
@@ -128,15 +234,42 @@
     "rating": 4.9,
     "review_count": 488,
     "brand": "UrbanRun",
-    "tags": ["running", "marathon", "cushion"],
-    "features": ["max_stack_foam", "stability_rails", "high_rebound"],
-    "specifications": {"weight_g": "281", "drop_mm": "6", "terrain": "road"},
+    "tags": [
+      "running",
+      "marathon",
+      "cushion"
+    ],
+    "features": [
+      "max_stack_foam",
+      "stability_rails",
+      "high_rebound"
+    ],
+    "specifications": {
+      "weight_g": "281",
+      "drop_mm": "6",
+      "terrain": "road"
+    },
     "image_url": "https://images.urbanrun.example/cushionflow-max.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 2},
-    "return_policy": {"days": 10, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo", "offer_marathon_prep"],
-    "complementary_product_ids": ["ur_sock_003", "ur_watch_003", "ur_hyd_002"],
-    "upsell_product_ids": ["ur_watch_005"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 10,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo",
+      "offer_marathon_prep"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_003",
+      "ur_watch_003",
+      "ur_hyd_002"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_005"
+    ],
     "created_at": "2026-06-05T09:00:00Z"
   },
   {
@@ -156,15 +289,42 @@
     "rating": 4.6,
     "review_count": 377,
     "brand": "UrbanRun",
-    "tags": ["running", "speed", "tempo"],
-    "features": ["lightweight", "grippy_outsole", "responsive_foam"],
-    "specifications": {"weight_g": "219", "drop_mm": "7", "terrain": "road"},
+    "tags": [
+      "running",
+      "speed",
+      "tempo"
+    ],
+    "features": [
+      "lightweight",
+      "grippy_outsole",
+      "responsive_foam"
+    ],
+    "specifications": {
+      "weight_g": "219",
+      "drop_mm": "7",
+      "terrain": "road"
+    },
     "image_url": "https://images.urbanrun.example/tempolite.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo"],
-    "complementary_product_ids": ["ur_sock_004", "ur_watch_004", "ur_belt_003"],
-    "upsell_product_ids": ["ur_shoe_002", "ur_watch_003"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_004",
+      "ur_watch_004",
+      "ur_belt_003"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_002",
+      "ur_watch_003"
+    ],
     "created_at": "2026-06-06T09:00:00Z"
   },
   {
@@ -184,15 +344,42 @@
     "rating": 4.5,
     "review_count": 198,
     "brand": "UrbanRun",
-    "tags": ["trail", "grip", "outdoor"],
-    "features": ["rock_plate", "mud_lugs", "toe_guard"],
-    "specifications": {"weight_g": "294", "drop_mm": "6", "terrain": "trail"},
+    "tags": [
+      "trail",
+      "grip",
+      "outdoor"
+    ],
+    "features": [
+      "rock_plate",
+      "mud_lugs",
+      "toe_guard"
+    ],
+    "specifications": {
+      "weight_g": "294",
+      "drop_mm": "6",
+      "terrain": "trail"
+    },
     "image_url": "https://images.urbanrun.example/trailblaze-t1.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_trail_kit"],
-    "complementary_product_ids": ["ur_hyd_003", "ur_belt_002", "ur_sock_005"],
-    "upsell_product_ids": ["ur_trail_002", "ur_trail_003"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_hyd_003",
+      "ur_belt_002",
+      "ur_sock_005"
+    ],
+    "upsell_product_ids": [
+      "ur_trail_002",
+      "ur_trail_003"
+    ],
     "created_at": "2026-06-07T09:00:00Z"
   },
   {
@@ -212,15 +399,42 @@
     "rating": 4.7,
     "review_count": 255,
     "brand": "UrbanRun",
-    "tags": ["trail", "all_terrain", "stability"],
-    "features": ["aggressive_lugs", "heel_stabilizer", "water_resistant_upper"],
-    "specifications": {"weight_g": "301", "drop_mm": "6", "terrain": "trail"},
+    "tags": [
+      "trail",
+      "all_terrain",
+      "stability"
+    ],
+    "features": [
+      "aggressive_lugs",
+      "heel_stabilizer",
+      "water_resistant_upper"
+    ],
+    "specifications": {
+      "weight_g": "301",
+      "drop_mm": "6",
+      "terrain": "trail"
+    },
     "image_url": "https://images.urbanrun.example/ridgegrip-t2.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 3},
-    "return_policy": {"days": 10, "eligible": true},
-    "eligible_offers": ["offer_trail_kit"],
-    "complementary_product_ids": ["ur_hyd_003", "ur_belt_002", "ur_acc_007"],
-    "upsell_product_ids": ["ur_trail_003", "ur_trail_005"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 10,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_hyd_003",
+      "ur_belt_002",
+      "ur_acc_007"
+    ],
+    "upsell_product_ids": [
+      "ur_trail_003",
+      "ur_trail_005"
+    ],
     "created_at": "2026-06-08T09:00:00Z"
   },
   {
@@ -240,15 +454,41 @@
     "rating": 4.8,
     "review_count": 141,
     "brand": "UrbanRun",
-    "tags": ["trail", "race", "technical"],
-    "features": ["vibram_lite_lugs", "dual_density_midsole", "lace_gaiter"],
-    "specifications": {"weight_g": "286", "drop_mm": "5", "terrain": "technical_trail"},
+    "tags": [
+      "trail",
+      "race",
+      "technical"
+    ],
+    "features": [
+      "vibram_lite_lugs",
+      "dual_density_midsole",
+      "lace_gaiter"
+    ],
+    "specifications": {
+      "weight_g": "286",
+      "drop_mm": "5",
+      "terrain": "technical_trail"
+    },
     "image_url": "https://images.urbanrun.example/summitedge-pro.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 2},
-    "return_policy": {"days": 10, "eligible": true},
-    "eligible_offers": ["offer_trail_kit"],
-    "complementary_product_ids": ["ur_hyd_004", "ur_watch_005", "ur_sock_005"],
-    "upsell_product_ids": ["ur_watch_005"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 10,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_hyd_004",
+      "ur_watch_005",
+      "ur_sock_005"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_005"
+    ],
     "created_at": "2026-06-09T09:00:00Z"
   },
   {
@@ -268,15 +508,40 @@
     "rating": 4.2,
     "review_count": 89,
     "brand": "UrbanRun",
-    "tags": ["trail", "mud", "monsoon"],
-    "features": ["deep_mud_lugs", "drainage_ports", "toe_armor"],
-    "specifications": {"weight_g": "307", "drop_mm": "4", "terrain": "mud_trail"},
+    "tags": [
+      "trail",
+      "mud",
+      "monsoon"
+    ],
+    "features": [
+      "deep_mud_lugs",
+      "drainage_ports",
+      "toe_armor"
+    ],
+    "specifications": {
+      "weight_g": "307",
+      "drop_mm": "4",
+      "terrain": "mud_trail"
+    },
     "image_url": "https://images.urbanrun.example/mudrunner-xt.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_trail_kit"],
-    "complementary_product_ids": ["ur_hyd_003", "ur_belt_002"],
-    "upsell_product_ids": ["ur_trail_002"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_hyd_003",
+      "ur_belt_002"
+    ],
+    "upsell_product_ids": [
+      "ur_trail_002"
+    ],
     "created_at": "2026-06-10T09:00:00Z"
   },
   {
@@ -296,15 +561,42 @@
     "rating": 4.6,
     "review_count": 176,
     "brand": "UrbanRun",
-    "tags": ["trail", "ultra", "comfort"],
-    "features": ["wide_platform", "anti_slip_lugs", "trail_cushion"],
-    "specifications": {"weight_g": "299", "drop_mm": "6", "terrain": "trail"},
+    "tags": [
+      "trail",
+      "ultra",
+      "comfort"
+    ],
+    "features": [
+      "wide_platform",
+      "anti_slip_lugs",
+      "trail_cushion"
+    ],
+    "specifications": {
+      "weight_g": "299",
+      "drop_mm": "6",
+      "terrain": "trail"
+    },
     "image_url": "https://images.urbanrun.example/terraflex.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 3},
-    "return_policy": {"days": 10, "eligible": true},
-    "eligible_offers": ["offer_trail_kit"],
-    "complementary_product_ids": ["ur_sock_005", "ur_hyd_004", "ur_acc_007"],
-    "upsell_product_ids": ["ur_trail_003", "ur_watch_003"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 10,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_005",
+      "ur_hyd_004",
+      "ur_acc_007"
+    ],
+    "upsell_product_ids": [
+      "ur_trail_003",
+      "ur_watch_003"
+    ],
     "created_at": "2026-06-11T09:00:00Z"
   },
   {
@@ -324,15 +616,39 @@
     "rating": 4.5,
     "review_count": 1211,
     "brand": "UrbanRun",
-    "tags": ["socks", "breathable", "daily"],
-    "features": ["arch_support", "anti_blister", "quick_dry"],
-    "specifications": {"material": "polyester_blend", "pack": "2_pairs"},
+    "tags": [
+      "socks",
+      "breathable",
+      "daily"
+    ],
+    "features": [
+      "arch_support",
+      "anti_blister",
+      "quick_dry"
+    ],
+    "specifications": {
+      "material": "polyester_blend",
+      "pack": "2_pairs"
+    },
     "image_url": "https://images.urbanrun.example/drystride-low-cut.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 5, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo"],
-    "complementary_product_ids": ["ur_shoe_001", "ur_shoe_003"],
-    "upsell_product_ids": ["ur_sock_003"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 5,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_001",
+      "ur_shoe_003"
+    ],
+    "upsell_product_ids": [
+      "ur_sock_003"
+    ],
     "created_at": "2026-06-12T09:00:00Z"
   },
   {
@@ -352,15 +668,39 @@
     "rating": 4.4,
     "review_count": 780,
     "brand": "UrbanRun",
-    "tags": ["socks", "crew", "cushioned"],
-    "features": ["ankle_padding", "odor_control", "ventilation_panels"],
-    "specifications": {"material": "nylon_blend", "pack": "2_pairs"},
+    "tags": [
+      "socks",
+      "crew",
+      "cushioned"
+    ],
+    "features": [
+      "ankle_padding",
+      "odor_control",
+      "ventilation_panels"
+    ],
+    "specifications": {
+      "material": "nylon_blend",
+      "pack": "2_pairs"
+    },
     "image_url": "https://images.urbanrun.example/drystride-crew.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 5, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo"],
-    "complementary_product_ids": ["ur_shoe_003", "ur_shoe_004"],
-    "upsell_product_ids": ["ur_sock_003"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 5,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_003",
+      "ur_shoe_004"
+    ],
+    "upsell_product_ids": [
+      "ur_sock_003"
+    ],
     "created_at": "2026-06-13T09:00:00Z"
   },
   {
@@ -380,15 +720,40 @@
     "rating": 4.8,
     "review_count": 552,
     "brand": "UrbanRun",
-    "tags": ["socks", "marathon", "performance"],
-    "features": ["max_cushion", "compression_arch", "seamless_toe"],
-    "specifications": {"material": "technical_fiber", "pack": "2_pairs"},
+    "tags": [
+      "socks",
+      "marathon",
+      "performance"
+    ],
+    "features": [
+      "max_cushion",
+      "compression_arch",
+      "seamless_toe"
+    ],
+    "specifications": {
+      "material": "technical_fiber",
+      "pack": "2_pairs"
+    },
     "image_url": "https://images.urbanrun.example/ultracushion-marathon.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 3},
-    "return_policy": {"days": 5, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo", "offer_marathon_prep"],
-    "complementary_product_ids": ["ur_shoe_005", "ur_watch_003"],
-    "upsell_product_ids": ["ur_sock_004"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 5,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo",
+      "offer_marathon_prep"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_005",
+      "ur_watch_003"
+    ],
+    "upsell_product_ids": [
+      "ur_sock_004"
+    ],
     "created_at": "2026-06-14T09:00:00Z"
   },
   {
@@ -408,15 +773,39 @@
     "rating": 4.6,
     "review_count": 334,
     "brand": "UrbanRun",
-    "tags": ["socks", "compression", "recovery"],
-    "features": ["graduated_compression", "calf_support", "temperature_control"],
-    "specifications": {"material": "elastane_blend", "pack": "1_pair"},
+    "tags": [
+      "socks",
+      "compression",
+      "recovery"
+    ],
+    "features": [
+      "graduated_compression",
+      "calf_support",
+      "temperature_control"
+    ],
+    "specifications": {
+      "material": "elastane_blend",
+      "pack": "1_pair"
+    },
     "image_url": "https://images.urbanrun.example/compression-pace.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 3},
-    "return_policy": {"days": 5, "eligible": true},
-    "eligible_offers": ["offer_shoe_socks_combo"],
-    "complementary_product_ids": ["ur_shoe_006", "ur_acc_001"],
-    "upsell_product_ids": ["ur_acc_005"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 5,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_006",
+      "ur_acc_001"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_005"
+    ],
     "created_at": "2026-06-15T09:00:00Z"
   },
   {
@@ -436,15 +825,39 @@
     "rating": 4.3,
     "review_count": 147,
     "brand": "UrbanRun",
-    "tags": ["socks", "trail", "merino"],
-    "features": ["wool_blend", "anti_blister", "odor_resistant"],
-    "specifications": {"material": "merino_blend", "pack": "1_pair"},
+    "tags": [
+      "socks",
+      "trail",
+      "merino"
+    ],
+    "features": [
+      "wool_blend",
+      "anti_blister",
+      "odor_resistant"
+    ],
+    "specifications": {
+      "material": "merino_blend",
+      "pack": "1_pair"
+    },
     "image_url": "https://images.urbanrun.example/merino-trail.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 5},
-    "return_policy": {"days": 5, "eligible": true},
-    "eligible_offers": ["offer_trail_kit"],
-    "complementary_product_ids": ["ur_trail_001", "ur_trail_005"],
-    "upsell_product_ids": ["ur_sock_004"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 5
+    },
+    "return_policy": {
+      "days": 5,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_trail_001",
+      "ur_trail_005"
+    ],
+    "upsell_product_ids": [
+      "ur_sock_004"
+    ],
     "created_at": "2026-06-16T09:00:00Z"
   },
   {
@@ -464,15 +877,40 @@
     "rating": 4.4,
     "review_count": 402,
     "brand": "UrbanRun",
-    "tags": ["watch", "gps", "running"],
-    "features": ["built_in_gps", "wrist_hr", "sleep_tracking"],
-    "specifications": {"battery": "8_days", "water_resistance": "5ATM"},
+    "tags": [
+      "watch",
+      "gps",
+      "running"
+    ],
+    "features": [
+      "built_in_gps",
+      "wrist_hr",
+      "sleep_tracking"
+    ],
+    "specifications": {
+      "battery": "8_days",
+      "water_resistance": "5ATM"
+    },
     "image_url": "https://images.urbanrun.example/pulsetrack-s1.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 3},
-    "return_policy": {"days": 10, "eligible": true},
-    "eligible_offers": ["offer_watch_upgrade"],
-    "complementary_product_ids": ["ur_shoe_001", "ur_belt_001"],
-    "upsell_product_ids": ["ur_watch_002", "ur_watch_003"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 10,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_watch_upgrade"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_001",
+      "ur_belt_001"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_002",
+      "ur_watch_003"
+    ],
     "created_at": "2026-06-17T09:00:00Z"
   },
   {
@@ -492,15 +930,40 @@
     "rating": 4.6,
     "review_count": 233,
     "brand": "UrbanRun",
-    "tags": ["watch", "gps", "training"],
-    "features": ["advanced_metrics", "multiband_gps", "interval_workouts"],
-    "specifications": {"battery": "10_days", "water_resistance": "5ATM"},
+    "tags": [
+      "watch",
+      "gps",
+      "training"
+    ],
+    "features": [
+      "advanced_metrics",
+      "multiband_gps",
+      "interval_workouts"
+    ],
+    "specifications": {
+      "battery": "10_days",
+      "water_resistance": "5ATM"
+    },
     "image_url": "https://images.urbanrun.example/pulsetrack-s1-pro.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 2},
-    "return_policy": {"days": 10, "eligible": true},
-    "eligible_offers": ["offer_watch_upgrade"],
-    "complementary_product_ids": ["ur_shoe_002", "ur_sock_003"],
-    "upsell_product_ids": ["ur_watch_003", "ur_watch_005"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 10,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_watch_upgrade"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_002",
+      "ur_sock_003"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_003",
+      "ur_watch_005"
+    ],
     "created_at": "2026-06-18T09:00:00Z"
   },
   {
@@ -520,15 +983,41 @@
     "rating": 4.8,
     "review_count": 197,
     "brand": "UrbanRun",
-    "tags": ["watch", "endurance", "marathon"],
-    "features": ["dual_frequency_gps", "race_predictor", "recovery_time"],
-    "specifications": {"battery": "14_days", "water_resistance": "10ATM"},
+    "tags": [
+      "watch",
+      "endurance",
+      "marathon"
+    ],
+    "features": [
+      "dual_frequency_gps",
+      "race_predictor",
+      "recovery_time"
+    ],
+    "specifications": {
+      "battery": "14_days",
+      "water_resistance": "10ATM"
+    },
     "image_url": "https://images.urbanrun.example/enduragps-x.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 2},
-    "return_policy": {"days": 10, "eligible": true},
-    "eligible_offers": ["offer_watch_upgrade", "offer_marathon_prep"],
-    "complementary_product_ids": ["ur_shoe_005", "ur_sock_003", "ur_hyd_002"],
-    "upsell_product_ids": ["ur_watch_005"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 10,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_watch_upgrade",
+      "offer_marathon_prep"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_005",
+      "ur_sock_003",
+      "ur_hyd_002"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_005"
+    ],
     "created_at": "2026-06-19T09:00:00Z"
   },
   {
@@ -548,15 +1037,40 @@
     "rating": 4.2,
     "review_count": 351,
     "brand": "UrbanRun",
-    "tags": ["watch", "budget", "pace"],
-    "features": ["pace_alerts", "step_tracking", "connected_gps"],
-    "specifications": {"battery": "7_days", "water_resistance": "3ATM"},
+    "tags": [
+      "watch",
+      "budget",
+      "pace"
+    ],
+    "features": [
+      "pace_alerts",
+      "step_tracking",
+      "connected_gps"
+    ],
+    "specifications": {
+      "battery": "7_days",
+      "water_resistance": "3ATM"
+    },
     "image_url": "https://images.urbanrun.example/tempocoach-lite.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_watch_upgrade"],
-    "complementary_product_ids": ["ur_shoe_003", "ur_belt_001"],
-    "upsell_product_ids": ["ur_watch_001", "ur_watch_002"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_watch_upgrade"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_003",
+      "ur_belt_001"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_001",
+      "ur_watch_002"
+    ],
     "created_at": "2026-06-20T09:00:00Z"
   },
   {
@@ -576,14 +1090,36 @@
     "rating": 4.9,
     "review_count": 122,
     "brand": "UrbanRun",
-    "tags": ["watch", "triathlon", "premium"],
-    "features": ["multisport_modes", "map_navigation", "long_battery"],
-    "specifications": {"battery": "18_days", "water_resistance": "10ATM"},
+    "tags": [
+      "watch",
+      "triathlon",
+      "premium"
+    ],
+    "features": [
+      "multisport_modes",
+      "map_navigation",
+      "long_battery"
+    ],
+    "specifications": {
+      "battery": "18_days",
+      "water_resistance": "10ATM"
+    },
     "image_url": "https://images.urbanrun.example/apextri-elite.jpg",
-    "shipping": {"free_shipping": true, "estimated_days": 2},
-    "return_policy": {"days": 10, "eligible": true},
-    "eligible_offers": ["offer_watch_upgrade"],
-    "complementary_product_ids": ["ur_shoe_005", "ur_hyd_004"],
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 10,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_watch_upgrade"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_005",
+      "ur_hyd_004"
+    ],
     "upsell_product_ids": [],
     "created_at": "2026-06-21T09:00:00Z"
   },
@@ -604,15 +1140,39 @@
     "rating": 4.3,
     "review_count": 502,
     "brand": "UrbanRun",
-    "tags": ["hydration", "bottle", "running"],
-    "features": ["bpa_free", "easy_squeeze", "spill_lock_cap"],
-    "specifications": {"capacity_ml": "500", "material": "food_grade_polymer"},
+    "tags": [
+      "hydration",
+      "bottle",
+      "running"
+    ],
+    "features": [
+      "bpa_free",
+      "easy_squeeze",
+      "spill_lock_cap"
+    ],
+    "specifications": {
+      "capacity_ml": "500",
+      "material": "food_grade_polymer"
+    },
     "image_url": "https://images.urbanrun.example/hydrosip-500.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 5, "eligible": true},
-    "eligible_offers": ["offer_hydration_week"],
-    "complementary_product_ids": ["ur_belt_001", "ur_shoe_001"],
-    "upsell_product_ids": ["ur_hyd_002"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 5,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_hydration_week"
+    ],
+    "complementary_product_ids": [
+      "ur_belt_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [
+      "ur_hyd_002"
+    ],
     "created_at": "2026-06-22T09:00:00Z"
   },
   {
@@ -632,15 +1192,40 @@
     "rating": 4.6,
     "review_count": 367,
     "brand": "UrbanRun",
-    "tags": ["hydration", "insulated", "endurance"],
-    "features": ["double_wall", "leakproof", "wide_mouth"],
-    "specifications": {"capacity_ml": "750", "material": "stainless_steel"},
+    "tags": [
+      "hydration",
+      "insulated",
+      "endurance"
+    ],
+    "features": [
+      "double_wall",
+      "leakproof",
+      "wide_mouth"
+    ],
+    "specifications": {
+      "capacity_ml": "750",
+      "material": "stainless_steel"
+    },
     "image_url": "https://images.urbanrun.example/hydrosip-750.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_hydration_week", "offer_marathon_prep"],
-    "complementary_product_ids": ["ur_belt_003", "ur_watch_003"],
-    "upsell_product_ids": ["ur_hyd_004"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_hydration_week",
+      "offer_marathon_prep"
+    ],
+    "complementary_product_ids": [
+      "ur_belt_003",
+      "ur_watch_003"
+    ],
+    "upsell_product_ids": [
+      "ur_hyd_004"
+    ],
     "created_at": "2026-06-23T09:00:00Z"
   },
   {
@@ -660,15 +1245,40 @@
     "rating": 4.5,
     "review_count": 208,
     "brand": "UrbanRun",
-    "tags": ["hydration", "trail", "soft_flask"],
-    "features": ["collapsible", "bite_valve", "lightweight"],
-    "specifications": {"capacity_ml": "350", "material": "tpu"},
+    "tags": [
+      "hydration",
+      "trail",
+      "soft_flask"
+    ],
+    "features": [
+      "collapsible",
+      "bite_valve",
+      "lightweight"
+    ],
+    "specifications": {
+      "capacity_ml": "350",
+      "material": "tpu"
+    },
     "image_url": "https://images.urbanrun.example/flexflask-350.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 5, "eligible": true},
-    "eligible_offers": ["offer_hydration_week", "offer_trail_kit"],
-    "complementary_product_ids": ["ur_trail_001", "ur_belt_002"],
-    "upsell_product_ids": ["ur_hyd_004"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 5,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_hydration_week",
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_trail_001",
+      "ur_belt_002"
+    ],
+    "upsell_product_ids": [
+      "ur_hyd_004"
+    ],
     "created_at": "2026-06-24T09:00:00Z"
   },
   {
@@ -688,14 +1298,36 @@
     "rating": 4.4,
     "review_count": 156,
     "brand": "UrbanRun",
-    "tags": ["hydration", "smart", "electrolyte"],
-    "features": ["hydration_reminder", "mix_marks", "flip_straw_lid"],
-    "specifications": {"capacity_ml": "700", "material": "tritan"},
+    "tags": [
+      "hydration",
+      "smart",
+      "electrolyte"
+    ],
+    "features": [
+      "hydration_reminder",
+      "mix_marks",
+      "flip_straw_lid"
+    ],
+    "specifications": {
+      "capacity_ml": "700",
+      "material": "tritan"
+    },
     "image_url": "https://images.urbanrun.example/electromix-smartbottle.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_hydration_week"],
-    "complementary_product_ids": ["ur_watch_005", "ur_trail_003"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_hydration_week"
+    ],
+    "complementary_product_ids": [
+      "ur_watch_005",
+      "ur_trail_003"
+    ],
     "upsell_product_ids": [],
     "created_at": "2026-06-25T09:00:00Z"
   },
@@ -716,15 +1348,39 @@
     "rating": 4.5,
     "review_count": 294,
     "brand": "UrbanRun",
-    "tags": ["belt", "storage", "running"],
-    "features": ["bounce_free", "water_resistant_zip", "reflective_trim"],
-    "specifications": {"capacity_l": "0.8", "size_range": "S-XL"},
+    "tags": [
+      "belt",
+      "storage",
+      "running"
+    ],
+    "features": [
+      "bounce_free",
+      "water_resistant_zip",
+      "reflective_trim"
+    ],
+    "specifications": {
+      "capacity_l": "0.8",
+      "size_range": "S-XL"
+    },
     "image_url": "https://images.urbanrun.example/runcarry-slim-belt.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_hydration_week"],
-    "complementary_product_ids": ["ur_hyd_001", "ur_shoe_001"],
-    "upsell_product_ids": ["ur_belt_002"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_hydration_week"
+    ],
+    "complementary_product_ids": [
+      "ur_hyd_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [
+      "ur_belt_002"
+    ],
     "created_at": "2026-06-26T09:00:00Z"
   },
   {
@@ -744,15 +1400,40 @@
     "rating": 4.6,
     "review_count": 188,
     "brand": "UrbanRun",
-    "tags": ["belt", "trail", "hydration"],
-    "features": ["dual_flask_pockets", "gel_loops", "anti_chafe"],
-    "specifications": {"capacity_l": "1.4", "size_range": "M-XL"},
+    "tags": [
+      "belt",
+      "trail",
+      "hydration"
+    ],
+    "features": [
+      "dual_flask_pockets",
+      "gel_loops",
+      "anti_chafe"
+    ],
+    "specifications": {
+      "capacity_l": "1.4",
+      "size_range": "M-XL"
+    },
     "image_url": "https://images.urbanrun.example/trailpack-hydration-belt.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_hydration_week", "offer_trail_kit"],
-    "complementary_product_ids": ["ur_hyd_003", "ur_trail_001"],
-    "upsell_product_ids": ["ur_hyd_004"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_hydration_week",
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_hyd_003",
+      "ur_trail_001"
+    ],
+    "upsell_product_ids": [
+      "ur_hyd_004"
+    ],
     "created_at": "2026-06-27T09:00:00Z"
   },
   {
@@ -772,15 +1453,39 @@
     "rating": 4.4,
     "review_count": 273,
     "brand": "UrbanRun",
-    "tags": ["belt", "marathon", "race"],
-    "features": ["gel_loops", "bib_toggles", "stretch_pocket"],
-    "specifications": {"capacity_l": "0.5", "size_range": "S-L"},
+    "tags": [
+      "belt",
+      "marathon",
+      "race"
+    ],
+    "features": [
+      "gel_loops",
+      "bib_toggles",
+      "stretch_pocket"
+    ],
+    "specifications": {
+      "capacity_l": "0.5",
+      "size_range": "S-L"
+    },
     "image_url": "https://images.urbanrun.example/marathon-gel-belt.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 3},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_marathon_prep"],
-    "complementary_product_ids": ["ur_watch_003", "ur_shoe_005"],
-    "upsell_product_ids": ["ur_belt_002"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_marathon_prep"
+    ],
+    "complementary_product_ids": [
+      "ur_watch_003",
+      "ur_shoe_005"
+    ],
+    "upsell_product_ids": [
+      "ur_belt_002"
+    ],
     "created_at": "2026-06-28T09:00:00Z"
   },
   {
@@ -800,15 +1505,39 @@
     "rating": 4.5,
     "review_count": 418,
     "brand": "UrbanRun",
-    "tags": ["recovery", "mobility", "fitness"],
-    "features": ["high_density_foam", "compact_size", "trigger_zones"],
-    "specifications": {"length_cm": "33", "diameter_cm": "14"},
+    "tags": [
+      "recovery",
+      "mobility",
+      "fitness"
+    ],
+    "features": [
+      "high_density_foam",
+      "compact_size",
+      "trigger_zones"
+    ],
+    "specifications": {
+      "length_cm": "33",
+      "diameter_cm": "14"
+    },
     "image_url": "https://images.urbanrun.example/foam-roller-compact.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_recovery_bundle"],
-    "complementary_product_ids": ["ur_sock_004", "ur_acc_003"],
-    "upsell_product_ids": ["ur_acc_005"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_004",
+      "ur_acc_003"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_005"
+    ],
     "created_at": "2026-06-29T09:00:00Z"
   },
   {
@@ -828,15 +1557,39 @@
     "rating": 4.4,
     "review_count": 361,
     "brand": "UrbanRun",
-    "tags": ["strength", "bands", "fitness"],
-    "features": ["5_levels", "latex_durable", "door_anchor"],
-    "specifications": {"levels": "5", "material": "latex"},
+    "tags": [
+      "strength",
+      "bands",
+      "fitness"
+    ],
+    "features": [
+      "5_levels",
+      "latex_durable",
+      "door_anchor"
+    ],
+    "specifications": {
+      "levels": "5",
+      "material": "latex"
+    },
     "image_url": "https://images.urbanrun.example/resistance-band-set.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_recovery_bundle"],
-    "complementary_product_ids": ["ur_acc_006", "ur_acc_007"],
-    "upsell_product_ids": ["ur_acc_004"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle"
+    ],
+    "complementary_product_ids": [
+      "ur_acc_006",
+      "ur_acc_007"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_004"
+    ],
     "created_at": "2026-06-30T09:00:00Z"
   },
   {
@@ -856,15 +1609,39 @@
     "rating": 4.3,
     "review_count": 204,
     "brand": "UrbanRun",
-    "tags": ["recovery", "massage", "footcare"],
-    "features": ["firm_core", "textured_surface", "portable"],
-    "specifications": {"diameter_cm": "6.5", "material": "eva"},
+    "tags": [
+      "recovery",
+      "massage",
+      "footcare"
+    ],
+    "features": [
+      "firm_core",
+      "textured_surface",
+      "portable"
+    ],
+    "specifications": {
+      "diameter_cm": "6.5",
+      "material": "eva"
+    },
     "image_url": "https://images.urbanrun.example/recovery-massage-ball.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_recovery_bundle"],
-    "complementary_product_ids": ["ur_acc_001", "ur_sock_004"],
-    "upsell_product_ids": ["ur_acc_005"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle"
+    ],
+    "complementary_product_ids": [
+      "ur_acc_001",
+      "ur_sock_004"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_005"
+    ],
     "created_at": "2026-07-01T09:00:00Z"
   },
   {
@@ -884,15 +1661,37 @@
     "rating": 4.2,
     "review_count": 133,
     "brand": "UrbanRun",
-    "tags": ["cardio", "jump_rope", "smart"],
-    "features": ["rep_counter", "bluetooth_sync", "weighted_handles"],
-    "specifications": {"battery": "20_hours", "rope_length_cm": "300"},
+    "tags": [
+      "cardio",
+      "jump_rope",
+      "smart"
+    ],
+    "features": [
+      "rep_counter",
+      "bluetooth_sync",
+      "weighted_handles"
+    ],
+    "specifications": {
+      "battery": "20_hours",
+      "rope_length_cm": "300"
+    },
     "image_url": "https://images.urbanrun.example/smart-jump-rope.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
     "eligible_offers": [],
-    "complementary_product_ids": ["ur_acc_002", "ur_watch_001"],
-    "upsell_product_ids": ["ur_watch_002"],
+    "complementary_product_ids": [
+      "ur_acc_002",
+      "ur_watch_001"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_002"
+    ],
     "created_at": "2026-07-02T09:00:00Z"
   },
   {
@@ -912,15 +1711,39 @@
     "rating": 4.6,
     "review_count": 288,
     "brand": "UrbanRun",
-    "tags": ["mobility", "stretching", "recovery"],
-    "features": ["multi_loop_design", "durable_weave", "instruction_guide"],
-    "specifications": {"length_cm": "190", "loops": "10"},
+    "tags": [
+      "mobility",
+      "stretching",
+      "recovery"
+    ],
+    "features": [
+      "multi_loop_design",
+      "durable_weave",
+      "instruction_guide"
+    ],
+    "specifications": {
+      "length_cm": "190",
+      "loops": "10"
+    },
     "image_url": "https://images.urbanrun.example/stretch-strap-pro.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_recovery_bundle"],
-    "complementary_product_ids": ["ur_acc_001", "ur_acc_003"],
-    "upsell_product_ids": ["ur_acc_006"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle"
+    ],
+    "complementary_product_ids": [
+      "ur_acc_001",
+      "ur_acc_003"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_006"
+    ],
     "created_at": "2026-07-03T09:00:00Z"
   },
   {
@@ -940,15 +1763,39 @@
     "rating": 4.4,
     "review_count": 221,
     "brand": "UrbanRun",
-    "tags": ["support", "knee", "recovery"],
-    "features": ["compression_fit", "anti_slip_grip", "ventilated_fabric"],
-    "specifications": {"sizes": "S-XL", "material": "nylon_spandex"},
+    "tags": [
+      "support",
+      "knee",
+      "recovery"
+    ],
+    "features": [
+      "compression_fit",
+      "anti_slip_grip",
+      "ventilated_fabric"
+    ],
+    "specifications": {
+      "sizes": "S-XL",
+      "material": "nylon_spandex"
+    },
     "image_url": "https://images.urbanrun.example/knee-support-pair.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_recovery_bundle"],
-    "complementary_product_ids": ["ur_acc_002", "ur_acc_005"],
-    "upsell_product_ids": ["ur_acc_007"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle"
+    ],
+    "complementary_product_ids": [
+      "ur_acc_002",
+      "ur_acc_005"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_007"
+    ],
     "created_at": "2026-07-04T09:00:00Z"
   },
   {
@@ -968,15 +1815,266 @@
     "rating": 4.3,
     "review_count": 176,
     "brand": "UrbanRun",
-    "tags": ["support", "ankle", "trail"],
-    "features": ["adjustable_strap", "stability_panels", "low_profile"],
-    "specifications": {"sizes": "S-L", "material": "neoprene_blend"},
+    "tags": [
+      "support",
+      "ankle",
+      "trail"
+    ],
+    "features": [
+      "adjustable_strap",
+      "stability_panels",
+      "low_profile"
+    ],
+    "specifications": {
+      "sizes": "S-L",
+      "material": "neoprene_blend"
+    },
     "image_url": "https://images.urbanrun.example/ankle-support-brace.jpg",
-    "shipping": {"free_shipping": false, "estimated_days": 4},
-    "return_policy": {"days": 7, "eligible": true},
-    "eligible_offers": ["offer_recovery_bundle", "offer_trail_kit"],
-    "complementary_product_ids": ["ur_trail_002", "ur_acc_006"],
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle",
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_trail_002",
+      "ur_acc_006"
+    ],
     "upsell_product_ids": [],
     "created_at": "2026-07-05T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_001",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AU-001",
+    "name": "SoundWave ANC Wireless Headphones",
+    "category": "headphones",
+    "subcategory": "wireless_headphones",
+    "description": "Active Noise Cancelling wireless over-ear headphones.",
+    "price_inr": 4499,
+    "compare_at_price_inr": 5999,
+    "cost_inr": 2000,
+    "currency": "INR",
+    "inventory_quantity": 9,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 320,
+    "brand": "UrbanRun",
+    "tags": [
+      "audio",
+      "wireless",
+      "anc"
+    ],
+    "features": [
+      "active_noise_cancelling",
+      "40h_battery",
+      "comfort_padding"
+    ],
+    "specifications": {
+      "battery_life": "40h",
+      "bluetooth": "5.2"
+    },
+    "image_url": "https://images.urbanrun.example/soundwave-anc.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [],
+    "upsell_product_ids": [
+      "ur_audio_002"
+    ],
+    "created_at": "2026-07-06T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_002",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AU-002",
+    "name": "EchoBuds Pro True Wireless",
+    "category": "headphones",
+    "subcategory": "wireless_earbuds",
+    "description": "True wireless earbuds with smart noise reduction.",
+    "price_inr": 2999,
+    "compare_at_price_inr": 3999,
+    "cost_inr": 1200,
+    "currency": "INR",
+    "inventory_quantity": 30,
+    "available": true,
+    "rating": 4.5,
+    "review_count": 180,
+    "brand": "UrbanRun",
+    "tags": [
+      "audio",
+      "wireless",
+      "earbuds"
+    ],
+    "features": [
+      "smart_anc",
+      "sweatproof",
+      "touch_controls"
+    ],
+    "specifications": {
+      "battery_life": "24h",
+      "water_resistance": "IPX5"
+    },
+    "image_url": "https://images.urbanrun.example/echobuds-pro.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [],
+    "upsell_product_ids": [],
+    "created_at": "2026-07-07T09:00:00Z"
+  },
+  {
+    "id": "ur_gear_001",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-GE-001",
+    "name": "TrailPack Elite Backpack",
+    "category": "backpack",
+    "subcategory": "hiking_backpacks",
+    "description": "Premium multi-day trail and hiking backpack.",
+    "price_inr": 2499,
+    "compare_at_price_inr": 3499,
+    "cost_inr": 1100,
+    "currency": "INR",
+    "inventory_quantity": 16,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 140,
+    "brand": "UrbanRun",
+    "tags": [
+      "outdoor",
+      "backpack",
+      "trail"
+    ],
+    "features": [
+      "waterproof_nylon",
+      "ergonomic_straps",
+      "hydration_pocket"
+    ],
+    "specifications": {
+      "capacity": "45L",
+      "weight_g": "980"
+    },
+    "image_url": "https://images.urbanrun.example/trailpack-elite.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [],
+    "upsell_product_ids": [],
+    "created_at": "2026-07-08T09:00:00Z"
+  },
+  {
+    "id": "ur_fit_001",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-FI-001",
+    "name": "FlexiFlow Premium Non-Slip Yoga Mat",
+    "category": "yoga_mat",
+    "subcategory": "exercise_mats",
+    "description": "High-grip premium yoga mat for home or gym workouts.",
+    "price_inr": 1999,
+    "compare_at_price_inr": 2499,
+    "cost_inr": 800,
+    "currency": "INR",
+    "inventory_quantity": 31,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 220,
+    "brand": "UrbanRun",
+    "tags": [
+      "fitness",
+      "yoga",
+      "mat"
+    ],
+    "features": [
+      "non_slip",
+      "eco_friendly_tpe",
+      "6mm_thickness"
+    ],
+    "specifications": {
+      "dimensions": "183cm x 61cm",
+      "thickness": "6mm"
+    },
+    "image_url": "https://images.urbanrun.example/flexiflow-yoga-mat.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 4
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [],
+    "upsell_product_ids": [],
+    "created_at": "2026-07-09T09:00:00Z"
+  },
+  {
+    "id": "ur_comp_001",
+    "merchant_id": "m_gadgetworld",
+    "sku": "UR-CO-001",
+    "name": "SlimBook Pro 14 Laptop",
+    "category": "laptops",
+    "subcategory": "ultrabooks",
+    "description": "Ultra-thin professional productivity laptop.",
+    "price_inr": 79999,
+    "compare_at_price_inr": 89999,
+    "cost_inr": 55000,
+    "currency": "INR",
+    "inventory_quantity": 12,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 95,
+    "brand": "GadgetWorld",
+    "tags": [
+      "laptops",
+      "ultrabook",
+      "productivity"
+    ],
+    "features": [
+      "14_inch_display",
+      "16GB_RAM",
+      "512GB_SSD"
+    ],
+    "specifications": {
+      "processor": "Intel i7",
+      "ram": "16GB",
+      "storage": "512GB SSD"
+    },
+    "image_url": "https://images.urbanrun.example/slimbook-pro.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [],
+    "upsell_product_ids": [],
+    "created_at": "2026-07-10T09:00:00Z"
   }
 ]

@@ -35,7 +35,7 @@ export default function CartPage() {
     setActionError(null);
     setValidating(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${cart.customer_id}`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Validation check failed.");
@@ -136,7 +136,7 @@ export default function CartPage() {
           setCart(dummyEmptyCart(null));
         } else {
           // Fetch existing cart
-          const res = await fetch(`${API_BASE_URL}/cart/${storedId}`);
+          const res = await fetch(`${API_BASE_URL}/cart/${storedId}?customer_id=c_demo_001`);
           if (!res.ok) {
             // If stored cart ID is invalid/expired on server, clear from storage and fallback to empty
             localStorage.removeItem(storageKey);
@@ -199,7 +199,7 @@ export default function CartPage() {
         activeCartId = createdData.cart_id;
       }
 
-      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}?customer_id=${cart.customer_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: newQty }),
@@ -229,7 +229,7 @@ export default function CartPage() {
     setActionError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}?customer_id=${cart.customer_id}`, {
         method: "DELETE",
       });
 
@@ -257,7 +257,7 @@ export default function CartPage() {
     setActionError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${cart.customer_id}`, {
         method: "DELETE",
       });
 
@@ -286,7 +286,7 @@ export default function CartPage() {
     setValidating(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${cart.customer_id}`, {
         method: "POST",
       });
 

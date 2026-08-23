@@ -42,10 +42,11 @@ def get_order(order_id: str | None = None, cart_id: str | None = None, customer_
     Returns:
         dict: The order details.
     """
+    if not customer_id:
+        raise ValueError("Customer ID is required.")
+
     with SessionLocal() as db:
-        query = db.query(Order)
-        if customer_id:
-            query = query.filter(Order.customer_id == customer_id)
+        query = db.query(Order).filter(Order.customer_id == customer_id)
 
         if order_id:
             order = query.filter(Order.order_id == order_id).first()
@@ -55,14 +56,6 @@ def get_order(order_id: str | None = None, cart_id: str | None = None, customer_
         
         if cart_id:
             order = query.filter(Order.cart_id == cart_id).first()
-            if not order:
-                raise ValueError("No matching order found")
-            return map_order_to_schema(order).model_dump()
-
-        # If no specific ID is provided, query all orders for this customer
-        if not customer_id:
-            # Fallback to absolute latest if customer context is missing
-            order = query.order_by(Order.created_at.desc()).first()
             if not order:
                 raise ValueError("No matching order found")
             return map_order_to_schema(order).model_dump()

@@ -11,7 +11,43 @@ from app.services.catalog_service import _load_products
 from app.db.database import SessionLocal
 from app.db.models import Order
 
-client = TestClient(app)
+class ClientWrapper:
+    def __init__(self, client):
+        self.client = client
+        self.last_customer_id = "c_general_001"
+
+    def get(self, url, *args, **kwargs):
+        if "/api/v1/cart/" in url and "customer_id" not in url:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        elif "/api/v1/checkout/order" in url and "customer_id" not in url:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        return self.client.get(url, *args, **kwargs)
+
+    def post(self, url, *args, **kwargs):
+        if url == "/api/v1/cart":
+            json_data = kwargs.get("json", {})
+            if json_data and "customer_id" in json_data:
+                self.last_customer_id = json_data["customer_id"]
+        if "/api/v1/cart/" in url and "customer_id" not in url and not url.endswith("/checkout"):
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        return self.client.post(url, *args, **kwargs)
+
+    def patch(self, url, *args, **kwargs):
+        if "/api/v1/cart/" in url and "customer_id" not in url:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        return self.client.patch(url, *args, **kwargs)
+
+    def delete(self, url, *args, **kwargs):
+        if "/api/v1/cart/" in url and "customer_id" not in url:
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        return self.client.delete(url, *args, **kwargs)
+
+client = ClientWrapper(TestClient(app))
 
 
 def test_generalization_search_products() -> None:

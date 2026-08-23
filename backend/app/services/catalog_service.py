@@ -1,5 +1,8 @@
 import json
 import logging
+import os
+import time
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 
@@ -35,8 +38,17 @@ def _data_dir() -> Path:
 
 def _load_json(filename: str) -> list[dict]:
 	filepath = _data_dir() / filename
-	with filepath.open("r", encoding="utf-8") as file:
-		payload = json.load(file)
+	max_retries = 5
+	payload = None
+	for attempt in range(max_retries):
+		try:
+			with filepath.open("r", encoding="utf-8") as file:
+				payload = json.load(file)
+			break
+		except (PermissionError, json.JSONDecodeError) as e:
+			if attempt == max_retries - 1:
+				raise e
+			time.sleep(0.05 * (attempt + 1))
 	if not isinstance(payload, list):
 		raise CatalogDataError(f"{filename} must contain a JSON array")
 	return payload
@@ -281,6 +293,54 @@ def get_related_products(product_id: str, limit: int = 6) -> RelatedProductsResp
 	)
 
 
+def get_cross_sell_recommendations(product_id: str) -> dict:
+	source = _load_products().get(product_id)
+	if source is None:
+		raise ProductNotFoundError(f"Product not found: {product_id}")
+
+	products_by_id = _load_products()
+	recommendations = []
+
+	# 1. Use explicit complementary products if defined
+	for comp_id in source.complementary_product_ids:
+		if comp_id in products_by_id:
+			comp = products_by_id[comp_id]
+			recommendations.append({
+				"product_id": comp.id,
+				"name": comp.name,
+				"category": comp.category,
+				"price_inr": comp.price_inr,
+				"explanation": f"Recommended because it is compatible with your selected {source.name} ({source.category}) and is frequently paired with similar purchases.",
+			})
+
+	# 2. Rule-based fallbacks for new categories if explicit list is empty
+	if not recommendations:
+		category_map = {
+			"laptops": ["backpack", "headphones"],
+			"headphones": ["backpack", "yoga_mat"],
+			"backpack": ["hydration_bottles", "sports_watches"],
+			"yoga_mat": ["fitness_accessories", "hydration_bottles"],
+		}
+		target_categories = category_map.get(source.category, ["fitness_accessories"])
+		for p in products_by_id.values():
+			if p.category in target_categories and p.available:
+				recommendations.append({
+					"product_id": p.id,
+					"name": p.name,
+					"category": p.category,
+					"price_inr": p.price_inr,
+					"explanation": f"Recommended because it matches your selected {source.name} category ({source.category}) and enhances your experience.",
+				})
+				if len(recommendations) >= 3:
+					break
+
+	return {
+		"source_product_id": product_id,
+		"source_product_name": source.name,
+		"recommendations": recommendations,
+	}
+
+
 def list_categories() -> list[str]:
 	categories = {_normalize(product.category): product.category for product in _load_products().values()}
 	return sorted(categories.values())
@@ -317,36 +377,92 @@ def compare_products(product_ids: list[str]) -> ProductComparisonResponse:
 	return ProductComparisonResponse(items=items)
 
 
-import os
-import time
-from contextlib import contextmanager
+def is_pid_running(pid: int) -> bool:
+	if pid <= 0:
+		return False
+	try:
+		os.kill(pid, 0)
+		return True
+	except OSError:
+		return False
+
+
+import threading
 
 LOCK_FILE = _data_dir() / "products.json.lock"
+_THREAD_LOCK = threading.Lock()
 
 
 @contextmanager
-def file_lock(lock_path: Path, timeout: float = 10.0, delay: float = 0.05):
+def file_lock(lock_path: Path, timeout: float = 10.0, delay: float = 0.01):
 	"""
-	Cross-platform atomic file lock using O_CREAT and O_EXCL.
+	Cross-platform atomic file lock using O_CREAT and O_EXCL with stale lock detection
+	and in-process thread synchronization.
 	"""
-	start_time = time.time()
-	while True:
+	with _THREAD_LOCK:
+		start_time = time.time()
+		while True:
+			try:
+				fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+				os.write(fd, str(os.getpid()).encode())
+				os.close(fd)
+				break
+			except FileExistsError:
+				try:
+					if lock_path.exists():
+						mtime = lock_path.stat().st_mtime
+						# Stale lock cleanup: If lock is older than 3 seconds, remove it
+						if time.time() - mtime > 3.0:
+							try:
+								os.unlink(lock_path)
+							except FileNotFoundError:
+								pass
+						else:
+							with open(lock_path, "r", encoding="utf-8") as f:
+								content = f.read().strip()
+								if content:
+									pid = int(content)
+									if pid != os.getpid() and not is_pid_running(pid):
+										try:
+											os.unlink(lock_path)
+										except FileNotFoundError:
+											pass
+				except Exception:
+					pass
+
+				if time.time() - start_time > timeout:
+					# Force clean stale lock on timeout to prevent deadlock cascade
+					try:
+						os.unlink(lock_path)
+					except FileNotFoundError:
+						pass
+					raise TimeoutError(f"Could not acquire lock on {lock_path} within {timeout} seconds")
+				time.sleep(delay)
 		try:
-			fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-			os.write(fd, str(os.getpid()).encode())
-			os.close(fd)
-			break
-		except FileExistsError:
-			if time.time() - start_time > timeout:
-				raise TimeoutError(f"Could not acquire lock on {lock_path} within {timeout} seconds")
-			time.sleep(delay)
-	try:
-		yield
-	finally:
+			yield
+		finally:
+			try:
+				os.unlink(str(lock_path))
+			except (FileNotFoundError, PermissionError):
+				pass
+
+
+def _safe_write_json(filename: str, data: list[dict]) -> None:
+	filepath = _data_dir() / filename
+	temp_filepath = filepath.with_suffix(".tmp")
+	
+	with temp_filepath.open("w", encoding="utf-8") as file:
+		json.dump(data, file, indent=2, ensure_ascii=False)
+		
+	max_retries = 5
+	for attempt in range(max_retries):
 		try:
-			os.unlink(str(lock_path))
-		except FileNotFoundError:
-			pass
+			os.replace(temp_filepath, filepath)
+			return
+		except PermissionError as e:
+			if attempt == max_retries - 1:
+				raise e
+			time.sleep(0.05 * (attempt + 1))
 
 
 def decrement_inventory(items_to_decrement: dict[str, int]) -> None:
@@ -354,9 +470,7 @@ def decrement_inventory(items_to_decrement: dict[str, int]) -> None:
 	Safely decrement inventory for multiple products in products.json.
 	"""
 	with file_lock(LOCK_FILE):
-		filepath = _data_dir() / "products.json"
-		with filepath.open("r", encoding="utf-8") as file:
-			products = json.load(file)
+		products = _load_json("products.json")
 
 		# Verify inventory first before making any changes
 		for p in products:
@@ -375,8 +489,7 @@ def decrement_inventory(items_to_decrement: dict[str, int]) -> None:
 				if p["inventory_quantity"] == 0:
 					p["available"] = False
 
-		with filepath.open("w", encoding="utf-8") as file:
-			json.dump(products, file, indent=2, ensure_ascii=False)
+		_safe_write_json("products.json", products)
 
 		# Clear LRU caches
 		_load_products.cache_clear()
@@ -388,9 +501,7 @@ def increment_inventory(items_to_increment: dict[str, int]) -> None:
 	Safely increment inventory for multiple products in products.json (e.g. on rollback).
 	"""
 	with file_lock(LOCK_FILE):
-		filepath = _data_dir() / "products.json"
-		with filepath.open("r", encoding="utf-8") as file:
-			products = json.load(file)
+		products = _load_json("products.json")
 
 		# Apply increment
 		for p in products:
@@ -401,8 +512,7 @@ def increment_inventory(items_to_increment: dict[str, int]) -> None:
 				if qty_to_inc > 0:
 					p["available"] = True
 
-		with filepath.open("w", encoding="utf-8") as file:
-			json.dump(products, file, indent=2, ensure_ascii=False)
+		_safe_write_json("products.json", products)
 
 		# Clear LRU caches
 		_load_products.cache_clear()

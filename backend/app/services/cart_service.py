@@ -216,7 +216,28 @@ def create_cart(merchant_id: str, customer_id: str, db: Session) -> Cart:
     )
     db.add(cart)
     recalculate_cart(cart)
+    db.commit()
+    db.refresh(cart)
+    return cart
 
+
+def get_cart(cart_id: str, db: Session, customer_id: str | None = None) -> Cart | None:
+    """Retrieves a cart by ID."""
+    cart = db.query(Cart).filter(Cart.id == cart_id).first()
+    if not cart:
+        return None
+    if customer_id is not None and cart.customer_id != customer_id:
+        raise PermissionError("Access denied: You do not have permission to access this cart")
+    return cart
+
+
+def add_item_to_cart(cart_id: str, product_id: str, quantity: int, db: Session, customer_id: str | None = None) -> Cart:
+    """Adds a product to the cart or increments its quantity if it already exists."""
+    cart = get_cart(cart_id, db, customer_id)
+    if not cart:
+        raise CartNotFoundError(f"Cart {cart_id} not found")
+
+    if cart.status != "active":
         raise ValueError("Cart is not active")
 
     if quantity <= 0:
@@ -272,9 +293,9 @@ def create_cart(merchant_id: str, customer_id: str, db: Session) -> Cart:
     return cart
 
 
-def update_item_quantity(cart_id: str, product_id: str, quantity: int, db: Session) -> Cart:
+def update_item_quantity(cart_id: str, product_id: str, quantity: int, db: Session, customer_id: str | None = None) -> Cart:
     """Updates the quantity of a product in the cart."""
-    cart = get_cart(cart_id, db)
+    cart = get_cart(cart_id, db, customer_id)
     if not cart:
         raise CartNotFoundError(f"Cart {cart_id} not found")
 
@@ -306,9 +327,9 @@ def update_item_quantity(cart_id: str, product_id: str, quantity: int, db: Sessi
     return cart
 
 
-def remove_item_from_cart(cart_id: str, product_id: str, db: Session) -> Cart:
+def remove_item_from_cart(cart_id: str, product_id: str, db: Session, customer_id: str | None = None) -> Cart:
     """Removes a product from the cart."""
-    cart = get_cart(cart_id, db)
+    cart = get_cart(cart_id, db, customer_id)
     if not cart:
         raise CartNotFoundError(f"Cart {cart_id} not found")
 
@@ -326,9 +347,9 @@ def remove_item_from_cart(cart_id: str, product_id: str, db: Session) -> Cart:
     return cart
 
 
-def clear_cart(cart_id: str, db: Session) -> Cart:
+def clear_cart(cart_id: str, db: Session, customer_id: str | None = None) -> Cart:
     """Removes all items from the cart and resets totals."""
-    cart = get_cart(cart_id, db)
+    cart = get_cart(cart_id, db, customer_id)
     if not cart:
         raise CartNotFoundError(f"Cart {cart_id} not found")
 

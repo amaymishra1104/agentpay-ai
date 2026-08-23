@@ -650,6 +650,11 @@ def _inject_trusted_tool_arguments(
 
     # Inject customer_id securely only into tools that support it
     if tool_name in {
+        "add_to_cart",
+        "get_cart",
+        "update_cart_item",
+        "remove_from_cart",
+        "validate_cart",
         "checkout_cart",
         "get_order",
         "get_order_tracking",

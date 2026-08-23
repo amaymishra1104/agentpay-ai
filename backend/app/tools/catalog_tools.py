@@ -46,3 +46,8 @@ def get_related_products(product_id: str, limit: int = 6) -> RelatedProductsResp
 def compare_products(product_ids: list[str]) -> ProductComparisonResponse:
 	"""Return a structured product comparison view safe for buyer consumption."""
 	return catalog_service.compare_products(product_ids)
+
+
+def get_cross_sell_recommendations(product_id: str) -> dict:
+	"""Return deterministic, explainable cross-sell recommendations for a product."""
+	return catalog_service.get_cross_sell_recommendations(product_id)
