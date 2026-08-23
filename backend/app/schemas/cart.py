@@ -45,10 +45,12 @@ class CartCreateRequest(BaseModel):
 class CartItemAddRequest(BaseModel):
     product_id: str
     quantity: int = Field(..., gt=0)
+    customer_id: str | None = None
 
 
 class CartItemUpdateRequest(BaseModel):
     quantity: int = Field(..., gt=0)
+    customer_id: str | None = None
 
 
 class CartValidationIssue(BaseModel):

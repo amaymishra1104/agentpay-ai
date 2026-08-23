@@ -101,7 +101,19 @@ def test_adversarial_cart_isolation_via_api():
     )
     assert res.status_code == 403
 
-    # Attack 5: Customer A checks out Customer B's cart
+    # Attack 5: Customer A clears Customer B's cart
+    res = client.delete(
+        "/api/v1/cart/cart_cust_b_100?customer_id=customer_a"
+    )
+    assert res.status_code == 403
+
+    # Attack 6: Customer A validates Customer B's cart
+    res = client.post(
+        "/api/v1/cart/cart_cust_b_100/validate?customer_id=customer_a"
+    )
+    assert res.status_code == 403
+
+    # Attack 7: Customer A checks out Customer B's cart
     res = client.post(
         "/api/v1/cart/cart_cust_b_100/checkout",
         json={"payment_method": "mock_upi", "customer_id": "customer_a"},
@@ -112,22 +124,22 @@ def test_adversarial_cart_isolation_via_api():
 def test_adversarial_order_isolation_via_api():
     setup_test_data()
 
-    # Attack 6: Customer A fetches Customer B's order
+    # Attack 8: Customer A fetches Customer B's order
     res = client.get("/api/v1/checkout/order/ord_b_100?customer_id=customer_a")
     assert res.status_code == 403
 
-    # Attack 7: Customer A tracks Customer B's order
+    # Attack 9: Customer A tracks Customer B's order
     res = client.get("/api/v1/checkout/order/ord_b_100/tracking?customer_id=customer_a")
     assert res.status_code == 403
 
-    # Attack 8: Customer A cancels Customer B's order
+    # Attack 10: Customer A cancels Customer B's order
     res = client.post(
         "/api/v1/checkout/order/ord_b_100/cancel",
         json={"customer_id": "customer_a"},
     )
     assert res.status_code == 403
 
-    # Attack 9: Customer A requests return on Customer B's order
+    # Attack 11: Customer A requests return on Customer B's order
     res = client.post(
         "/api/v1/checkout/order/ord_b_100/return",
         json={"product_id": "ur_shoe_001", "quantity": 1, "customer_id": "customer_a"},
@@ -162,3 +174,37 @@ def test_adversarial_tools_isolation():
 
     with pytest.raises((ValueError, PermissionError)):
         request_return(order_id="ord_b_100", product_id="ur_shoe_001", quantity=1, customer_id="customer_a")
+
+
+def test_missing_customer_id_rejection():
+    setup_test_data()
+    # Missing customer_id tool invocations must raise ValueError or PermissionError
+    with pytest.raises((ValueError, PermissionError)):
+        get_cart(cart_id="cart_cust_b_100", customer_id=None)
+
+    with pytest.raises((ValueError, PermissionError)):
+        add_to_cart(cart_id="cart_cust_b_100", product_id="ur_shoe_002", quantity=1, customer_id=None)
+
+    with pytest.raises((ValueError, PermissionError)):
+        get_order(order_id="ord_b_100", customer_id=None)
+
+
+def test_agent_graph_trusted_customer_id_override():
+    setup_test_data()
+    from app.agents.graph import _inject_trusted_tool_arguments
+
+    state = BuyerAgentState(
+        session_id="session_cust_a",
+        customer_id="customer_a",
+        user_message="Show cart",
+        messages=[],
+    )
+
+    # LLM attempts to forge customer_id="customer_b" in tool arguments
+    model_args = {"cart_id": "cart_cust_b_100", "customer_id": "customer_b"}
+    injected_args = _inject_trusted_tool_arguments(state, "get_cart", model_args)
+
+    # Trusted state.customer_id ("customer_a") MUST overwrite the model-supplied value
+    assert injected_args["customer_id"] == "customer_a"
+    assert injected_args["customer_id"] != "customer_b"
+

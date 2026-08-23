@@ -96,16 +96,19 @@ def get_cart_endpoint(
 def add_item_endpoint(
     cart_id: str,
     req: CartItemAddRequest,
-    customer_id: str,
+    customer_id: str | None = None,
     db: Session = Depends(get_db),
 ) -> CartSchema:
+    eff_customer_id = customer_id or req.customer_id
+    if not eff_customer_id:
+        raise HTTPException(status_code=400, detail="customer_id is required")
     try:
         cart = cart_service.add_item_to_cart(
             cart_id=cart_id,
             product_id=req.product_id,
             quantity=req.quantity,
             db=db,
-            customer_id=customer_id,
+            customer_id=eff_customer_id,
         )
         return map_cart_to_schema(cart)
     except PermissionError as exc:
@@ -128,17 +131,21 @@ def update_item_endpoint(
     cart_id: str,
     product_id: str,
     req: CartItemUpdateRequest,
-    customer_id: str,
+    customer_id: str | None = None,
     db: Session = Depends(get_db),
 ) -> CartSchema:
+    eff_customer_id = customer_id or req.customer_id
+    if not eff_customer_id:
+        raise HTTPException(status_code=400, detail="customer_id is required")
     try:
         cart = cart_service.update_item_quantity(
             cart_id=cart_id,
             product_id=product_id,
             quantity=req.quantity,
             db=db,
-            customer_id=customer_id,
+            customer_id=eff_customer_id,
         )
+        return map_cart_to_schema(cart)
         return map_cart_to_schema(cart)
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc

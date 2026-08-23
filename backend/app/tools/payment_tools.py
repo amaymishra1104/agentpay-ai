@@ -16,6 +16,9 @@ def checkout_cart(cart_id: str, payment_method: str = "mock_upi", customer_id: s
     Returns:
         dict: The created order details serialized as a dictionary.
     """
+    if not customer_id:
+        raise ValueError("Customer ID is required.")
+
     with SessionLocal() as db:
         try:
             order = checkout_service.checkout_cart(

@@ -36,6 +36,9 @@ def get_cart(cart_id: str, customer_id: str | None = None) -> dict:
     Returns:
         dict: The current cart state.
     """
+    if not customer_id:
+        raise ValueError("Customer ID is required.")
+
     with SessionLocal() as db:
         cart = cart_service.get_cart(cart_id=cart_id, db=db, customer_id=customer_id)
         if not cart:
@@ -56,6 +59,9 @@ def add_to_cart(cart_id: str, product_id: str, quantity: int = 1, customer_id: s
     Returns:
         dict: The updated cart state.
     """
+    if not customer_id:
+        raise ValueError("Customer ID is required.")
+
     with SessionLocal() as db:
         try:
             cart = cart_service.add_item_to_cart(
@@ -90,6 +96,9 @@ def update_cart_item(cart_id: str, product_id: str, quantity: int, customer_id: 
     Returns:
         dict: The updated cart state.
     """
+    if not customer_id:
+        raise ValueError("Customer ID is required.")
+
     with SessionLocal() as db:
         try:
             cart = cart_service.update_item_quantity(
@@ -121,6 +130,9 @@ def remove_from_cart(cart_id: str, product_id: str, customer_id: str | None = No
     Returns:
         dict: The updated cart state.
     """
+    if not customer_id:
+        raise ValueError("Customer ID is required.")
+
     with SessionLocal() as db:
         try:
             cart = cart_service.remove_item_from_cart(
@@ -150,6 +162,9 @@ def validate_cart(cart_id: str, customer_id: str | None = None) -> dict:
     Returns:
         dict: Validation results structured as {"valid": bool, "issues": [...]}.
     """
+    if not customer_id:
+        raise ValueError("Customer ID is required.")
+
     with SessionLocal() as db:
         try:
             return cart_service.validate_cart(cart_id=cart_id, db=db, customer_id=customer_id)

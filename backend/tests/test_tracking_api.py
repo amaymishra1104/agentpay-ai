@@ -224,7 +224,8 @@ def test_post_purchase_security_ownership() -> None:
 
     client.post(f"/api/v1/cart/{cart_id}/items", json={
         "product_id": "ur_audio_001",
-        "quantity": 1
+        "quantity": 1,
+        "customer_id": "c_customer_a"
     })
 
     checkout_res = client.post(f"/api/v1/cart/{cart_id}/checkout", json={

@@ -187,6 +187,9 @@ def recalculate_cart(cart: Cart) -> None:
 
 def create_cart(merchant_id: str, customer_id: str, db: Session) -> Cart:
     """Creates and stores a new cart in the database."""
+    if not customer_id or not str(customer_id).strip():
+        raise ValueError("customer_id is required to create a cart")
+
     # Validate merchant exists
     merchants = _load_merchants()
     normalized_m_id = _normalize_merchant_id(merchant_id)
@@ -373,7 +376,7 @@ def validate_cart(
     Validates a cart against the current state of products, inventory, and status.
     Returns a dict with 'valid' and a list of 'issues'.
     """
-    cart = get_cart(cart_id, db)
+    cart = get_cart(cart_id, db, customer_id=customer_id)
     if not cart:
         raise CartNotFoundError(f"Cart {cart_id} not found")
 
