@@ -1,520 +1,346 @@
 import json
-import logging
 import os
 import time
-from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 
-from app.schemas.catalog import (
-	AgentCatalogProduct,
-	AvailabilityView,
-	CatalogQueryParams,
-	MerchantRecord,
-	OfferSummary,
-	PriceView,
-	ProductComparisonItem,
-	ProductComparisonResponse,
-	ProductRecord,
-	ProductSearchResponse,
-	RatingView,
-	RelatedProductsResponse,
-)
-
-logger = logging.getLogger(__name__)
+from app.services.file_lock import file_lock
 
 
-class ProductNotFoundError(ValueError):
-	"""Raised when a product does not exist in the catalog."""
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
 
 
-class CatalogDataError(RuntimeError):
-	"""Raised when catalog seed data is malformed or inconsistent."""
+def _project_root() -> Path:
+    return Path(__file__).resolve().parents[3]
 
 
 def _data_dir() -> Path:
-	return Path(__file__).resolve().parents[3] / "data"
+    return _project_root() / "data"
+
+
+PRODUCTS_FILE = _data_dir() / "products.json"
+MERCHANTS_FILE = _data_dir() / "merchants.json"
+LOCK_FILE = _data_dir() / "products.json.lock"
+
+
+# ---------------------------------------------------------------------------
+# Exceptions
+# ---------------------------------------------------------------------------
+
+
+class ProductNotFoundError(ValueError):
+    """Raised when a requested product does not exist."""
+
+
+# ---------------------------------------------------------------------------
+# Product / merchant loading
+# ---------------------------------------------------------------------------
+
+
+class Product:
+    def __init__(self, data: dict):
+        self.id = data["id"]
+        self.merchant_id = data.get("merchant_id")
+        self.sku = data.get("sku")
+        self.name = data.get("name")
+        self.category = data.get("category")
+        self.subcategory = data.get("subcategory")
+        self.description = data.get("description")
+        self.price_inr = data.get("price_inr", 0)
+        self.compare_at_price_inr = data.get("compare_at_price_inr")
+        self.cost_inr = data.get("cost_inr")
+        self.currency = data.get("currency", "INR")
+        self.inventory_quantity = data.get("inventory_quantity", 0)
+        self.available = data.get("available", False)
+        self.rating = data.get("rating")
+        self.review_count = data.get("review_count", 0)
+        self.brand = data.get("brand")
+        self.tags = data.get("tags", [])
+
+    def __repr__(self) -> str:
+        return (
+            f"Product(id={self.id!r}, "
+            f"inventory_quantity={self.inventory_quantity!r}, "
+            f"available={self.available!r})"
+        )
+
+
+@lru_cache(maxsize=1)
+def _load_products() -> dict[str, Product]:
+    with PRODUCTS_FILE.open("r", encoding="utf-8") as file:
+        raw_products = json.load(file)
+
+    return {
+        product["id"]: Product(product)
+        for product in raw_products
+    }
+
+
+@lru_cache(maxsize=1)
+def _load_merchants() -> dict[str, dict]:
+    """
+    Load merchants from merchants.json.
+
+    The legacy cart service requires this loader to exist and return
+    merchant records keyed by merchant ID.
+    """
+    if not MERCHANTS_FILE.exists():
+        return {}
+
+    with MERCHANTS_FILE.open("r", encoding="utf-8") as file:
+        raw_merchants = json.load(file)
+
+    if not isinstance(raw_merchants, list):
+        raise ValueError("merchants.json must contain a JSON array")
+
+    return {
+        merchant["id"]: merchant
+        for merchant in raw_merchants
+        if isinstance(merchant, dict) and merchant.get("id")
+    }
 
 
 def _load_json(filename: str) -> list[dict]:
-	filepath = _data_dir() / filename
-	max_retries = 5
-	payload = None
-	for attempt in range(max_retries):
-		try:
-			with filepath.open("r", encoding="utf-8") as file:
-				payload = json.load(file)
-			break
-		except (PermissionError, json.JSONDecodeError) as e:
-			if attempt == max_retries - 1:
-				raise e
-			time.sleep(0.05 * (attempt + 1))
-	if not isinstance(payload, list):
-		raise CatalogDataError(f"{filename} must contain a JSON array")
-	return payload
+    filepath = _data_dir() / filename
 
+    with filepath.open("r", encoding="utf-8") as file:
+        return json.load(file)
 
-@lru_cache(maxsize=1)
-def _load_merchants() -> dict[str, MerchantRecord]:
-	records = [MerchantRecord.model_validate(item) for item in _load_json("merchants.json")]
-	return {record.id: record for record in records}
 
-
-@lru_cache(maxsize=1)
-def _load_products() -> dict[str, ProductRecord]:
-	records = [ProductRecord.model_validate(item) for item in _load_json("products.json")]
-	products_by_id = {record.id: record for record in records}
-
-	for product in records:
-		for related_id in product.complementary_product_ids + product.upsell_product_ids:
-			if related_id not in products_by_id:
-				raise CatalogDataError(
-					f"Product {product.id} references missing related product {related_id}"
-				)
-		if product.available and product.inventory_quantity <= 0:
-			raise CatalogDataError(
-				f"Product {product.id} marked available with non-positive inventory"
-			)
-		if not product.available and product.inventory_quantity > 0:
-			logger.warning(
-				"Product %s has stock but is marked unavailable; honoring explicit unavailable flag",
-				product.id,
-			)
-
-	return products_by_id
-
-
-@lru_cache(maxsize=1)
-def _load_offers_by_product() -> dict[str, list[OfferSummary]]:
-	offers_by_product: dict[str, list[OfferSummary]] = {}
-	products_by_id = _load_products()
-	offer_ids: set[str] = set()
-
-	for offer in _load_json("offers.json"):
-		offer_ids.add(offer["id"])
-		product_ids = offer.get("product_ids", [])
-		if not isinstance(product_ids, list):
-			raise CatalogDataError(f"Offer {offer.get('id', 'unknown')} has invalid product_ids")
-
-		for product_id in product_ids:
-			if product_id not in products_by_id:
-				raise CatalogDataError(
-					f"Offer {offer.get('id', 'unknown')} references missing product {product_id}"
-				)
-
-			offers_by_product.setdefault(product_id, []).append(
-				OfferSummary(
-					offer_id=offer["id"],
-					title=offer["title"],
-					type=offer["type"],
-					discount_percent=offer["discount_percent"],
-				)
-			)
-
-	for product in products_by_id.values():
-		for offer_id in product.eligible_offers:
-			if offer_id not in offer_ids:
-				raise CatalogDataError(
-					f"Product {product.id} references missing offer {offer_id}"
-				)
-
-	return offers_by_product
-
-
-def _to_public_product(product: ProductRecord) -> AgentCatalogProduct:
-	offers = _load_offers_by_product().get(product.id, [])
-
-	return AgentCatalogProduct(
-		product_id=product.id,
-		name=product.name,
-		category=product.category,
-		subcategory=product.subcategory,
-		description=product.description,
-		brand=product.brand,
-		price=PriceView(amount=product.price_inr, currency=product.currency),
-		availability=AvailabilityView(
-			in_stock=product.available and product.inventory_quantity > 0,
-			quantity=product.inventory_quantity,
-		),
-		rating=RatingView(score=product.rating, reviews=product.review_count),
-		features=product.features,
-		specifications=product.specifications,
-		shipping=product.shipping,
-		return_policy=product.return_policy,
-		offers=offers,
-		recommended_with=product.complementary_product_ids,
-		better_alternative=product.upsell_product_ids[0] if product.upsell_product_ids else None,
-		image_url=product.image_url,
-	)
-
-
-def _normalize(text: str) -> str:
-	return " ".join(text.lower().split())
-
-
-def _search_text(product: ProductRecord) -> str:
-	fields = [
-		product.name,
-		product.category,
-		product.subcategory,
-		product.description,
-		product.brand,
-		" ".join(product.tags),
-		" ".join(product.features),
-	]
-	return _normalize(" ".join(fields))
-
-
-def _relevance_score(product: ProductRecord, query: str | None) -> int:
-	if not query:
-		return 0
-
-	normalized_query = _normalize(query)
-	haystack = _search_text(product)
-	terms = [term for term in normalized_query.split(" ") if term]
-	if not terms:
-		return 0
-
-	score = 0
-	if normalized_query in haystack:
-		score += 8
-
-	for term in terms:
-		if term in haystack:
-			score += 2
-		if term in _normalize(product.name):
-			score += 3
-		if term in _normalize(product.category):
-			score += 2
-
-	return score
-
-
-def _price_fit_score(product: ProductRecord, params: CatalogQueryParams) -> float:
-	if params.max_price is not None and params.max_price > 0:
-		if product.price_inr > params.max_price:
-			return 0.0
-		return 1 - (product.price_inr / params.max_price)
-
-	return 1 / (product.price_inr + 1)
-
-
-def _matches_filters(product: ProductRecord, params: CatalogQueryParams) -> bool:
-	if params.category and _normalize(product.category) != _normalize(params.category):
-		return False
-
-	if params.min_price is not None and product.price_inr < params.min_price:
-		return False
-
-	if params.max_price is not None and product.price_inr > params.max_price:
-		return False
-
-	if params.min_rating is not None and product.rating < params.min_rating:
-		return False
-
-	if params.in_stock is True and not (product.available and product.inventory_quantity > 0):
-		return False
-
-	if params.in_stock is False and (product.available and product.inventory_quantity > 0):
-		return False
-
-	if params.query and _relevance_score(product, params.query) <= 0:
-		return False
-
-	return True
-
-
-def search_products(params: CatalogQueryParams) -> ProductSearchResponse:
-	products = list(_load_products().values())
-	filtered = [product for product in products if _matches_filters(product, params)]
-
-	ranked = sorted(
-		filtered,
-		key=lambda product: (
-			_relevance_score(product, params.query),
-			1 if (product.available and product.inventory_quantity > 0) else 0,
-			product.rating,
-			_price_fit_score(product, params),
-			product.review_count,
-			-product.price_inr,
-		),
-		reverse=True,
-	)
-
-	items = [_to_public_product(product) for product in ranked[: params.limit]]
-	return ProductSearchResponse(items=items, total=len(filtered))
-
-
-def get_product(product_id: str) -> AgentCatalogProduct:
-	product = _load_products().get(product_id)
-	if product is None:
-		raise ProductNotFoundError(f"Product not found: {product_id}")
-	return _to_public_product(product)
-
-
-def get_related_products(product_id: str, limit: int = 6) -> RelatedProductsResponse:
-	source = _load_products().get(product_id)
-	if source is None:
-		raise ProductNotFoundError(f"Product not found: {product_id}")
-
-	products_by_id = _load_products()
-
-	complementary = [
-		_to_public_product(products_by_id[pid])
-		for pid in source.complementary_product_ids
-		if pid in products_by_id
-	][:limit]
-
-	upsell = [
-		_to_public_product(products_by_id[pid]) for pid in source.upsell_product_ids if pid in products_by_id
-	][:limit]
-
-	alternatives: list[AgentCatalogProduct] = []
-	for product in products_by_id.values():
-		if product.id == source.id:
-			continue
-		if product.category != source.category:
-			continue
-		if product.price_inr < source.price_inr * 0.85 or product.price_inr > source.price_inr * 1.15:
-			continue
-		alternatives.append(_to_public_product(product))
-
-	alternatives = sorted(
-		alternatives,
-		key=lambda item: (item.rating.score, item.availability.in_stock, -item.price.amount),
-		reverse=True,
-	)[:limit]
-
-	return RelatedProductsResponse(
-		product_id=product_id,
-		complementary=complementary,
-		upsell=upsell,
-		alternatives=alternatives,
-	)
-
-
-def get_cross_sell_recommendations(product_id: str) -> dict:
-	source = _load_products().get(product_id)
-	if source is None:
-		raise ProductNotFoundError(f"Product not found: {product_id}")
-
-	products_by_id = _load_products()
-	recommendations = []
-
-	# 1. Use explicit complementary products if defined
-	for comp_id in source.complementary_product_ids:
-		if comp_id in products_by_id:
-			comp = products_by_id[comp_id]
-			recommendations.append({
-				"product_id": comp.id,
-				"name": comp.name,
-				"category": comp.category,
-				"price_inr": comp.price_inr,
-				"explanation": f"Recommended because it is compatible with your selected {source.name} ({source.category}) and is frequently paired with similar purchases.",
-			})
-
-	# 2. Rule-based fallbacks for new categories if explicit list is empty
-	if not recommendations:
-		category_map = {
-			"laptops": ["backpack", "headphones"],
-			"headphones": ["backpack", "yoga_mat"],
-			"backpack": ["hydration_bottles", "sports_watches"],
-			"yoga_mat": ["fitness_accessories", "hydration_bottles"],
-		}
-		target_categories = category_map.get(source.category, ["fitness_accessories"])
-		for p in products_by_id.values():
-			if p.category in target_categories and p.available:
-				recommendations.append({
-					"product_id": p.id,
-					"name": p.name,
-					"category": p.category,
-					"price_inr": p.price_inr,
-					"explanation": f"Recommended because it matches your selected {source.name} category ({source.category}) and enhances your experience.",
-				})
-				if len(recommendations) >= 3:
-					break
-
-	return {
-		"source_product_id": product_id,
-		"source_product_name": source.name,
-		"recommendations": recommendations,
-	}
-
-
-def list_categories() -> list[str]:
-	categories = {_normalize(product.category): product.category for product in _load_products().values()}
-	return sorted(categories.values())
-
-
-def compare_products(product_ids: list[str]) -> ProductComparisonResponse:
-	if not product_ids:
-		return ProductComparisonResponse(items=[])
-
-	products_by_id = _load_products()
-	missing = [product_id for product_id in product_ids if product_id not in products_by_id]
-	if missing:
-		raise ProductNotFoundError(f"Products not found: {', '.join(missing)}")
-
-	items = [
-		ProductComparisonItem(
-			product_id=product.id,
-			name=product.name,
-			category=product.category,
-			price=PriceView(amount=product.price_inr, currency=product.currency),
-			rating=RatingView(score=product.rating, reviews=product.review_count),
-			availability=AvailabilityView(
-				in_stock=product.available and product.inventory_quantity > 0,
-				quantity=product.inventory_quantity,
-			),
-			features=product.features,
-			shipping=product.shipping,
-			return_policy=product.return_policy,
-			offers=_load_offers_by_product().get(product.id, []),
-		)
-		for product in [products_by_id[pid] for pid in product_ids]
-	]
-
-	return ProductComparisonResponse(items=items)
-
-
-def is_pid_running(pid: int) -> bool:
-	if pid <= 0:
-		return False
-	try:
-		os.kill(pid, 0)
-		return True
-	except OSError:
-		return False
-
-
-import threading
-
-LOCK_FILE = _data_dir() / "products.json.lock"
-_THREAD_LOCK = threading.Lock()
-
-
-@contextmanager
-def file_lock(lock_path: Path, timeout: float = 10.0, delay: float = 0.01):
-	"""
-	Cross-platform atomic file lock using O_CREAT and O_EXCL with stale lock detection
-	and in-process thread synchronization.
-	"""
-	with _THREAD_LOCK:
-		start_time = time.time()
-		while True:
-			try:
-				fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-				os.write(fd, str(os.getpid()).encode())
-				os.close(fd)
-				break
-			except FileExistsError:
-				try:
-					if lock_path.exists():
-						mtime = lock_path.stat().st_mtime
-						# Stale lock cleanup: If lock is older than 3 seconds, remove it
-						if time.time() - mtime > 3.0:
-							try:
-								os.unlink(lock_path)
-							except FileNotFoundError:
-								pass
-						else:
-							with open(lock_path, "r", encoding="utf-8") as f:
-								content = f.read().strip()
-								if content:
-									pid = int(content)
-									if pid != os.getpid() and not is_pid_running(pid):
-										try:
-											os.unlink(lock_path)
-										except FileNotFoundError:
-											pass
-				except Exception:
-					pass
-
-				if time.time() - start_time > timeout:
-					# Force clean stale lock on timeout to prevent deadlock cascade
-					try:
-						os.unlink(lock_path)
-					except FileNotFoundError:
-						pass
-					raise TimeoutError(f"Could not acquire lock on {lock_path} within {timeout} seconds")
-				time.sleep(delay)
-		try:
-			yield
-		finally:
-			try:
-				os.unlink(str(lock_path))
-			except (FileNotFoundError, PermissionError):
-				pass
+# ---------------------------------------------------------------------------
+# Safe JSON writing
+# ---------------------------------------------------------------------------
 
 
 def _safe_write_json(filename: str, data: list[dict]) -> None:
-	filepath = _data_dir() / filename
-	temp_filepath = filepath.with_suffix(".tmp")
-	
-	with temp_filepath.open("w", encoding="utf-8") as file:
-		json.dump(data, file, indent=2, ensure_ascii=False)
-		
-	max_retries = 5
-	for attempt in range(max_retries):
-		try:
-			os.replace(temp_filepath, filepath)
-			return
-		except PermissionError as e:
-			if attempt == max_retries - 1:
-				raise e
-			time.sleep(0.05 * (attempt + 1))
+    filepath = _data_dir() / filename
+    temp_filepath = filepath.with_suffix(".tmp")
+
+    with temp_filepath.open("w", encoding="utf-8") as file:
+        json.dump(
+            data,
+            file,
+            indent=2,
+            ensure_ascii=False,
+        )
+        file.flush()
+        os.fsync(file.fileno())
+
+    max_retries = 5
+
+    for attempt in range(max_retries):
+        try:
+            os.replace(temp_filepath, filepath)
+            return
+
+        except PermissionError:
+            if attempt == max_retries - 1:
+                raise
+
+            time.sleep(0.05 * (attempt + 1))
+
+    raise RuntimeError(f"Failed to replace {filepath}")
 
 
-def decrement_inventory(items_to_decrement: dict[str, int]) -> None:
-	"""
-	Safely decrement inventory for multiple products in products.json.
-	"""
-	with file_lock(LOCK_FILE):
-		products = _load_json("products.json")
-
-		# Verify inventory first before making any changes
-		for p in products:
-			pid = p.get("id")
-			if pid in items_to_decrement:
-				qty_to_dec = items_to_decrement[pid]
-				if p.get("inventory_quantity", 0) < qty_to_dec:
-					raise ValueError(f"Insufficient inventory for product {pid}")
-
-		# Apply decrement
-		for p in products:
-			pid = p.get("id")
-			if pid in items_to_decrement:
-				qty_to_dec = items_to_decrement[pid]
-				p["inventory_quantity"] = max(0, p.get("inventory_quantity", 0) - qty_to_dec)
-				if p["inventory_quantity"] == 0:
-					p["available"] = False
-
-		_safe_write_json("products.json", products)
-
-		# Clear LRU caches
-		_load_products.cache_clear()
-		_load_offers_by_product.cache_clear()
+# ---------------------------------------------------------------------------
+# Product helpers
+# ---------------------------------------------------------------------------
 
 
-def increment_inventory(items_to_increment: dict[str, int]) -> None:
-	"""
-	Safely increment inventory for multiple products in products.json (e.g. on rollback).
-	"""
-	with file_lock(LOCK_FILE):
-		products = _load_json("products.json")
+def get_product(product_id: str) -> Product | None:
+    """
+    Return a single product by ID.
+    """
+    products = _load_products()
+    return products.get(product_id)
 
-		# Apply increment
-		for p in products:
-			pid = p.get("id")
-			if pid in items_to_increment:
-				qty_to_inc = items_to_increment[pid]
-				p["inventory_quantity"] = p.get("inventory_quantity", 0) + qty_to_inc
-				if qty_to_inc > 0:
-					p["available"] = True
 
-		_safe_write_json("products.json", products)
+def get_products() -> list[Product]:
+    """
+    Return all products.
+    """
+    return list(_load_products().values())
 
-		# Clear LRU caches
-		_load_products.cache_clear()
-		_load_offers_by_product.cache_clear()
 
+def search_products(
+    query: str | None = None,
+    category: str | None = None,
+    merchant_id: str | None = None,
+) -> list[Product]:
+    """
+    Search products using simple text/category/merchant filters.
+    """
+
+    products = _load_products().values()
+
+    if query:
+        query_lower = query.lower().strip()
+
+        products = [
+            product
+            for product in products
+            if (
+                query_lower in (product.name or "").lower()
+                or query_lower in (product.description or "").lower()
+                or query_lower in (product.brand or "").lower()
+                or any(
+                    query_lower in str(tag).lower()
+                    for tag in product.tags
+                )
+            )
+        ]
+
+    if category:
+        category_lower = category.lower()
+
+        products = [
+            product
+            for product in products
+            if (
+                (product.category or "").lower() == category_lower
+                or (product.subcategory or "").lower() == category_lower
+            )
+        ]
+
+    if merchant_id:
+        products = [
+            product
+            for product in products
+            if product.merchant_id == merchant_id
+        ]
+
+    return list(products)
+
+
+# ---------------------------------------------------------------------------
+# Inventory mutation
+# ---------------------------------------------------------------------------
+
+
+def decrement_inventory(items: dict[str, int]) -> None:
+    """
+    Atomically decrement inventory for multiple products.
+
+    `items` maps:
+        product_id -> quantity_to_decrement
+
+    All inventory changes happen under one cross-process lock.
+
+    If any requested quantity cannot be fulfilled, ValueError is raised
+    and no partial inventory changes are written.
+    """
+
+    if not items:
+        return
+
+    # Validate quantities before touching the file.
+    for product_id, quantity in items.items():
+        if not isinstance(quantity, int) or isinstance(quantity, bool):
+            raise ValueError(
+                f"Invalid inventory quantity for product "
+                f"{product_id}: {quantity}"
+            )
+
+        if quantity <= 0:
+            raise ValueError(
+                f"Invalid inventory quantity for product "
+                f"{product_id}: {quantity}"
+            )
+
+    with file_lock(LOCK_FILE):
+        raw_products = _load_json("products.json")
+
+        products_by_id = {
+            product["id"]: product
+            for product in raw_products
+        }
+
+        # First pass: validate everything.
+        for product_id, quantity in items.items():
+            product = products_by_id.get(product_id)
+
+            if product is None:
+                raise ValueError(
+                    f"Product {product_id} not found"
+                )
+
+            current_quantity = int(
+                product.get("inventory_quantity", 0)
+            )
+
+            if current_quantity < quantity:
+                raise ValueError(
+                    f"Insufficient inventory for product {product_id}"
+                )
+
+        # Second pass: apply everything.
+        for product_id, quantity in items.items():
+            product = products_by_id[product_id]
+
+            new_quantity = (
+                int(product.get("inventory_quantity", 0))
+                - quantity
+            )
+
+            product["inventory_quantity"] = new_quantity
+            product["available"] = new_quantity > 0
+
+        _safe_write_json("products.json", raw_products)
+
+        # Clear cached Product objects because the JSON source changed.
+        _load_products.cache_clear()
+
+
+def increment_inventory(items: dict[str, int]) -> None:
+    """
+    Atomically increment inventory for multiple products.
+
+    Used to compensate for a successful decrement when a later checkout
+    operation fails.
+    """
+
+    if not items:
+        return
+
+    for product_id, quantity in items.items():
+        if not isinstance(quantity, int) or isinstance(quantity, bool):
+            raise ValueError(
+                f"Invalid inventory quantity for product "
+                f"{product_id}: {quantity}"
+            )
+
+        if quantity <= 0:
+            raise ValueError(
+                f"Invalid inventory quantity for product "
+                f"{product_id}: {quantity}"
+            )
+
+    with file_lock(LOCK_FILE):
+        raw_products = _load_json("products.json")
+
+        products_by_id = {
+            product["id"]: product
+            for product in raw_products
+        }
+
+        for product_id, quantity in items.items():
+            product = products_by_id.get(product_id)
+
+            if product is None:
+                raise ValueError(
+                    f"Product {product_id} not found"
+                )
+
+            new_quantity = (
+                int(product.get("inventory_quantity", 0))
+                + quantity
+            )
+
+            product["inventory_quantity"] = new_quantity
+            product["available"] = new_quantity > 0
+
+        _safe_write_json("products.json", raw_products)
+
+        _load_products.cache_clear()
