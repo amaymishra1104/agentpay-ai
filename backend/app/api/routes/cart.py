@@ -217,6 +217,73 @@ def validate_cart_endpoint(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+from app.schemas.payment import (
+    CreatePaymentOrderRequest,
+    CreatePaymentOrderResponse,
+)
+from app.services import razorpay_service
+
+
+@router.post("/{cart_id}/payment/create-order", response_model=CreatePaymentOrderResponse)
+def create_payment_order_endpoint(
+    cart_id: str,
+    req: CreatePaymentOrderRequest,
+    db: Session = Depends(get_db),
+) -> CreatePaymentOrderResponse:
+    """
+    Validate the cart and create an authoritative Razorpay test-mode order.
+    Does NOT decrement inventory at this stage.
+    """
+    try:
+        cart = cart_service.get_cart(cart_id, db, customer_id=req.customer_id)
+        if not cart:
+            raise cart_service.CartNotFoundError(f"Cart {cart_id} not found")
+
+        # Recalculate and validate cart
+        cart_service.recalculate_cart(cart)
+        db.flush()
+
+        val_res = cart_service.validate_cart(
+            cart_id=cart.id,
+            db=db,
+            customer_id=req.customer_id,
+        )
+        if not val_res["valid"]:
+            issues_str = ", ".join(issue["message"] for issue in val_res["issues"])
+            raise ValueError(f"Cart validation failed: {issues_str}")
+
+        if cart.total_inr <= 0:
+            raise ValueError("Cart total must be greater than zero for payment.")
+
+        rzp_order = razorpay_service.create_razorpay_order(
+            amount_inr=cart.total_inr,
+            currency=cart.currency,
+            receipt=f"rcpt_{cart.id[:30]}",
+            notes={
+                "cart_id": cart.id,
+                "customer_id": req.customer_id,
+                "merchant_id": cart.merchant_id,
+            },
+        )
+
+        return CreatePaymentOrderResponse(
+            razorpay_order_id=rzp_order["razorpay_order_id"],
+            amount_paise=rzp_order["amount_paise"],
+            currency=rzp_order["currency"],
+            receipt=rzp_order.get("receipt"),
+            key_id=rzp_order.get("key_id"),
+            cart_id=cart.id,
+            total_inr=cart.total_inr,
+            mode=rzp_order["mode"],
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except cart_service.CartNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, razorpay_service.RazorpayServiceError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.post("/{cart_id}/checkout", response_model=OrderSchema)
 def checkout_cart_endpoint(
     cart_id: str,
@@ -229,6 +296,9 @@ def checkout_cart_endpoint(
             payment_method=req.payment_method,
             db=db,
             customer_id=req.customer_id,
+            razorpay_order_id=req.razorpay_order_id,
+            razorpay_payment_id=req.razorpay_payment_id,
+            razorpay_signature=req.razorpay_signature,
         )
         return map_order_to_schema(order)
     except PermissionError as exc:

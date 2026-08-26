@@ -186,6 +186,10 @@ def test_successful_checkout_and_idempotency() -> None:
     assert get_order_by_cart_res.status_code == 200
     assert get_order_by_cart_res.json()["order_id"] == order_data["order_id"]
 
+    # Restore inventory
+    from app.services.catalog_service import increment_inventory
+    increment_inventory({"ur_shoe_001": 2})
+
 
 def test_agent_checkout_safety_confirmation() -> None:
     graph = build_buyer_graph()
@@ -279,3 +283,182 @@ def test_agent_get_order_status() -> None:
     assert result["last_tool_result"] is not None
     assert result["last_tool_result"]["tool_name"] == "get_order"
     assert "ur_shoe_001" in result["final_response"] or "AeroRun" in result["final_response"]
+
+    # Restore inventory
+    from app.services.catalog_service import increment_inventory
+    increment_inventory({"ur_shoe_001": 1})
+
+
+def test_create_payment_order_endpoint_success_and_no_inventory_drain() -> None:
+    # 1. Capture initial stock
+    products = _load_products()
+    initial_qty = products["ur_shoe_001"].inventory_quantity
+
+    # 2. Create cart and add item
+    create_res = client.post("/api/v1/cart", json={
+        "merchant_id": "m_urbanrun",
+        "customer_id": "c_demo_001"
+    })
+    cart_id = create_res.json()["cart_id"]
+
+    client.post(f"/api/v1/cart/{cart_id}/items", json={
+        "product_id": "ur_shoe_001",
+        "quantity": 1
+    })
+
+    # 3. Call create-order endpoint
+    order_res = client.post(f"/api/v1/cart/{cart_id}/payment/create-order", json={
+        "customer_id": "c_demo_001"
+    })
+    assert order_res.status_code == 200
+    data = order_res.json()
+
+    assert "razorpay_order_id" in data
+    assert data["amount_paise"] == data["total_inr"] * 100
+    assert data["currency"] == "INR"
+    assert data["cart_id"] == cart_id
+    assert "key_id" in data
+
+    # 4. Critical requirement: Inventory must NOT be decremented on order creation
+    products_after = _load_products()
+    assert products_after["ur_shoe_001"].inventory_quantity == initial_qty
+
+
+def test_checkout_razorpay_verified_payment_flow() -> None:
+    import hashlib
+    import hmac
+    from app.config import get_settings
+
+    settings = get_settings()
+    secret = "test_rzp_secret_key_789"
+
+    with patch.object(settings, "razorpay_key_id", "rzp_test_key_abc"), \
+         patch.object(settings, "razorpay_key_secret", secret):
+
+        _load_products.cache_clear()
+        products = _load_products()
+        initial_qty = products["ur_shoe_001"].inventory_quantity
+
+        # 1. Create cart
+        create_res = client.post("/api/v1/cart", json={
+            "merchant_id": "m_urbanrun",
+            "customer_id": "c_demo_001"
+        })
+        cart_id = create_res.json()["cart_id"]
+
+        client.post(f"/api/v1/cart/{cart_id}/items", json={
+            "product_id": "ur_shoe_001",
+            "quantity": 1
+        })
+
+        # 2. Dynamic unique Razorpay order and payment IDs
+        import uuid
+        rzp_order_id = f"order_rzp_test_{uuid.uuid4().hex[:8]}"
+        rzp_payment_id = f"pay_rzp_test_{uuid.uuid4().hex[:8]}"
+
+        # 3. Generate valid HMAC-SHA256 signature
+        msg = f"{rzp_order_id}|{rzp_payment_id}"
+        valid_sig = hmac.new(
+            secret.encode("utf-8"),
+            msg.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+        # 4. Checkout with valid signature
+        checkout_res = client.post(f"/api/v1/cart/{cart_id}/checkout", json={
+            "payment_method": "razorpay",
+            "customer_id": "c_demo_001",
+            "razorpay_order_id": rzp_order_id,
+            "razorpay_payment_id": rzp_payment_id,
+            "razorpay_signature": valid_sig,
+        })
+        assert checkout_res.status_code == 200
+        order_data = checkout_res.json()
+
+        assert order_data["order_id"].startswith("ord_")
+        assert order_data["payment_method"] == "razorpay"
+        assert order_data["payment_status"] == "successful"
+        assert order_data["payment_id"] == rzp_payment_id
+        assert order_data["transaction_reference"] == rzp_order_id
+
+        # 5. Inventory must be decremented by 1
+        products_after = _load_products()
+        assert products_after["ur_shoe_001"].inventory_quantity == initial_qty - 1
+
+        # 6. Duplicate callback idempotency: Same payment ID submitted again returns existing order
+        dup_res = client.post(f"/api/v1/cart/{cart_id}/checkout", json={
+            "payment_method": "razorpay",
+            "customer_id": "c_demo_001",
+            "razorpay_order_id": rzp_order_id,
+            "razorpay_payment_id": rzp_payment_id,
+            "razorpay_signature": valid_sig,
+        })
+        assert dup_res.status_code == 200
+        assert dup_res.json()["order_id"] == order_data["order_id"]
+
+        # Inventory NOT decremented again
+        products_after_dup = _load_products()
+        assert products_after_dup["ur_shoe_001"].inventory_quantity == initial_qty - 1
+
+        # Restore inventory for other tests
+        from app.services.catalog_service import increment_inventory
+        increment_inventory({"ur_shoe_001": 1})
+
+
+def test_checkout_razorpay_invalid_signature_rejected() -> None:
+    from app.config import get_settings
+
+    settings = get_settings()
+    with patch.object(settings, "razorpay_key_id", "rzp_test_key_abc"), \
+         patch.object(settings, "razorpay_key_secret", "real_secret_123"):
+
+        _load_products.cache_clear()
+        products = _load_products()
+        initial_qty = products["ur_shoe_001"].inventory_quantity
+
+        create_res = client.post("/api/v1/cart", json={
+            "merchant_id": "m_urbanrun",
+            "customer_id": "c_demo_001"
+        })
+        cart_id = create_res.json()["cart_id"]
+
+        client.post(f"/api/v1/cart/{cart_id}/items", json={
+            "product_id": "ur_shoe_001",
+            "quantity": 1
+        })
+
+        # Checkout with forged/invalid signature
+        checkout_res = client.post(f"/api/v1/cart/{cart_id}/checkout", json={
+            "payment_method": "razorpay",
+            "customer_id": "c_demo_001",
+            "razorpay_order_id": "order_123",
+            "razorpay_payment_id": "pay_123",
+            "razorpay_signature": "forged_invalid_signature",
+        })
+        assert checkout_res.status_code == 400
+        assert "invalid razorpay payment signature" in checkout_res.json()["detail"].lower()
+
+        # Stock must NOT be decremented
+        products_after = _load_products()
+        assert products_after["ur_shoe_001"].inventory_quantity == initial_qty
+
+
+def test_checkout_razorpay_missing_parameters_rejected() -> None:
+    create_res = client.post("/api/v1/cart", json={
+        "merchant_id": "m_urbanrun",
+        "customer_id": "c_demo_001"
+    })
+    cart_id = create_res.json()["cart_id"]
+
+    client.post(f"/api/v1/cart/{cart_id}/items", json={
+        "product_id": "ur_shoe_001",
+        "quantity": 1
+    })
+
+    # Missing signature and payment ID
+    checkout_res = client.post(f"/api/v1/cart/{cart_id}/checkout", json={
+        "payment_method": "razorpay",
+        "customer_id": "c_demo_001",
+    })
+    assert checkout_res.status_code == 400
+    assert "razorpay payment verification requires" in checkout_res.json()["detail"].lower()

@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.db.models import Order, OrderItem, AgentSession
-from app.services import cart_service
+from app.services import cart_service, razorpay_service
 from app.services.catalog_service import (
     decrement_inventory,
     increment_inventory,
@@ -17,10 +17,17 @@ def checkout_cart(
     db: Session,
     customer_id: str | None = None,
     merchant_id: str | None = None,
+    razorpay_order_id: str | None = None,
+    razorpay_payment_id: str | None = None,
+    razorpay_signature: str | None = None,
 ) -> Order:
     """
     Checkout the cart, deduct inventory, record deterministic payment
     details, and create the order.
+
+    For Razorpay payments:
+    - Cryptographic signature is verified server-side before any inventory mutation.
+    - Idempotency ensures duplicate callbacks return the existing order.
 
     Inventory is decremented before the database transaction is committed.
     If database processing fails, the database transaction is rolled back
@@ -41,16 +48,25 @@ def checkout_cart(
             f"Cart {cart_id} not found"
         )
 
-    # Keep a stable identifier because SQLAlchemy rollback can expire
-    # ORM attributes.
+    # Keep a stable identifier because SQLAlchemy rollback can expire ORM attributes.
     stable_cart_id = cart.id
 
-    # 2. Idempotency check.
-    existing_order = (
-        db.query(Order)
-        .filter(Order.cart_id == stable_cart_id)
-        .first()
-    )
+    # 2. Idempotency check: Return existing order if cart or payment was already finalized.
+    if razorpay_payment_id:
+        existing_order = (
+            db.query(Order)
+            .filter(
+                (Order.cart_id == stable_cart_id)
+                | (Order.payment_id == razorpay_payment_id)
+            )
+            .first()
+        )
+    else:
+        existing_order = (
+            db.query(Order)
+            .filter(Order.cart_id == stable_cart_id)
+            .first()
+        )
 
     if existing_order:
         return existing_order
@@ -76,28 +92,40 @@ def checkout_cart(
             f"Cart validation failed: {issues_str}"
         )
 
-    # 5. Collect inventory changes.
+    # 5. Server-side payment verification for Razorpay.
+    if payment_method == "razorpay":
+        if not razorpay_order_id or not razorpay_payment_id or not razorpay_signature:
+            raise ValueError(
+                "Razorpay payment verification requires razorpay_order_id, razorpay_payment_id, and razorpay_signature."
+            )
+
+        is_valid = razorpay_service.verify_payment_signature(
+            razorpay_order_id=razorpay_order_id,
+            razorpay_payment_id=razorpay_payment_id,
+            razorpay_signature=razorpay_signature,
+        )
+        if not is_valid:
+            raise ValueError("Invalid Razorpay payment signature.")
+
+        payment_id = razorpay_payment_id
+        transaction_ref = razorpay_order_id
+    else:
+        # Mock payment identifiers
+        payment_id = f"pay_{uuid.uuid4().hex[:12]}"
+        transaction_ref = f"txn_{uuid.uuid4().hex[:12]}"
+
+    # 6. Collect inventory changes.
     items_to_dec = {
         item.product_id: item.quantity
         for item in cart.items
     }
 
-    # 6. Safely decrement inventory.
+    # 7. Safely decrement inventory under cross-process file lock.
     decrement_inventory(items_to_dec)
 
     try:
-        # 7. Generate mock payment references.
-        payment_id = (
-            f"pay_{uuid.uuid4().hex[:12]}"
-        )
-        transaction_ref = (
-            f"txn_{uuid.uuid4().hex[:12]}"
-        )
-
         # 8. Create order.
-        order_id = (
-            f"ord_{uuid.uuid4().hex[:12]}"
-        )
+        order_id = f"ord_{uuid.uuid4().hex[:12]}"
 
         order = Order(
             order_id=order_id,
@@ -131,7 +159,6 @@ def checkout_cart(
                 unit_price=item.unit_price_inr,
                 line_total=item.line_total_inr,
             )
-
             db.add(order_item)
 
         # 10. Mark cart as checked out.
@@ -141,9 +168,7 @@ def checkout_cart(
         # 11. Clear cart references from active agent sessions.
         sessions = (
             db.query(AgentSession)
-            .filter(
-                AgentSession.cart_id == stable_cart_id
-            )
+            .filter(AgentSession.cart_id == stable_cart_id)
             .all()
         )
 
@@ -153,7 +178,6 @@ def checkout_cart(
 
         # 12. Commit the database transaction.
         db.commit()
-
         db.refresh(order)
 
         return order
@@ -162,9 +186,7 @@ def checkout_cart(
         # Database state must be rolled back first.
         db.rollback()
 
-        # Refresh the cart after rollback so its attributes are
-        # loaded again. This prevents DetachedInstanceError when
-        # the caller later accesses cart.id after the session closes.
+        # Refresh the cart after rollback so its attributes are loaded again.
         try:
             db.refresh(cart)
         except Exception:

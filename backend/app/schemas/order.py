@@ -41,6 +41,9 @@ class OrderSchema(BaseModel):
 class CheckoutRequest(BaseModel):
     payment_method: str = Field(default="mock_upi")
     customer_id: str
+    razorpay_order_id: str | None = None
+    razorpay_payment_id: str | None = None
+    razorpay_signature: str | None = None
 
 
 class TrackingTimelineEvent(BaseModel):

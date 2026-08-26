@@ -16,6 +16,38 @@ type ValidationResult = {
   issues: ValidationIssue[];
 };
 
+interface RazorpaySuccessResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayOptions {
+  key?: string | null;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpaySuccessResponse) => void | Promise<void>;
+  modal?: {
+    ondismiss?: () => void;
+  };
+  theme?: {
+    color?: string;
+  };
+}
+
+interface RazorpayInstance {
+  open: () => void;
+}
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
+  }
+}
+
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,9 +58,30 @@ export default function CartPage() {
 
   // New checkout state variables
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "review" | "success">("cart");
-  const [paymentMethod, setPaymentMethod] = useState<"mock_upi" | "mock_card">("mock_upi");
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "mock_upi" | "mock_card">("razorpay");
   const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
+
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window !== "undefined" && window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const clearCartStorage = () => {
+    const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
+    const sessionId = typeof window !== "undefined" ? window.sessionStorage.getItem(SESSION_STORAGE_KEY) : null;
+    const storageKey = sessionId ? `agentpay_cart_id:${sessionId}` : "agentpay_cart_id";
+    localStorage.removeItem(storageKey);
+  };
 
   const handleProceedToCheckout = async () => {
     if (!cart) return;
@@ -59,12 +112,103 @@ export default function CartPage() {
     setCheckingOut(true);
 
     try {
+      if (paymentMethod === "razorpay") {
+        const orderRes = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/payment/create-order`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customer_id: cart.customer_id }),
+        });
+
+        if (!orderRes.ok) {
+          let errMsg = `Failed to initialize payment (status ${orderRes.status})`;
+          try {
+            const errData = await orderRes.json();
+            if (errData && errData.detail) {
+              errMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+            }
+          } catch {}
+          throw new Error(errMsg);
+        }
+
+        const paymentOrder = await orderRes.json();
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          throw new Error("Unable to load Razorpay payment SDK. Please verify internet connection.");
+        }
+
+        const options = {
+          key: paymentOrder.key_id,
+          amount: paymentOrder.amount_paise,
+          currency: paymentOrder.currency || "INR",
+          name: "AgentPay Commerce",
+          description: `Order for Cart ${cart.cart_id}`,
+          order_id: paymentOrder.razorpay_order_id,
+          handler: async function (response: {
+            razorpay_payment_id: string;
+            razorpay_order_id: string;
+            razorpay_signature: string;
+          }) {
+            setCheckingOut(true);
+            try {
+              const checkoutRes = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/checkout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  payment_method: "razorpay",
+                  customer_id: cart.customer_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+
+              if (!checkoutRes.ok) {
+                let verifyErrMsg = `Checkout verification failed (status ${checkoutRes.status})`;
+                try {
+                  const errData = await checkoutRes.json();
+                  if (errData && errData.detail) {
+                    verifyErrMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+                  }
+                } catch {}
+                throw new Error(verifyErrMsg);
+              }
+
+              const orderData = (await checkoutRes.json()) as Order;
+              setPlacedOrder(orderData);
+              clearCartStorage();
+              setCheckoutStep("success");
+            } catch (verifyErr) {
+              setActionError(getErrorMessage(verifyErr, "Payment verification failed."));
+            } finally {
+              setCheckingOut(false);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setCheckingOut(false);
+            },
+          },
+          theme: {
+            color: "#4f46e5",
+          },
+        };
+
+        if (window.Razorpay) {
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } else {
+          throw new Error("Razorpay SDK not initialized.");
+        }
+        return;
+      }
+
+      // Mock direct checkout fallback
       const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           payment_method: paymentMethod,
-          customer_id: cart.customer_id
+          customer_id: cart.customer_id,
         }),
       });
 
@@ -81,18 +225,14 @@ export default function CartPage() {
 
       const orderData = (await res.json()) as Order;
       setPlacedOrder(orderData);
-
-      // Clear localStorage cart reference so next session starts fresh
-      const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
-      const sessionId = typeof window !== "undefined" ? window.sessionStorage.getItem(SESSION_STORAGE_KEY) : null;
-      const storageKey = sessionId ? `agentpay_cart_id:${sessionId}` : "agentpay_cart_id";
-      localStorage.removeItem(storageKey);
-
+      clearCartStorage();
       setCheckoutStep("success");
     } catch (err) {
       setActionError(getErrorMessage(err, "Error placing order"));
     } finally {
-      setCheckingOut(false);
+      if (paymentMethod !== "razorpay") {
+        setCheckingOut(false);
+      }
     }
   };
 
@@ -425,6 +565,24 @@ export default function CartPage() {
               ⚠️ DEMO ENVIRONMENT: This is a sandboxed payment layer. No real money or real card details will be collected or processed.
             </p>
             <div className="space-y-2.5">
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 border-indigo-500 bg-indigo-50/40 hover:bg-indigo-50/70 transition">
+                <input
+                  type="radio"
+                  name="payment"
+                  value="razorpay"
+                  checked={paymentMethod === "razorpay"}
+                  onChange={() => setPaymentMethod("razorpay")}
+                  className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-950">Razorpay (Test Mode)</p>
+                    <span className="text-2xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">RECOMMENDED</span>
+                  </div>
+                  <p className="text-2xs text-muted-foreground">Real Razorpay Checkout popup (UPI, Cards, NetBanking Sandbox)</p>
+                </div>
+              </label>
+
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-slate-50 transition">
                 <input
                   type="radio"
@@ -435,8 +593,8 @@ export default function CartPage() {
                   className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
                 />
                 <div>
-                  <p className="text-sm font-semibold text-slate-950">Mock UPI</p>
-                  <p className="text-2xs text-muted-foreground">Simulate instant UPI sandbox payment</p>
+                  <p className="text-sm font-semibold text-slate-950">Mock Direct UPI</p>
+                  <p className="text-2xs text-muted-foreground">Simulate instant UPI direct sandbox payment without popup</p>
                 </div>
               </label>
 
@@ -450,8 +608,8 @@ export default function CartPage() {
                   className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
                 />
                 <div>
-                  <p className="text-sm font-semibold text-slate-950">Mock Card</p>
-                  <p className="text-2xs text-muted-foreground">Simulate card sandbox credit/debit transaction</p>
+                  <p className="text-sm font-semibold text-slate-950">Mock Direct Card</p>
+                  <p className="text-2xs text-muted-foreground">Simulate direct card sandbox transaction without popup</p>
                 </div>
               </label>
             </div>
