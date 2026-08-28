@@ -22,11 +22,12 @@ class ClientWrapper:
         return self.client.get(url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
+        json_data = kwargs.get("json", {})
         if url == "/api/v1/cart":
-            json_data = kwargs.get("json", {})
-            if json_data and "customer_id" in json_data:
+            if isinstance(json_data, dict) and "customer_id" in json_data:
                 self.last_customer_id = json_data["customer_id"]
-        if "/api/v1/cart/" in url and "customer_id" not in url and not url.endswith("/checkout"):
+        has_cust = ("customer_id" in url) or (isinstance(json_data, dict) and "customer_id" in json_data)
+        if "/api/v1/cart/" in url and not has_cust and not url.endswith("/checkout"):
             sep = "&" if "?" in url else "?"
             url = f"{url}{sep}customer_id={self.last_customer_id}"
         return self.client.post(url, *args, **kwargs)
@@ -55,7 +56,7 @@ def test_post_purchase_lifecycle_and_tracking() -> None:
     cart_id = create_res.json()["cart_id"]
 
     client.post(f"/api/v1/cart/{cart_id}/items", json={
-        "product_id": "ur_audio_001",
+        "product_id": "ur_shoe_001",
         "quantity": 2
     })
 
@@ -110,14 +111,14 @@ def test_post_purchase_cancellation_and_inventory_restore() -> None:
     })
     cart_id = create_res.json()["cart_id"]
 
-    # Headphones (ur_audio_001)
+    # Headphones (ur_shoe_001)
     client.post(f"/api/v1/cart/{cart_id}/items", json={
-        "product_id": "ur_audio_001",
+        "product_id": "ur_shoe_001",
         "quantity": 1
     })
 
     products_before = _load_products()
-    inv_before = products_before["ur_audio_001"].inventory_quantity
+    inv_before = products_before["ur_shoe_001"].inventory_quantity
 
     checkout_res = client.post(f"/api/v1/cart/{cart_id}/checkout", json={
         "payment_method": "mock_card",
@@ -127,7 +128,7 @@ def test_post_purchase_cancellation_and_inventory_restore() -> None:
 
     # Deducted inventory check
     products_after_checkout = _load_products()
-    assert products_after_checkout["ur_audio_001"].inventory_quantity == inv_before - 1
+    assert products_after_checkout["ur_shoe_001"].inventory_quantity == inv_before - 1
 
     # 2. Cancel order
     cancel_res = client.post(f"/api/v1/checkout/order/{order_id}/cancel", json={
@@ -139,7 +140,7 @@ def test_post_purchase_cancellation_and_inventory_restore() -> None:
 
     # Restored inventory check
     products_after_cancel = _load_products()
-    assert products_after_cancel["ur_audio_001"].inventory_quantity == inv_before
+    assert products_after_cancel["ur_shoe_001"].inventory_quantity == inv_before
 
     # 3. Duplicate cancellation check (must be idempotent/ignored gracefully)
     cancel_res_dup = client.post(f"/api/v1/checkout/order/{order_id}/cancel", json={
@@ -150,7 +151,7 @@ def test_post_purchase_cancellation_and_inventory_restore() -> None:
     
     # Must NOT restore inventory twice
     products_dup = _load_products()
-    assert products_dup["ur_audio_001"].inventory_quantity == inv_before
+    assert products_dup["ur_shoe_001"].inventory_quantity == inv_before
 
 
 def test_post_purchase_returns_workflow() -> None:
@@ -162,7 +163,7 @@ def test_post_purchase_returns_workflow() -> None:
     cart_id = create_res.json()["cart_id"]
 
     client.post(f"/api/v1/cart/{cart_id}/items", json={
-        "product_id": "ur_audio_001",
+        "product_id": "ur_shoe_001",
         "quantity": 1
     })
 
@@ -175,7 +176,7 @@ def test_post_purchase_returns_workflow() -> None:
     # Try return in placed status (should fail)
     ret_fail = client.post(f"/api/v1/checkout/order/{order_id}/return", json={
         "customer_id": "c_post_003",
-        "product_id": "ur_audio_001",
+        "product_id": "ur_shoe_001",
         "quantity": 1,
         "reason": "Not fits"
     })
@@ -192,7 +193,7 @@ def test_post_purchase_returns_workflow() -> None:
     # 2. Submit valid return request
     ret_success = client.post(f"/api/v1/checkout/order/{order_id}/return", json={
         "customer_id": "c_post_003",
-        "product_id": "ur_audio_001",
+        "product_id": "ur_shoe_001",
         "quantity": 1,
         "reason": "Defective item received"
     })
@@ -200,13 +201,13 @@ def test_post_purchase_returns_workflow() -> None:
     ret_data = ret_success.json()
     assert ret_data["status"] == "requested"
     assert len(ret_data["items"]) == 1
-    assert ret_data["items"][0]["product_id"] == "ur_audio_001"
+    assert ret_data["items"][0]["product_id"] == "ur_shoe_001"
     assert ret_data["items"][0]["reason"] == "Defective item received"
 
     # 3. Duplicate return request (should fail)
     ret_dup = client.post(f"/api/v1/checkout/order/{order_id}/return", json={
         "customer_id": "c_post_003",
-        "product_id": "ur_audio_001",
+        "product_id": "ur_shoe_001",
         "quantity": 1,
         "reason": "Duplicate try"
     })
@@ -223,7 +224,7 @@ def test_post_purchase_security_ownership() -> None:
     cart_id = create_res.json()["cart_id"]
 
     client.post(f"/api/v1/cart/{cart_id}/items", json={
-        "product_id": "ur_audio_001",
+        "product_id": "ur_shoe_001",
         "quantity": 1,
         "customer_id": "c_customer_a"
     })
@@ -249,7 +250,7 @@ def test_post_purchase_security_ownership() -> None:
     # 4. Customer B attempts to return Customer A's order (should fail)
     return_res = client.post(f"/api/v1/checkout/order/{order_id}/return", json={
         "customer_id": "c_customer_b",
-        "product_id": "ur_audio_001",
+        "product_id": "ur_shoe_001",
         "quantity": 1
     })
     assert return_res.status_code == 403

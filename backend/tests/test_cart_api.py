@@ -20,13 +20,17 @@ class ClientWrapper:
         return self.client.get(url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
-        if "/api/v1/cart/" in url and "customer_id" not in url:
+        json_data = kwargs.get("json", {})
+        has_cust = ("customer_id" in url) or (isinstance(json_data, dict) and "customer_id" in json_data)
+        if "/api/v1/cart/" in url and not has_cust:
             sep = "&" if "?" in url else "?"
             url = f"{url}{sep}customer_id=c_demo_001"
         return self.client.post(url, *args, **kwargs)
 
     def patch(self, url, *args, **kwargs):
-        if "/api/v1/cart/" in url and "customer_id" not in url:
+        json_data = kwargs.get("json", {})
+        has_cust = ("customer_id" in url) or (isinstance(json_data, dict) and "customer_id" in json_data)
+        if "/api/v1/cart/" in url and not has_cust:
             sep = "&" if "?" in url else "?"
             url = f"{url}{sep}customer_id=c_demo_001"
         return self.client.patch(url, *args, **kwargs)
@@ -440,3 +444,73 @@ def test_20_merchant_isolation_is_enforced() -> None:
         })
         assert response.status_code == 400
         assert "different merchant" in response.json()["detail"].lower()
+
+
+def test_regression_stable_customer_same_cart_persistence() -> None:
+    """
+    Regression test:
+    Verify that an item added via canonical customer_id is preserved,
+    can be retrieved repeatedly using the same cart_id and customer_id,
+    and does not generate a new cart.
+    """
+    customer_id = "c_demo_001"
+
+    # 1. Create cart
+    create_res = client.post("/api/v1/cart", json={
+        "merchant_id": "m_urbanrun",
+        "customer_id": customer_id
+    })
+    assert create_res.status_code == 201
+    cart_id = create_res.json()["cart_id"]
+
+    # 2. Add product
+    add_res = client.post(f"/api/v1/cart/{cart_id}/items", json={
+        "product_id": "ur_shoe_001",
+        "quantity": 1,
+        "customer_id": customer_id
+    })
+    assert add_res.status_code == 200
+    assert len(add_res.json()["items"]) == 1
+    assert add_res.json()["items"][0]["product_id"] == "ur_shoe_001"
+
+    # 3. Repeated GET requests (simulating navigation / refresh) return the exact same cart
+    get1 = client.get(f"/api/v1/cart/{cart_id}?customer_id={customer_id}")
+    assert get1.status_code == 200
+    assert get1.json()["cart_id"] == cart_id
+    assert len(get1.json()["items"]) == 1
+    assert get1.json()["items"][0]["product_id"] == "ur_shoe_001"
+
+    get2 = client.get(f"/api/v1/cart/{cart_id}?customer_id={customer_id}")
+    assert get2.status_code == 200
+    assert get2.json()["cart_id"] == cart_id
+
+    # 4. Adding a second product updates the existing cart rather than creating a new one
+    add2 = client.post(f"/api/v1/cart/{cart_id}/items", json={
+        "product_id": "ur_shoe_002",
+        "quantity": 1,
+        "customer_id": customer_id
+    })
+    assert add2.status_code == 200
+    assert add2.json()["cart_id"] == cart_id
+    assert len(add2.json()["items"]) == 2
+
+    # 5. Quantity update operates on the same cart
+    patch_res = client.patch(f"/api/v1/cart/{cart_id}/items/ur_shoe_001", json={
+        "quantity": 2,
+        "customer_id": customer_id
+    })
+    assert patch_res.status_code == 200
+    assert patch_res.json()["cart_id"] == cart_id
+    item1 = next(item for item in patch_res.json()["items"] if item["product_id"] == "ur_shoe_001")
+    assert item1["quantity"] == 2
+
+    # 6. Customer isolation: another customer cannot read or mutate this cart
+    other_get = client.get(f"/api/v1/cart/{cart_id}?customer_id=c_other_customer")
+    assert other_get.status_code == 403
+
+    other_patch = client.patch(f"/api/v1/cart/{cart_id}/items/ur_shoe_001", json={
+        "quantity": 5,
+        "customer_id": "c_other_customer"
+    })
+    assert other_patch.status_code == 403
+

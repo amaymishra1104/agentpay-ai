@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Cart, Order } from "../../lib/types";
-import { API_BASE_URL } from "../../lib/api";
+import {
+  API_BASE_URL,
+  DEFAULT_CUSTOMER_ID,
+  getStoredCartId,
+  setStoredCartId,
+  clearStoredCartId,
+} from "../../lib/api";
 
 type ValidationIssue = {
   type: string;
@@ -77,10 +83,7 @@ export default function CartPage() {
   };
 
   const clearCartStorage = () => {
-    const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
-    const sessionId = typeof window !== "undefined" ? window.sessionStorage.getItem(SESSION_STORAGE_KEY) : null;
-    const storageKey = sessionId ? `agentpay_cart_id:${sessionId}` : "agentpay_cart_id";
-    localStorage.removeItem(storageKey);
+    clearStoredCartId();
   };
 
   const handleProceedToCheckout = async () => {
@@ -88,7 +91,7 @@ export default function CartPage() {
     setActionError(null);
     setValidating(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${cart.customer_id}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Validation check failed.");
@@ -116,7 +119,7 @@ export default function CartPage() {
         const orderRes = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/payment/create-order`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ customer_id: cart.customer_id }),
+          body: JSON.stringify({ customer_id: cart.customer_id || DEFAULT_CUSTOMER_ID }),
         });
 
         if (!orderRes.ok) {
@@ -155,7 +158,7 @@ export default function CartPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   payment_method: "razorpay",
-                  customer_id: cart.customer_id,
+                  customer_id: cart.customer_id || DEFAULT_CUSTOMER_ID,
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
@@ -208,7 +211,7 @@ export default function CartPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           payment_method: paymentMethod,
-          customer_id: cart.customer_id,
+          customer_id: cart.customer_id || DEFAULT_CUSTOMER_ID,
         }),
       });
 
@@ -249,7 +252,7 @@ export default function CartPage() {
   const dummyEmptyCart = (cartId: string | null): Cart => ({
     cart_id: cartId || "",
     merchant_id: "m_urbanrun",
-    customer_id: "c_demo_001",
+    customer_id: DEFAULT_CUSTOMER_ID,
     currency: "INR",
     items: [],
     subtotal_inr: 0,
@@ -266,21 +269,30 @@ export default function CartPage() {
   useEffect(() => {
     async function initCart() {
       try {
-        const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
-        const sessionId = typeof window !== "undefined" ? window.sessionStorage.getItem(SESSION_STORAGE_KEY) : null;
-        const storageKey = sessionId ? `agentpay_cart_id:${sessionId}` : "agentpay_cart_id";
-
-        const storedId = localStorage.getItem(storageKey);
+        const storedId = getStoredCartId();
         if (!storedId) {
           // Instead of creating a database record immediately, show a clean client empty cart
           setCart(dummyEmptyCart(null));
         } else {
           // Fetch existing cart
-          const res = await fetch(`${API_BASE_URL}/cart/${storedId}?customer_id=c_demo_001`);
+          const res = await fetch(`${API_BASE_URL}/cart/${storedId}?customer_id=${DEFAULT_CUSTOMER_ID}`);
           if (!res.ok) {
-            // If stored cart ID is invalid/expired on server, clear from storage and fallback to empty
-            localStorage.removeItem(storageKey);
-            setCart(dummyEmptyCart(null));
+            if (res.status === 404) {
+              // If stored cart ID does not exist on server, clear from storage and fallback to empty
+              clearStoredCartId();
+              setCart(dummyEmptyCart(null));
+            } else {
+              // For other errors (e.g. 403 or 500), do NOT destroy localStorage cart ID
+              let errMsg = `Failed to load cart (${res.status})`;
+              try {
+                const errData = await res.json();
+                if (errData?.detail) {
+                  errMsg = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+                }
+              } catch {}
+              setError(errMsg);
+              setCart(dummyEmptyCart(storedId));
+            }
             return;
           }
           const data = (await res.json()) as Cart;
@@ -289,7 +301,7 @@ export default function CartPage() {
           // Handle checked_out carts on page refresh/initial load
           if (data.status === "checked_out") {
             try {
-              const orderRes = await fetch(`${API_BASE_URL}/checkout/order/by-cart/${data.cart_id}?customer_id=${data.customer_id}`);
+              const orderRes = await fetch(`${API_BASE_URL}/checkout/order/by-cart/${data.cart_id}?customer_id=${data.customer_id || DEFAULT_CUSTOMER_ID}`);
               if (orderRes.ok) {
                 const orderData = (await orderRes.json()) as Order;
                 setPlacedOrder(orderData);
@@ -320,9 +332,6 @@ export default function CartPage() {
     try {
       // If the cart doesn't exist on server yet (dummy empty cart), create it first
       let activeCartId = cart.cart_id;
-      const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
-      const sessionId = typeof window !== "undefined" ? window.sessionStorage.getItem(SESSION_STORAGE_KEY) : null;
-      const storageKey = sessionId ? `agentpay_cart_id:${sessionId}` : "agentpay_cart_id";
 
       if (!activeCartId) {
         const createRes = await fetch(`${API_BASE_URL}/cart`, {
@@ -330,16 +339,16 @@ export default function CartPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             merchant_id: "m_urbanrun",
-            customer_id: "c_demo_001",
+            customer_id: DEFAULT_CUSTOMER_ID,
           }),
         });
         if (!createRes.ok) throw new Error("Failed to initialize server-side cart");
         const createdData = (await createRes.json()) as Cart;
-        localStorage.setItem(storageKey, createdData.cart_id);
+        setStoredCartId(createdData.cart_id);
         activeCartId = createdData.cart_id;
       }
 
-      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}?customer_id=${cart.customer_id}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: newQty }),
@@ -369,7 +378,7 @@ export default function CartPage() {
     setActionError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}?customer_id=${cart.customer_id}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
         method: "DELETE",
       });
 
@@ -397,7 +406,7 @@ export default function CartPage() {
     setActionError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${cart.customer_id}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
         method: "DELETE",
       });
 
@@ -426,7 +435,7 @@ export default function CartPage() {
     setValidating(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${cart.customer_id}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
         method: "POST",
       });
 

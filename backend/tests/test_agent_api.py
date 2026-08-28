@@ -378,3 +378,51 @@ def test_groq_buyer_model_fail_fast_long_wait(monkeypatch):
     except Exception as exc:
         assert call_count == 1
         assert exc.__class__.__name__ == "DummyRateLimitError"
+
+
+def test_get_buyer_session_endpoint(monkeypatch):
+    configure_mock_provider(monkeypatch)
+    identifier = new_session_id()
+
+    # Chat with agent
+    chat_res = client.post(
+        "/api/v1/agent/chat",
+        json={
+            "session_id": identifier,
+            "customer_id": "c_demo_001",
+            "message": "I need running shoes under 5000",
+        },
+    )
+    assert chat_res.status_code == 200
+
+    # Retrieve session history
+    session_res = client.get(f"/api/v1/agent/sessions/{identifier}?customer_id=c_demo_001")
+    assert session_res.status_code == 200
+    data = session_res.json()
+    assert data["session_id"] == identifier
+    assert data["customer_id"] == "c_demo_001"
+    assert len(data["messages"]) >= 2
+    assert any(m["role"] == "user" for m in data["messages"])
+    assert any(m["role"] == "assistant" for m in data["messages"])
+
+
+def test_get_buyer_session_not_found():
+    res = client.get("/api/v1/agent/sessions/non-existent-session-id")
+    assert res.status_code == 404
+
+
+def test_get_buyer_session_customer_permission_denied(monkeypatch):
+    configure_mock_provider(monkeypatch)
+    identifier = new_session_id()
+
+    client.post(
+        "/api/v1/agent/chat",
+        json={
+            "session_id": identifier,
+            "customer_id": "c_customer_1",
+            "message": "Hello",
+        },
+    )
+
+    res = client.get(f"/api/v1/agent/sessions/{identifier}?customer_id=c_customer_2")
+    assert res.status_code == 403

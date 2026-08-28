@@ -1,6 +1,41 @@
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
 
+export const DEFAULT_CUSTOMER_ID = "c_demo_001";
+export const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
+export const CONVERSATION_STORAGE_KEY_PREFIX = "agentpay_conversation:";
+export const CART_STORAGE_KEY_PREFIX = "agentpay_cart_id:";
+
+export function getCartStorageKey(sessionId?: string | null): string {
+  if (sessionId) return `${CART_STORAGE_KEY_PREFIX}${sessionId}`;
+  if (typeof window !== "undefined") {
+    const session = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (session) return `${CART_STORAGE_KEY_PREFIX}${session}`;
+  }
+  return "agentpay_cart_id";
+}
+
+export function getStoredCartId(sessionId?: string | null): string | null {
+  if (typeof window === "undefined") return null;
+  const specificKey = getCartStorageKey(sessionId);
+  return window.localStorage.getItem(specificKey) || window.localStorage.getItem("agentpay_cart_id");
+}
+
+export function setStoredCartId(cartId: string, sessionId?: string | null): void {
+  if (typeof window === "undefined") return;
+  const specificKey = getCartStorageKey(sessionId);
+  window.localStorage.setItem(specificKey, cartId);
+  window.localStorage.setItem("agentpay_cart_id", cartId);
+}
+
+export function clearStoredCartId(sessionId?: string | null): void {
+  if (typeof window === "undefined") return;
+  const specificKey = getCartStorageKey(sessionId);
+  window.localStorage.removeItem(specificKey);
+  window.localStorage.removeItem("agentpay_cart_id");
+}
+
+
 export class ApiError extends Error {
   status: number;
   detail: string;

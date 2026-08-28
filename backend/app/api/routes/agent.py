@@ -21,6 +21,8 @@ from app.schemas.agent import (
     AgentChatRequest,
     AgentChatResponse,
     AgentToolResult,
+    AgentMessageItem,
+    AgentSessionResponse,
 )
 import logging
 
@@ -281,3 +283,61 @@ def chat_with_buyer_agent(
                 "the request."
             ),
         ) from exc
+
+
+@router.get(
+    "/sessions/{session_id}",
+    response_model=AgentSessionResponse,
+)
+@router.get(
+    "/session/{session_id}",
+    response_model=AgentSessionResponse,
+)
+def get_buyer_session(
+    session_id: str,
+    customer_id: str | None = None,
+) -> AgentSessionResponse:
+    """
+    Retrieve an existing buyer agent session along with all of its
+    persisted conversation messages.
+    """
+    session = get_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Session {session_id} not found",
+        )
+
+    if (
+        customer_id
+        and session.customer_id
+        and session.customer_id != customer_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: You do not have permission to view this session",
+        )
+
+    messages = get_messages(session_id)
+
+    return AgentSessionResponse(
+        session_id=session.session_id,
+        customer_id=session.customer_id,
+        cart_id=session.cart_id,
+        created_at=session.created_at,
+        updated_at=session.updated_at,
+        messages=[
+            AgentMessageItem(
+                id=m.id,
+                session_id=m.session_id,
+                sequence=m.sequence,
+                role=m.role,
+                message_type=m.message_type,
+                content=m.content,
+                tool_name=m.tool_name,
+                tool_call_id=m.tool_call_id,
+                created_at=m.created_at,
+            )
+            for m in messages
+        ],
+    )

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { API_BASE_URL } from "../../lib/api";
+import { API_BASE_URL, DEFAULT_CUSTOMER_ID } from "../../lib/api";
 import type { Order } from "../../lib/types";
 
-const CUSTOMER_ID = "demo-customer-001";
+const CUSTOMER_ID = DEFAULT_CUSTOMER_ID;
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);

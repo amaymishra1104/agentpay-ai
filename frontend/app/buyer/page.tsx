@@ -17,14 +17,17 @@ import {
   X,
 } from "lucide-react";
 
-import { API_BASE_URL } from "../../lib/api";
+import {
+  API_BASE_URL,
+  DEFAULT_CUSTOMER_ID,
+  SESSION_STORAGE_KEY,
+  CONVERSATION_STORAGE_KEY_PREFIX,
+  getStoredCartId,
+  setStoredCartId,
+  clearStoredCartId,
+} from "../../lib/api";
 
-const CUSTOMER_ID = "demo-customer-001";
-const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
-
-function cartStorageKey(activeSessionId: string) {
-  return `agentpay_cart_id:${activeSessionId}`;
-}
+const CUSTOMER_ID = DEFAULT_CUSTOMER_ID;
 
 type Product = {
   product_id: string;
@@ -161,9 +164,6 @@ export default function BuyerPage() {
   }, [cart]);
 
   useEffect(() => {
-    // Keep the conversation isolated to this browser tab.
-    // The previous hard-coded session ID caused old agent conversations
-    // to leak into new chats.
     let activeSessionId = window.sessionStorage.getItem(
       SESSION_STORAGE_KEY,
     );
@@ -177,13 +177,99 @@ export default function BuyerPage() {
     }
 
     setSessionId(activeSessionId);
+
+    // 1. Immediately restore cached conversation from sessionStorage
+    const cachedConversation = window.sessionStorage.getItem(
+      `${CONVERSATION_STORAGE_KEY_PREFIX}${activeSessionId}`
+    );
+    if (cachedConversation) {
+      try {
+        const parsedMessages: Message[] = JSON.parse(cachedConversation);
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+          const lastWithProducts = [...parsedMessages].reverse().find(
+            (m) => m.products && m.products.length > 0
+          );
+          if (lastWithProducts?.products) {
+            setProducts(lastWithProducts.products);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse cached conversation:", e);
+      }
+    }
+
+    // 2. Load cart and synchronize from backend
     void loadExistingCart(activeSessionId);
+    void restoreSessionFromBackend(activeSessionId);
   }, []);
 
+  async function restoreSessionFromBackend(activeSessionId: string) {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/agent/sessions/${activeSessionId}?customer_id=${CUSTOMER_ID}`
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.cart_id && !getStoredCartId(activeSessionId)) {
+        setStoredCartId(data.cart_id, activeSessionId);
+        void loadExistingCart(activeSessionId);
+      }
+
+      // If sessionStorage was empty, reconstruct UI messages from backend history
+      const cached = window.sessionStorage.getItem(
+        `${CONVERSATION_STORAGE_KEY_PREFIX}${activeSessionId}`
+      );
+      if (!cached && data.messages && data.messages.length > 0) {
+        const reconstructed: Message[] = [];
+        let currentProducts: Product[] | undefined = undefined;
+
+        for (const msg of data.messages) {
+          if (msg.role === "user") {
+            reconstructed.push({
+              id: `user-${msg.id || msg.sequence}`,
+              role: "user",
+              content: msg.content,
+            });
+            currentProducts = undefined;
+          } else if (msg.message_type === "tool_result") {
+            try {
+              const parsed = JSON.parse(msg.content);
+              if (parsed && Array.isArray(parsed.items)) {
+                currentProducts = parsed.items.filter(
+                  (item: unknown): item is Product =>
+                    typeof item === "object" && item !== null && typeof (item as Product).product_id === "string"
+                );
+              }
+            } catch {}
+          } else if (msg.role === "assistant" && (msg.message_type === "final" || msg.message_type === "text")) {
+            reconstructed.push({
+              id: `assistant-${msg.id || msg.sequence}`,
+              role: "assistant",
+              content: msg.content,
+              products: currentProducts && currentProducts.length > 0 ? currentProducts : undefined,
+            });
+            if (currentProducts && currentProducts.length > 0) {
+              setProducts(currentProducts);
+            }
+          }
+        }
+
+        if (reconstructed.length > 0) {
+          setMessages(reconstructed);
+          window.sessionStorage.setItem(
+            `${CONVERSATION_STORAGE_KEY_PREFIX}${activeSessionId}`,
+            JSON.stringify(reconstructed)
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Failed to restore session history from backend:", err);
+    }
+  }
+
   async function loadExistingCart(activeSessionId: string) {
-    const storedCartId = window.localStorage.getItem(
-      cartStorageKey(activeSessionId),
-    );
+    const storedCartId = getStoredCartId(activeSessionId);
 
     if (!storedCartId) {
       return;
@@ -195,13 +281,15 @@ export default function BuyerPage() {
       );
 
       if (!response.ok) {
-        window.localStorage.removeItem(cartStorageKey(activeSessionId));
+        if (response.status === 404) {
+          clearStoredCartId(activeSessionId);
+        }
         return;
       }
 
       const data: Cart = await response.json();
       if (data.status === "checked_out") {
-        window.localStorage.removeItem(cartStorageKey(activeSessionId));
+        clearStoredCartId(activeSessionId);
         setCart(null);
         return;
       }
@@ -231,13 +319,11 @@ export default function BuyerPage() {
 
     setCart(updatedCart);
 
-    window.localStorage.setItem(
-      cartStorageKey(sessionId),
-      updatedCart.cart_id,
-    );
+    setStoredCartId(updatedCart.cart_id, sessionId);
 
     return updatedCart;
   }
+
 
   async function updateCartItem(
     productId: string,
@@ -398,7 +484,16 @@ export default function BuyerPage() {
       content: text,
     };
 
-    setMessages((current) => [...current, userMessage]);
+    setMessages((current) => {
+      const next = [...current, userMessage];
+      if (sessionId) {
+        window.sessionStorage.setItem(
+          `${CONVERSATION_STORAGE_KEY_PREFIX}${sessionId}`,
+          JSON.stringify(next)
+        );
+      }
+      return next;
+    });
     setInput("");
     setLoading(true);
     setErrorMessage(null);
@@ -467,10 +562,16 @@ export default function BuyerPage() {
             : undefined,
       };
 
-      setMessages((current) => [
-        ...current,
-        assistantMessage,
-      ]);
+      setMessages((current) => {
+        const next = [...current, assistantMessage];
+        if (sessionId) {
+          window.sessionStorage.setItem(
+            `${CONVERSATION_STORAGE_KEY_PREFIX}${sessionId}`,
+            JSON.stringify(next)
+          );
+        }
+        return next;
+      });
 
       if (displayProducts.length > 0) {
         setProducts(displayProducts);
@@ -481,10 +582,7 @@ export default function BuyerPage() {
        * synchronize that server-side cart with the UI.
        */
       if (data.cart_id) {
-        window.localStorage.setItem(
-          cartStorageKey(sessionId),
-          data.cart_id,
-        );
+        setStoredCartId(data.cart_id, sessionId);
 
         try {
           await refreshCart(data.cart_id);
@@ -509,15 +607,24 @@ export default function BuyerPage() {
           : "Unable to reach the AgentPay backend.",
       );
 
-      setMessages((current) => [
-        ...current,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content:
-            "I couldn't complete that request right now. Please check that the AgentPay backend is running and try again.",
-        },
-      ]);
+      setMessages((current) => {
+        const next: Message[] = [
+          ...current,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content:
+              "I couldn't complete that request right now. Please check that the AgentPay backend is running and try again.",
+          },
+        ];
+        if (sessionId) {
+          window.sessionStorage.setItem(
+            `${CONVERSATION_STORAGE_KEY_PREFIX}${sessionId}`,
+            JSON.stringify(next)
+          );
+        }
+        return next;
+      });
     } finally {
       setLoading(false);
     }
@@ -542,7 +649,7 @@ export default function BuyerPage() {
       }
       
       if (!activeCartId) {
-        const storedCartId = window.localStorage.getItem(cartStorageKey(sessionId));
+        const storedCartId = getStoredCartId(sessionId);
         if (storedCartId) {
           activeCartId = storedCartId;
         }
@@ -567,10 +674,7 @@ export default function BuyerPage() {
         const newCartData: Cart = await createRes.json();
         activeCartId = newCartData.cart_id;
         setCart(newCartData);
-        window.localStorage.setItem(
-          cartStorageKey(sessionId),
-          newCartData.cart_id,
-        );
+        setStoredCartId(newCartData.cart_id, sessionId);
       }
 
       const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items?customer_id=${CUSTOMER_ID}`, {
