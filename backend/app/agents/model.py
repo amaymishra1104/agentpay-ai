@@ -276,10 +276,17 @@ class MockBuyerModel(BuyerModel):
                 ]
             )
 
-        if "compare" in user_message:
-            if self._has_tool_result(messages, "compare_products"):
+        # Comparison flow
+        if any(phrase in user_message for phrase in ("compare", "which one is better", "which is better", "better option", "which product")):
+            if self._has_tool_result_after_latest_user(messages, "compare_products"):
+                tool_res = self._latest_tool_result(messages, "compare_products")
+                if tool_res and tool_res.get("products"):
+                    p_names = " and ".join(p.get("name", "") for p in tool_res["products"][:2])
+                    return ModelResponse(
+                        content=f"Here is a comparison between {p_names}. Both offer excellent features with top build quality."
+                    )
                 return ModelResponse(
-                    content="I compared the first two matching products."
+                    content="I compared the matching products for you."
                 )
 
             product_ids = self._search_product_ids(messages)[:2]
@@ -293,21 +300,98 @@ class MockBuyerModel(BuyerModel):
                     ]
                 )
 
+        # Cheaper refinement flow
+        if "cheaper" in user_message or "lower price" in user_message or "less expensive" in user_message:
+            if self._has_tool_result_after_latest_user(messages, "search_products"):
+                tool_res = self._latest_tool_result(messages, "search_products")
+                category_name = "products"
+                if tool_res and tool_res.get("items"):
+                    first_item = tool_res["items"][0]
+                    category_name = first_item.get("category", "products").replace("_", " ")
+                return ModelResponse(
+                    content=f"Here are more affordable {category_name} from our catalog."
+                )
+
+            prev_query = "running shoes"
+            for m in reversed(messages):
+                if m.get("type") == "tool_result" and m.get("tool_name") == "search_products":
+                    content = m.get("content", "")
+                    if isinstance(content, str) and "running" in content:
+                        prev_query = "running"
+                    break
+
+            return ModelResponse(
+                tool_calls=[
+                    ToolCall(
+                        tool_name="search_products",
+                        arguments={
+                            "query": prev_query,
+                            "max_price": 3000,
+                        },
+                    )
+                ]
+            )
+
+        # Add or Remove cart flow
         if any(
             phrase in user_message
-            for phrase in ("add ", "put ", "remove ", "take ")
-        ) and ("cart" in user_message or "back" in user_message or "remove" in user_message):
+            for phrase in ("add ", "put ", "remove", "take ", "delete")
+        ) and ("cart" in user_message or "back" in user_message or "remove" in user_message or "item" in user_message):
             if self._has_tool_result_after_latest_user(messages, "add_to_cart") or self._has_tool_result_after_latest_user(messages, "remove_from_cart"):
                 return ModelResponse(
                     content="I updated your cart."
                 )
 
+            is_remove = any(w in user_message for w in ("remove", "take ", "delete"))
             product_ids = self._search_product_ids(messages)
-            product_id = product_ids[0] if product_ids else None
+            product_id = None
+
             if "second" in user_message and len(product_ids) > 1:
                 product_id = product_ids[1]
+            elif "first" in user_message and len(product_ids) > 0:
+                product_id = product_ids[0]
+            elif is_remove:
+                # Find most recently added product from add_to_cart tool call or cart item in history
+                for m in reversed(messages):
+                    if m.get("type") == "tool_call" and m.get("tool_name") == "add_to_cart":
+                        args = m.get("arguments") or {}
+                        if isinstance(args, str):
+                            try:
+                                args = json.loads(args)
+                            except Exception:
+                                pass
+                        if isinstance(args, dict) and "product_id" in args:
+                            product_id = args["product_id"]
+                            break
+                    if m.get("type") == "tool_result" and m.get("tool_name") in ("add_to_cart", "get_cart"):
+                        content = m.get("content", "")
+                        try:
+                            parsed = json.loads(content) if isinstance(content, str) else content
+                            if isinstance(parsed, dict) and parsed.get("items"):
+                                product_id = parsed["items"][-1].get("product_id")
+                                break
+                        except Exception:
+                            pass
+                if not product_id and product_ids:
+                    product_id = product_ids[0]
+
+            # If no product_id from search, try resolving from cart items
+            if not product_id:
+                for m in reversed(messages):
+                    if m.get("type") == "tool_result":
+                        content = m.get("content", "")
+                        if "items" in str(content):
+                            try:
+                                parsed = json.loads(content) if isinstance(content, str) else content
+                                if isinstance(parsed, dict) and parsed.get("items"):
+                                    product_id = parsed["items"][0].get("product_id")
+                            except Exception:
+                                pass
+                        if product_id:
+                            break
+
             if product_id:
-                action = "remove_from_cart" if "remove" in user_message or "take " in user_message else "add_to_cart"
+                action = "remove_from_cart" if is_remove else "add_to_cart"
                 arguments = {"product_id": product_id}
                 if action == "add_to_cart":
                     arguments["quantity"] = 1
@@ -320,13 +404,24 @@ class MockBuyerModel(BuyerModel):
                     ]
                 )
 
-        # If the graph has already executed a tool, the model
-        # should produce a final response rather than repeatedly
-        # requesting another tool.
         # Identify search keywords from user message dynamically
-        keywords = ["shoes", "shoe", "headphones", "headphone", "backpack", "backpacks", "laptop", "laptops", "phone", "smartphone", "smartwatches", "smartwatch", "yoga", "bottle", "product"]
+        search_keywords = [
+            "running", "shoes", "shoe", "trail", "headphones", "headphone", "earbuds", "earphones",
+            "apparel", "tshirt", "shorts", "jacket", "hoodie", "tights",
+            "backpack", "backpacks", "bag", "bags", "duffel", "rucksack",
+            "watch", "watches", "smartwatch", "tracker",
+            "equipment", "dumbbell", "pullup", "kettlebell", "rope", "bands",
+            "yoga", "mat", "blocks", "wheel",
+            "recovery", "massage", "ice", "acupressure",
+            "cycling", "bike", "helmet", "light", "gloves",
+            "electronics", "power bank", "scale", "speaker", "laptop", "laptops",
+            "hydration", "bottle", "flask", "shaker",
+            "sock", "socks",
+            "accessories", "cap", "sunglasses", "armband", "chafe",
+            "workout", "beginner", "gift", "deals", "rated", "product"
+        ]
         matched_keyword = None
-        for kw in keywords:
+        for kw in search_keywords:
             if kw in user_message:
                 matched_keyword = kw
                 break
@@ -366,26 +461,57 @@ class MockBuyerModel(BuyerModel):
                 content=f"I found matching {category_name} from the catalog."
             )
 
-        # Simulate the model deciding that a catalog search
-        # is required.
-        if matched_keyword or "under" in user_message:
+        # Simulate the model deciding that a catalog search is required.
+        is_search_intent = (
+            matched_keyword is not None
+            or "under" in user_message
+            or "find" in user_message
+            or "show" in user_message
+            or "looking for" in user_message
+            or "recommend" in user_message
+            or "need" in user_message
+            or "buy" in user_message
+            or "rated" in user_message
+            or "deal" in user_message
+        )
+
+        if is_search_intent:
             query = matched_keyword if matched_keyword else "products"
             if "shoes" in user_message or "shoe" in user_message:
                 query = "running shoes"
+            elif "wireless headphones" in user_message or "earbuds" in user_message:
+                query = "wireless headphones"
+            elif "headphones" in user_message or "headphone" in user_message:
+                query = "headphones"
+            elif "recovery" in user_message:
+                query = "recovery"
+            elif "beginner workout" in user_message or ("beginner" in user_message and "workout" in user_message):
+                query = "beginner workout"
+            elif "backpack" in user_message and "college" in user_message:
+                query = "backpack college"
+            elif "fitness watch" in user_message or "fitness watches" in user_message:
+                query = "fitness watch"
+            elif "gift" in user_message:
+                query = "gift"
+            elif "running" in user_message and "something" in user_message:
+                query = "running"
 
-            max_price = 5000
+            arguments: dict[str, Any] = {}
+            if query != "products" or not ("rated" in user_message or "under" in user_message):
+                arguments["query"] = query
+
             price_match = re.search(r"under\s*(?:₹|rs\.?)?\s*(\d+)", user_message)
             if price_match:
-                max_price = int(price_match.group(1))
+                arguments["max_price"] = int(price_match.group(1))
+
+            if "best rated" in user_message or "highly rated" in user_message or "top rated" in user_message:
+                arguments["min_rating"] = 4.7
 
             return ModelResponse(
                 tool_calls=[
                     ToolCall(
                         tool_name="search_products",
-                        arguments={
-                            "query": query,
-                            "max_price": max_price,
-                        },
+                        arguments=arguments,
                     )
                 ]
             )

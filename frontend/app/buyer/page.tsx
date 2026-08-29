@@ -123,9 +123,12 @@ type Cart = {
 };
 
 const starterPrompts = [
-  "Find wireless headphones under ₹5,000",
-  "Find a laptop for coding under ₹70,000",
-  "Build me a fitness kit under ₹10,000",
+  "Find something under ₹3,000",
+  "Help me choose something for running",
+  "Show me the best-rated products",
+  "Find a good gift under ₹5,000",
+  "What can I buy for my workout?",
+  "Show me some good deals",
 ];
 
 export default function BuyerPage() {

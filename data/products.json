@@ -2076,5 +2076,4119 @@
     "complementary_product_ids": [],
     "upsell_product_ids": [],
     "created_at": "2026-07-10T09:00:00Z"
+  },
+  {
+    "id": "ur_shoe_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SHOE-007",
+    "name": "CarbonPro Marathon Racer",
+    "category": "running_shoes",
+    "subcategory": "racing_shoes",
+    "description": "Full-length carbon fiber plate racing shoe with responsive PEBA foam for marathon personal bests.",
+    "price_inr": 12999,
+    "compare_at_price_inr": 15999,
+    "cost_inr": 6000,
+    "currency": "INR",
+    "inventory_quantity": 18,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 420,
+    "brand": "UrbanRun",
+    "tags": [
+      "running",
+      "shoes",
+      "marathon",
+      "carbon_plate",
+      "racing",
+      "speed",
+      "fast"
+    ],
+    "features": [
+      "carbon_fiber_plate",
+      "peba_foam",
+      "featherweight_upper",
+      "high_energy_return"
+    ],
+    "specifications": {
+      "weight_g": "195",
+      "drop_mm": "8",
+      "plate": "carbon",
+      "terrain": "road"
+    },
+    "image_url": "https://images.urbanrun.example/ur_shoe_007.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_sock_003",
+      "ur_watch_003"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_shoe_008",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SHOE-008",
+    "name": "StrideEase Beginner Running Shoe",
+    "category": "running_shoes",
+    "subcategory": "entry_running_shoes",
+    "description": "Comfortable, forgiving running shoe designed for new runners, daily walks, and light jogging under \u20b93000.",
+    "price_inr": 2499,
+    "compare_at_price_inr": 3499,
+    "cost_inr": 1100,
+    "currency": "INR",
+    "inventory_quantity": 40,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 610,
+    "brand": "UrbanRun",
+    "tags": [
+      "running",
+      "shoes",
+      "beginner",
+      "starter",
+      "budget",
+      "daily",
+      "jogging",
+      "walking",
+      "under_3000"
+    ],
+    "features": [
+      "soft_foam_cushion",
+      "wide_toe_box",
+      "breathable_mesh",
+      "durable_rubber_outsole"
+    ],
+    "specifications": {
+      "weight_g": "260",
+      "drop_mm": "10",
+      "terrain": "road_and_treadmill"
+    },
+    "image_url": "https://images.urbanrun.example/ur_shoe_008.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_001",
+      "ur_hyd_001"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_001",
+      "ur_shoe_003"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_shoe_009",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SHOE-009",
+    "name": "StabilityGrip Motion Control Shoe",
+    "category": "running_shoes",
+    "subcategory": "stability_running_shoes",
+    "description": "Engineered guide rails and arch support for overpronation and long-distance comfort under \u20b95000.",
+    "price_inr": 4999,
+    "compare_at_price_inr": 6499,
+    "cost_inr": 2300,
+    "currency": "INR",
+    "inventory_quantity": 22,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 280,
+    "brand": "UrbanRun",
+    "tags": [
+      "running",
+      "shoes",
+      "stability",
+      "support",
+      "overpronation",
+      "arch_support",
+      "long_distance",
+      "under_5000"
+    ],
+    "features": [
+      "guide_rail_support",
+      "dual_density_midsole",
+      "orthotic_insole",
+      "firm_heel_counter"
+    ],
+    "specifications": {
+      "weight_g": "285",
+      "drop_mm": "10",
+      "support": "stability"
+    },
+    "image_url": "https://images.urbanrun.example/ur_shoe_009.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_004",
+      "ur_acc_006"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_005"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_shoe_010",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SHOE-010",
+    "name": "CloudFloat Recovery Walking Shoe",
+    "category": "running_shoes",
+    "subcategory": "recovery_shoes",
+    "description": "Ultra-soft max-cushion slip-on shoe for post-run recovery, daily standing, and easy strolls.",
+    "price_inr": 3299,
+    "compare_at_price_inr": 4299,
+    "cost_inr": 1500,
+    "currency": "INR",
+    "inventory_quantity": 30,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 340,
+    "brand": "UrbanRun",
+    "tags": [
+      "running",
+      "shoes",
+      "recovery",
+      "walking",
+      "cushion",
+      "comfort",
+      "slip_on"
+    ],
+    "features": [
+      "superfoam_cushion",
+      "stretch_knit_upper",
+      "arch_cradle",
+      "slip_on_design"
+    ],
+    "specifications": {
+      "weight_g": "220",
+      "drop_mm": "6",
+      "closure": "slip_on"
+    },
+    "image_url": "https://images.urbanrun.example/ur_shoe_010.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_sock_002",
+      "ur_acc_001"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_005"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_shoe_011",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SHOE-011",
+    "name": "NitroPace Speed Trainer",
+    "category": "running_shoes",
+    "subcategory": "tempo_shoes",
+    "description": "Nitrogen-infused super-critical foam trainer for fast tempo workouts, 5k races, and interval training under \u20b96000.",
+    "price_inr": 5799,
+    "compare_at_price_inr": 7499,
+    "cost_inr": 2600,
+    "currency": "INR",
+    "inventory_quantity": 20,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 250,
+    "brand": "UrbanRun",
+    "tags": [
+      "running",
+      "shoes",
+      "tempo",
+      "speed",
+      "intervals",
+      "fast",
+      "nitrogen_foam"
+    ],
+    "features": [
+      "nitrogen_infused_midsole",
+      "rocker_geometry",
+      "breathable_monomesh"
+    ],
+    "specifications": {
+      "weight_g": "215",
+      "drop_mm": "6",
+      "cushion": "responsive"
+    },
+    "image_url": "https://images.urbanrun.example/ur_shoe_011.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_sock_003",
+      "ur_watch_004"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_007"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_shoe_012",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SHOE-012",
+    "name": "UrbanLite Budget Everyday Runner",
+    "category": "running_shoes",
+    "subcategory": "budget_running_shoes",
+    "description": "Affordable daily running shoe with responsive EVA sole, sleek design, and breathable upper under \u20b92000.",
+    "price_inr": 1899,
+    "compare_at_price_inr": 2699,
+    "cost_inr": 800,
+    "currency": "INR",
+    "inventory_quantity": 50,
+    "available": true,
+    "rating": 4.5,
+    "review_count": 410,
+    "brand": "UrbanRun",
+    "tags": [
+      "running",
+      "shoes",
+      "budget",
+      "cheap",
+      "daily",
+      "workout",
+      "under_2000",
+      "under_3000"
+    ],
+    "features": [
+      "eva_cushion",
+      "breathable_knit",
+      "anti_slip_sole"
+    ],
+    "specifications": {
+      "weight_g": "250",
+      "drop_mm": "8",
+      "terrain": "road"
+    },
+    "image_url": "https://images.urbanrun.example/ur_shoe_012.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_001",
+      "ur_hyd_001"
+    ],
+    "upsell_product_ids": [
+      "ur_shoe_008",
+      "ur_shoe_003"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_trail_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-TRAIL-006",
+    "name": "HydroShield Waterproof Trail Shoe",
+    "category": "trail_running_shoes",
+    "subcategory": "waterproof_trail_shoes",
+    "description": "Fully waterproof breathable membrane trail shoe with aggressive 5mm multidirectional lugs for monsoon hiking.",
+    "price_inr": 7999,
+    "compare_at_price_inr": 9999,
+    "cost_inr": 3800,
+    "currency": "INR",
+    "inventory_quantity": 16,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 195,
+    "brand": "UrbanRun",
+    "tags": [
+      "trail",
+      "running",
+      "shoes",
+      "waterproof",
+      "hiking",
+      "monsoon",
+      "mud",
+      "outdoor"
+    ],
+    "features": [
+      "waterproof_membrane",
+      "5mm_deep_lugs",
+      "reinforced_toe_cap",
+      "debris_gusset_tongue"
+    ],
+    "specifications": {
+      "weight_g": "310",
+      "drop_mm": "8",
+      "waterproof": "yes",
+      "lug_depth_mm": "5"
+    },
+    "image_url": "https://images.urbanrun.example/ur_trail_006.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_005",
+      "ur_hyd_002"
+    ],
+    "upsell_product_ids": [
+      "ur_trail_003"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_trail_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-TRAIL-007",
+    "name": "PathFinder Lite Road-to-Trail Shoe",
+    "category": "trail_running_shoes",
+    "subcategory": "light_trail_shoes",
+    "description": "Hybrid road-to-trail shoe perfect for gravel paths, park trails, and beginner trail runners under \u20b95000.",
+    "price_inr": 4299,
+    "compare_at_price_inr": 5499,
+    "cost_inr": 1900,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 210,
+    "brand": "UrbanRun",
+    "tags": [
+      "trail",
+      "running",
+      "shoes",
+      "hybrid",
+      "road_to_trail",
+      "beginner",
+      "under_5000",
+      "light_trail"
+    ],
+    "features": [
+      "hybrid_lugs",
+      "rock_plate_protection",
+      "breathable_mesh",
+      "durable_toe_guard"
+    ],
+    "specifications": {
+      "weight_g": "265",
+      "drop_mm": "8",
+      "terrain": "trail_and_road"
+    },
+    "image_url": "https://images.urbanrun.example/ur_trail_007.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_005",
+      "ur_belt_002"
+    ],
+    "upsell_product_ids": [
+      "ur_trail_001",
+      "ur_trail_002"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_trail_008",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-TRAIL-008",
+    "name": "AlpinePeak Ultra Trail Cruiser",
+    "category": "trail_running_shoes",
+    "subcategory": "ultra_trail_shoes",
+    "description": "Max-cushioned ultra-distance mountain trail shoe with Vibram Megagrip outsole for 50km+ trail ultras.",
+    "price_inr": 8999,
+    "compare_at_price_inr": 11499,
+    "cost_inr": 4200,
+    "currency": "INR",
+    "inventory_quantity": 14,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 140,
+    "brand": "UrbanRun",
+    "tags": [
+      "trail",
+      "running",
+      "shoes",
+      "ultra",
+      "mountain",
+      "vibram",
+      "max_cushion"
+    ],
+    "features": [
+      "vibram_megagrip",
+      "dual_density_superfoam",
+      "rock_shield",
+      "gaiter_attachment_points"
+    ],
+    "specifications": {
+      "weight_g": "295",
+      "drop_mm": "5",
+      "outsole": "Vibram Megagrip"
+    },
+    "image_url": "https://images.urbanrun.example/ur_trail_008.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_sock_005",
+      "ur_gear_004"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_watch_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-WATCH-006",
+    "name": "FitBand Core Activity Tracker",
+    "category": "sports_watches",
+    "subcategory": "fitness_band",
+    "description": "Slim, lightweight fitness watch with 24/7 heart rate, SpO2, sleep tracking, and 14-day battery under \u20b93000.",
+    "price_inr": 2499,
+    "compare_at_price_inr": 3499,
+    "cost_inr": 1000,
+    "currency": "INR",
+    "inventory_quantity": 45,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 520,
+    "brand": "PulseTrack",
+    "tags": [
+      "watch",
+      "fitness_watch",
+      "tracker",
+      "smartwatch",
+      "heart_rate",
+      "sleep",
+      "budget",
+      "under_3000",
+      "gift"
+    ],
+    "features": [
+      "amoled_display",
+      "heart_rate_monitor",
+      "spo2_sensor",
+      "14_day_battery",
+      "5atm_waterproof"
+    ],
+    "specifications": {
+      "battery_days": "14",
+      "water_resistance": "50m",
+      "weight_g": "28",
+      "screen": "AMOLED 1.47"
+    },
+    "image_url": "https://images.urbanrun.example/ur_watch_006.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_watch_upgrade"
+    ],
+    "complementary_product_ids": [
+      "ur_audio_002",
+      "ur_hyd_001"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_004",
+      "ur_watch_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_watch_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-WATCH-007",
+    "name": "PulseTrack Active AMOLED GPS Watch",
+    "category": "sports_watches",
+    "subcategory": "gps_running_watch",
+    "description": "Vibrant AMOLED touchscreen GPS sports watch with running power dynamics, offline music storage, and animated workouts.",
+    "price_inr": 13999,
+    "compare_at_price_inr": 16999,
+    "cost_inr": 6800,
+    "currency": "INR",
+    "inventory_quantity": 20,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 290,
+    "brand": "PulseTrack",
+    "tags": [
+      "watch",
+      "sports_watch",
+      "gps",
+      "amoled",
+      "running_watch",
+      "music",
+      "fitness"
+    ],
+    "features": [
+      "dual_frequency_gps",
+      "music_storage",
+      "vo2_max_estimator",
+      "amoled_touchscreen",
+      "training_readiness"
+    ],
+    "specifications": {
+      "screen": "AMOLED 1.3 inch",
+      "battery_gps_hours": "26",
+      "water_resistance": "5ATM"
+    },
+    "image_url": "https://images.urbanrun.example/ur_watch_007.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_watch_upgrade"
+    ],
+    "complementary_product_ids": [
+      "ur_audio_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_005"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_watch_008",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-WATCH-008",
+    "name": "SolarTrek Rugged Outdoor GPS Watch",
+    "category": "sports_watches",
+    "subcategory": "outdoor_gps_watch",
+    "description": "Military-grade rugged solar charging GPS watch with topographic offline maps, barometric altimeter, and 45-day battery.",
+    "price_inr": 24999,
+    "compare_at_price_inr": 29999,
+    "cost_inr": 12000,
+    "currency": "INR",
+    "inventory_quantity": 10,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 160,
+    "brand": "PulseTrack",
+    "tags": [
+      "watch",
+      "sports_watch",
+      "gps",
+      "solar",
+      "outdoor",
+      "hiking",
+      "battery",
+      "rugged"
+    ],
+    "features": [
+      "solar_charging_lens",
+      "offline_topographic_maps",
+      "military_std_810g",
+      "barometric_altimeter"
+    ],
+    "specifications": {
+      "battery_days": "45",
+      "water_resistance": "100m",
+      "glass": "Sapphire Solar"
+    },
+    "image_url": "https://images.urbanrun.example/ur_watch_008.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_watch_upgrade"
+    ],
+    "complementary_product_ids": [
+      "ur_trail_003",
+      "ur_gear_004"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_watch_009",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-WATCH-009",
+    "name": "FitStep Daily Smartwatch",
+    "category": "sports_watches",
+    "subcategory": "smartwatches",
+    "description": "Stylish Bluetooth calling smartwatch with 100+ sports modes, voice assistant, and step counter under \u20b94000.",
+    "price_inr": 3499,
+    "compare_at_price_inr": 4999,
+    "cost_inr": 1500,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 390,
+    "brand": "PulseTrack",
+    "tags": [
+      "watch",
+      "smartwatch",
+      "fitness_watch",
+      "bluetooth_calling",
+      "under_5000",
+      "gift",
+      "daily"
+    ],
+    "features": [
+      "bluetooth_calling_mic_speaker",
+      "100_sports_modes",
+      "1_85_hd_display",
+      "7_day_battery"
+    ],
+    "specifications": {
+      "screen": "1.85 inch HD",
+      "battery_days": "7",
+      "ip_rating": "IP68"
+    },
+    "image_url": "https://images.urbanrun.example/ur_watch_009.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_audio_002",
+      "ur_hyd_001"
+    ],
+    "upsell_product_ids": [
+      "ur_watch_004",
+      "ur_watch_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_003",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AUDIO-003",
+    "name": "AirSport Bone Conduction Open-Ear Headphones",
+    "category": "headphones",
+    "subcategory": "bone_conduction_headphones",
+    "description": "Open-ear bone conduction headphones for safe outdoor running with situational awareness and sweatproof IP67 rating under \u20b95000.",
+    "price_inr": 4999,
+    "compare_at_price_inr": 6999,
+    "cost_inr": 2200,
+    "currency": "INR",
+    "inventory_quantity": 28,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 310,
+    "brand": "SoundWave",
+    "tags": [
+      "headphones",
+      "earphones",
+      "bone_conduction",
+      "open_ear",
+      "wireless",
+      "running",
+      "safe",
+      "under_5000"
+    ],
+    "features": [
+      "bone_conduction_tech",
+      "ip67_waterproof",
+      "8_hour_battery",
+      "titanium_frame",
+      "open_ear_safety"
+    ],
+    "specifications": {
+      "battery_hours": "8",
+      "waterproof": "IP67",
+      "weight_g": "29",
+      "bluetooth": "5.3"
+    },
+    "image_url": "https://images.urbanrun.example/ur_audio_003.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_watch_001",
+      "ur_belt_001"
+    ],
+    "upsell_product_ids": [
+      "ur_audio_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_004",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AUDIO-004",
+    "name": "PulseBeat Neckband Sport Earphones",
+    "category": "headphones",
+    "subcategory": "neckband_earphones",
+    "description": "Magnetic wireless neckband with fast charging, deep bass, dual pairing, and 30-hour playback under \u20b92000.",
+    "price_inr": 1699,
+    "compare_at_price_inr": 2499,
+    "cost_inr": 750,
+    "currency": "INR",
+    "inventory_quantity": 50,
+    "available": true,
+    "rating": 4.5,
+    "review_count": 480,
+    "brand": "SoundWave",
+    "tags": [
+      "headphones",
+      "earphones",
+      "neckband",
+      "wireless",
+      "bass",
+      "budget",
+      "under_2000",
+      "under_3000",
+      "workout"
+    ],
+    "features": [
+      "30_hour_battery",
+      "magnetic_earbuds",
+      "fast_charge_10min",
+      "ipx5_sweatproof",
+      "dual_pairing"
+    ],
+    "specifications": {
+      "battery_hours": "30",
+      "driver_mm": "12",
+      "water_resistance": "IPX5"
+    },
+    "image_url": "https://images.urbanrun.example/ur_audio_004.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_hyd_001",
+      "ur_belt_001"
+    ],
+    "upsell_product_ids": [
+      "ur_audio_002",
+      "ur_audio_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_005",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AUDIO-005",
+    "name": "SportBuds Grip Secure-Hook Wireless Earbuds",
+    "category": "headphones",
+    "subcategory": "true_wireless_sport",
+    "description": "Secure ear-hook true wireless earbuds built for sprint intervals, heavy workouts, and zero slip under \u20b93500.",
+    "price_inr": 3499,
+    "compare_at_price_inr": 4999,
+    "cost_inr": 1600,
+    "currency": "INR",
+    "inventory_quantity": 32,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 390,
+    "brand": "SoundWave",
+    "tags": [
+      "headphones",
+      "earbuds",
+      "wireless",
+      "ear_hook",
+      "workout",
+      "gym",
+      "running",
+      "under_5000"
+    ],
+    "features": [
+      "ear_hook_fit",
+      "40_hour_total_playtime",
+      "ipx7_waterproof",
+      "touch_controls",
+      "bass_boost"
+    ],
+    "specifications": {
+      "battery_hours": "40_with_case",
+      "waterproof": "IPX7",
+      "bluetooth": "5.3"
+    },
+    "image_url": "https://images.urbanrun.example/ur_audio_005.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_shoe_001",
+      "ur_watch_004"
+    ],
+    "upsell_product_ids": [
+      "ur_audio_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AUDIO-006",
+    "name": "ClarityBuds ANC True Wireless Earbuds",
+    "category": "headphones",
+    "subcategory": "true_wireless_anc",
+    "description": "Active noise cancelling true wireless earbuds with transparency mode, quad-mic ENC for crystal clear calls under \u20b94000.",
+    "price_inr": 3899,
+    "compare_at_price_inr": 5499,
+    "cost_inr": 1800,
+    "currency": "INR",
+    "inventory_quantity": 30,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 310,
+    "brand": "SoundWave",
+    "tags": [
+      "headphones",
+      "earbuds",
+      "wireless",
+      "anc",
+      "noise_cancelling",
+      "calls",
+      "commute",
+      "under_5000",
+      "gift"
+    ],
+    "features": [
+      "32db_active_noise_cancellation",
+      "transparency_mode",
+      "4_mic_environmental_noise_cancelling",
+      "wireless_charging"
+    ],
+    "specifications": {
+      "driver_mm": "10",
+      "battery_hours": "32_with_case",
+      "anc_depth_db": "32"
+    },
+    "image_url": "https://images.urbanrun.example/ur_audio_006.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_gear_002",
+      "ur_watch_001"
+    ],
+    "upsell_product_ids": [
+      "ur_audio_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AUDIO-007",
+    "name": "StudioPulse Studio Monitor Over-Ear Headphones",
+    "category": "headphones",
+    "subcategory": "studio_headphones",
+    "description": "Hi-Res certified wireless and wired studio monitor headphones with 50mm dynamic drivers and plush memory foam earcups.",
+    "price_inr": 6499,
+    "compare_at_price_inr": 8999,
+    "cost_inr": 3100,
+    "currency": "INR",
+    "inventory_quantity": 18,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 240,
+    "brand": "SoundWave",
+    "tags": [
+      "headphones",
+      "over_ear",
+      "studio",
+      "audiophile",
+      "music",
+      "hi_res",
+      "wireless"
+    ],
+    "features": [
+      "50mm_custom_drivers",
+      "hi_res_audio_certified",
+      "60_hour_battery",
+      "plush_protein_leather_cushions"
+    ],
+    "specifications": {
+      "driver_mm": "50",
+      "battery_hours": "60",
+      "frequency_response": "20Hz-40kHz"
+    },
+    "image_url": "https://images.urbanrun.example/ur_audio_007.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_gear_003",
+      "ur_el_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_008",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AUDIO-008",
+    "name": "PocketBeats Ultra-Compact True Wireless Earbuds",
+    "category": "headphones",
+    "subcategory": "mini_earbuds",
+    "description": "Tiny pocket-sized wireless earbuds with punchy audio, instant auto-pairing, and 24-hour battery under \u20b92000.",
+    "price_inr": 1999,
+    "compare_at_price_inr": 2999,
+    "cost_inr": 850,
+    "currency": "INR",
+    "inventory_quantity": 45,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 520,
+    "brand": "SoundWave",
+    "tags": [
+      "headphones",
+      "earbuds",
+      "wireless",
+      "mini",
+      "compact",
+      "budget",
+      "under_2000",
+      "under_3000",
+      "gift"
+    ],
+    "features": [
+      "compact_case_fits_coin_pocket",
+      "instant_pairing",
+      "ipx4_water_resistant",
+      "touch_controls"
+    ],
+    "specifications": {
+      "weight_g": "3.5_per_earbud",
+      "battery_hours": "24_total"
+    },
+    "image_url": "https://images.urbanrun.example/ur_audio_008.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_hyd_001",
+      "ur_gear_002"
+    ],
+    "upsell_product_ids": [
+      "ur_audio_002",
+      "ur_audio_005"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_audio_009",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-AUDIO-009",
+    "name": "BassMax Wired In-Ear Earphones with Mic",
+    "category": "headphones",
+    "subcategory": "wired_earphones",
+    "description": "Durable tangle-free braided wired 3.5mm earphones with in-line microphone and punchy bass under \u20b9800.",
+    "price_inr": 699,
+    "compare_at_price_inr": 1099,
+    "cost_inr": 250,
+    "currency": "INR",
+    "inventory_quantity": 60,
+    "available": true,
+    "rating": 4.5,
+    "review_count": 490,
+    "brand": "SoundWave",
+    "tags": [
+      "headphones",
+      "earphones",
+      "wired",
+      "3_5mm",
+      "mic",
+      "budget",
+      "cheap",
+      "under_1000"
+    ],
+    "features": [
+      "braided_tangle_free_cable",
+      "hd_microphone_with_remote",
+      "10mm_bass_drivers",
+      "metal_housing"
+    ],
+    "specifications": {
+      "jack": "3.5mm gold plated",
+      "cable_length_m": "1.2"
+    },
+    "image_url": "https://images.urbanrun.example/ur_audio_009.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_gear_002",
+      "ur_hyd_001"
+    ],
+    "upsell_product_ids": [
+      "ur_audio_004"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_app_001",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-APP-001",
+    "name": "AeroWick Breathable Running Tee",
+    "category": "running_apparel",
+    "subcategory": "running_tshirts",
+    "description": "Ultralight quick-dry running t-shirt with laser-perforated back ventilation and anti-odor tech under \u20b91000.",
+    "price_inr": 999,
+    "compare_at_price_inr": 1499,
+    "cost_inr": 400,
+    "currency": "INR",
+    "inventory_quantity": 60,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 310,
+    "brand": "UrbanRun",
+    "tags": [
+      "apparel",
+      "clothing",
+      "tshirt",
+      "tee",
+      "running",
+      "workout",
+      "gym",
+      "quick_dry",
+      "under_1000",
+      "under_3000"
+    ],
+    "features": [
+      "quick_dry_fabric",
+      "laser_perforated_back",
+      "anti_odor_silver_ions",
+      "reflective_logos"
+    ],
+    "specifications": {
+      "material": "100% recycled polyester",
+      "fit": "athletic",
+      "weight_g": "110"
+    },
+    "image_url": "https://images.urbanrun.example/ur_app_001.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_sock_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_app_002",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-APP-002",
+    "name": "SpeedPace 2-in-1 Running Shorts with Phone Pocket",
+    "category": "running_apparel",
+    "subcategory": "running_shorts",
+    "description": "Lightweight outer shell with built-in compression liner and bounce-free zipper phone pocket under \u20b91500.",
+    "price_inr": 1499,
+    "compare_at_price_inr": 2199,
+    "cost_inr": 650,
+    "currency": "INR",
+    "inventory_quantity": 45,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 420,
+    "brand": "UrbanRun",
+    "tags": [
+      "apparel",
+      "shorts",
+      "running",
+      "2_in_1",
+      "compression",
+      "phone_pocket",
+      "workout",
+      "under_2000"
+    ],
+    "features": [
+      "built_in_compression_liner",
+      "anti_chafe_seams",
+      "bounce_free_phone_pocket",
+      "drawstring_waistband"
+    ],
+    "specifications": {
+      "inseam_inch": "5",
+      "material": "polyester_spandex_blend"
+    },
+    "image_url": "https://images.urbanrun.example/ur_app_002.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_app_001",
+      "ur_sock_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_app_003",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-APP-003",
+    "name": "FlexForm Compression Running Tights",
+    "category": "running_apparel",
+    "subcategory": "running_tights",
+    "description": "Graduated compression tights with muscle stabilization, reflective ankle strips, and dual drop-in pockets under \u20b92000.",
+    "price_inr": 1999,
+    "compare_at_price_inr": 2899,
+    "cost_inr": 850,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 275,
+    "brand": "UrbanRun",
+    "tags": [
+      "apparel",
+      "tights",
+      "compression",
+      "running",
+      "gym",
+      "recovery",
+      "winter",
+      "under_2000"
+    ],
+    "features": [
+      "graduated_compression",
+      "4_way_stretch",
+      "dual_thigh_pockets",
+      "ankle_zippers"
+    ],
+    "specifications": {
+      "material": "82% nylon 18% spandex",
+      "compression_level": "medium_firm"
+    },
+    "image_url": "https://images.urbanrun.example/ur_app_003.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_app_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_app_004",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-APP-004",
+    "name": "StormLite Packable Windbreaker Running Jacket",
+    "category": "running_apparel",
+    "subcategory": "running_jackets",
+    "description": "Windproof and water-resistant ultralight jacket that packs into its own chest pocket under \u20b93000.",
+    "price_inr": 2799,
+    "compare_at_price_inr": 3999,
+    "cost_inr": 1200,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 180,
+    "brand": "UrbanRun",
+    "tags": [
+      "apparel",
+      "jacket",
+      "windbreaker",
+      "running",
+      "water_resistant",
+      "monsoon",
+      "winter",
+      "under_3000"
+    ],
+    "features": [
+      "packable_chest_pocket",
+      "dwr_water_repellent",
+      "360_degree_reflectivity",
+      "underarm_vents"
+    ],
+    "specifications": {
+      "weight_g": "140",
+      "fabric": "ripstop nylon with DWR"
+    },
+    "image_url": "https://images.urbanrun.example/ur_app_004.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_app_001",
+      "ur_app_002"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_app_005",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-APP-005",
+    "name": "Elite Aero Race Singlet",
+    "category": "running_apparel",
+    "subcategory": "running_singlets",
+    "description": "Ultralight race day running singlet with bonded seams to eliminate chafing on hot marathon days under \u20b9900.",
+    "price_inr": 899,
+    "compare_at_price_inr": 1299,
+    "cost_inr": 350,
+    "currency": "INR",
+    "inventory_quantity": 40,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 160,
+    "brand": "UrbanRun",
+    "tags": [
+      "apparel",
+      "singlet",
+      "tank_top",
+      "running",
+      "marathon",
+      "racing",
+      "summer",
+      "under_1000"
+    ],
+    "features": [
+      "bonded_anti_chafe_seams",
+      "micromesh_cooling",
+      "ultra_lightweight_65g"
+    ],
+    "specifications": {
+      "weight_g": "65",
+      "material": "recycled micro-polyester"
+    },
+    "image_url": "https://images.urbanrun.example/ur_app_005.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_app_002",
+      "ur_sock_003"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_app_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-APP-006",
+    "name": "CoreComfort High-Impact Sports Bra",
+    "category": "running_apparel",
+    "subcategory": "sports_bras",
+    "description": "High-impact racerback sports bra with moisture-wicking compression support, molded cups, and breathable mesh back.",
+    "price_inr": 1599,
+    "compare_at_price_inr": 2299,
+    "cost_inr": 680,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 290,
+    "brand": "UrbanRun",
+    "tags": [
+      "apparel",
+      "sports_bra",
+      "running",
+      "gym",
+      "high_impact",
+      "workout",
+      "fitness",
+      "under_2000"
+    ],
+    "features": [
+      "high_impact_support",
+      "molded_breathable_cups",
+      "wide_anti_dig_straps",
+      "mesh_cooling_back"
+    ],
+    "specifications": {
+      "support_level": "high",
+      "material": "nylon spandex blend"
+    },
+    "image_url": "https://images.urbanrun.example/ur_app_006.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_app_003",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_app_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-APP-007",
+    "name": "ThermoShield Winter Thermal Running Hoodie",
+    "category": "running_apparel",
+    "subcategory": "running_hoodies",
+    "description": "Brushed fleece thermal running pullover hoodie with thumbhole cuffs and reflective chest logo for cold morning runs.",
+    "price_inr": 2399,
+    "compare_at_price_inr": 3299,
+    "cost_inr": 1050,
+    "currency": "INR",
+    "inventory_quantity": 28,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 210,
+    "brand": "UrbanRun",
+    "tags": [
+      "apparel",
+      "hoodie",
+      "pullover",
+      "winter",
+      "running",
+      "warm",
+      "thermal",
+      "under_3000"
+    ],
+    "features": [
+      "brushed_thermal_interior",
+      "thumbhole_cuffs",
+      "ponytail_compatible_hood",
+      "hidden_key_pocket"
+    ],
+    "specifications": {
+      "fabric": "thermal poly-spandex",
+      "weight_g": "320"
+    },
+    "image_url": "https://images.urbanrun.example/ur_app_007.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_app_003",
+      "ur_acc_011"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_app_008",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-APP-008",
+    "name": "AeroTrack Quick-Dry Training Track Pants",
+    "category": "running_apparel",
+    "subcategory": "track_pants",
+    "description": "Tapered athletic track pants with zipper ankle cuffs, breathable knee vents, and deep zipper pockets under \u20b91800.",
+    "price_inr": 1799,
+    "compare_at_price_inr": 2499,
+    "cost_inr": 780,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 340,
+    "brand": "UrbanRun",
+    "tags": [
+      "apparel",
+      "track_pants",
+      "joggers",
+      "running",
+      "gym",
+      "workout",
+      "pants",
+      "under_2000"
+    ],
+    "features": [
+      "tapered_ankle_fit",
+      "ankle_zippers_for_easy_on_off",
+      "zipper_hand_pockets",
+      "4_way_stretch"
+    ],
+    "specifications": {
+      "material": "90% polyester 10% spandex",
+      "fit": "slim athletic"
+    },
+    "image_url": "https://images.urbanrun.example/ur_app_008.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_app_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_gear_002",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-GEAR-002",
+    "name": "UrbanCampus 28L College Laptop Backpack",
+    "category": "backpacks",
+    "subcategory": "college_backpacks",
+    "description": "Durable 28L water-resistant collegiate backpack with padded 15.6-inch laptop compartment, organizer pockets, and ergonomic shoulder straps under \u20b93000.",
+    "price_inr": 2699,
+    "compare_at_price_inr": 3999,
+    "cost_inr": 1100,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 580,
+    "brand": "UrbanRun",
+    "tags": [
+      "backpack",
+      "bag",
+      "college",
+      "laptop",
+      "campus",
+      "school",
+      "travel",
+      "study",
+      "under_3000",
+      "under_5000",
+      "gift"
+    ],
+    "features": [
+      "padded_laptop_sleeve_15_6",
+      "water_resistant_fabric",
+      "usb_charging_port",
+      "hidden_anti_theft_pocket",
+      "breathable_back_padding"
+    ],
+    "specifications": {
+      "capacity_l": "28",
+      "laptop_size": "up to 15.6 inch",
+      "dimensions_cm": "46x31x18",
+      "weight_g": "680"
+    },
+    "image_url": "https://images.urbanrun.example/ur_gear_002.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_hyd_002",
+      "ur_audio_002"
+    ],
+    "upsell_product_ids": [
+      "ur_gear_003"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_gear_003",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-GEAR-003",
+    "name": "ProCommute 35L Tech Travel Backpack",
+    "category": "backpacks",
+    "subcategory": "travel_backpacks",
+    "description": "Executive 35L tech backpack with 17-inch laptop sleeve, TSA lay-flat opening, and luggage trolley strap under \u20b95000.",
+    "price_inr": 4499,
+    "compare_at_price_inr": 6299,
+    "cost_inr": 2000,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 340,
+    "brand": "UrbanRun",
+    "tags": [
+      "backpack",
+      "bag",
+      "travel",
+      "laptop",
+      "college",
+      "commute",
+      "work",
+      "tech",
+      "under_5000"
+    ],
+    "features": [
+      "tsa_friendly_lay_flat",
+      "fits_17_inch_laptop",
+      "luggage_pass_through_strap",
+      "waterproof_ballistic_nylon"
+    ],
+    "specifications": {
+      "capacity_l": "35",
+      "laptop_size": "up to 17.3 inch",
+      "weight_g": "950"
+    },
+    "image_url": "https://images.urbanrun.example/ur_gear_003.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_hyd_002",
+      "ur_audio_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_gear_004",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-GEAR-004",
+    "name": "AeroVest 5L Ultra Running Hydration Vest",
+    "category": "backpacks",
+    "subcategory": "hydration_vests",
+    "description": "Body-mapped breathable trail running vest with twin front soft flask holders and 5L rear storage under \u20b94000.",
+    "price_inr": 3799,
+    "compare_at_price_inr": 4999,
+    "cost_inr": 1600,
+    "currency": "INR",
+    "inventory_quantity": 20,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 210,
+    "brand": "UrbanRun",
+    "tags": [
+      "backpack",
+      "hydration_vest",
+      "running",
+      "trail",
+      "marathon",
+      "outdoor",
+      "under_5000"
+    ],
+    "features": [
+      "zero_bounce_fit",
+      "dual_front_flask_pockets",
+      "pole_attachment_loops",
+      "emergency_whistle"
+    ],
+    "specifications": {
+      "volume_l": "5",
+      "weight_g": "170",
+      "included": "twin 500ml soft flasks"
+    },
+    "image_url": "https://images.urbanrun.example/ur_gear_004.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_trail_kit"
+    ],
+    "complementary_product_ids": [
+      "ur_hyd_003",
+      "ur_trail_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_gear_005",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-GEAR-005",
+    "name": "GymDuffel Sport 40L with Shoe Compartment",
+    "category": "backpacks",
+    "subcategory": "gym_bags",
+    "description": "Multi-compartment gym duffel bag with isolated ventilated shoe pocket and waterproof wet-towel pouch under \u20b92000.",
+    "price_inr": 1999,
+    "compare_at_price_inr": 2999,
+    "cost_inr": 850,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 410,
+    "brand": "UrbanRun",
+    "tags": [
+      "backpack",
+      "bag",
+      "gym_bag",
+      "duffel",
+      "workout",
+      "fitness",
+      "shoe_compartment",
+      "under_2000",
+      "under_3000"
+    ],
+    "features": [
+      "ventilated_shoe_pocket",
+      "waterproof_wet_pouch",
+      "padded_shoulder_strap",
+      "durable_base"
+    ],
+    "specifications": {
+      "capacity_l": "40",
+      "dimensions_cm": "50x26x26",
+      "weight_g": "580"
+    },
+    "image_url": "https://images.urbanrun.example/ur_gear_005.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_hyd_002",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [
+      "ur_gear_002"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_gear_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-GEAR-006",
+    "name": "CitySling Waterproof Crossbody Bag",
+    "category": "backpacks",
+    "subcategory": "sling_bags",
+    "description": "Compact waterproof chest sling pack for running errands, cycling commutes, and daily carry under \u20b91500.",
+    "price_inr": 1299,
+    "compare_at_price_inr": 1899,
+    "cost_inr": 520,
+    "currency": "INR",
+    "inventory_quantity": 40,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 290,
+    "brand": "UrbanRun",
+    "tags": [
+      "backpack",
+      "bag",
+      "sling",
+      "crossbody",
+      "commute",
+      "travel",
+      "waterproof",
+      "under_1500",
+      "under_3000"
+    ],
+    "features": [
+      "waterproof_oxford_cloth",
+      "ambidextrous_strap",
+      "hidden_back_pocket",
+      "keyclip_interior"
+    ],
+    "specifications": {
+      "capacity_l": "6",
+      "dimensions_cm": "30x18x8",
+      "weight_g": "290"
+    },
+    "image_url": "https://images.urbanrun.example/ur_gear_006.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_audio_002",
+      "ur_hyd_001"
+    ],
+    "upsell_product_ids": [
+      "ur_gear_002"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_gear_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-GEAR-007",
+    "name": "AlpinePeak 45L Mountain Expedition Rucksack",
+    "category": "backpacks",
+    "subcategory": "trekking_backpacks",
+    "description": "Heavy-duty trekking and mountaineering rucksack with internal aluminum frame, rain cover, and sleeping bag compartment.",
+    "price_inr": 5999,
+    "compare_at_price_inr": 7999,
+    "cost_inr": 2700,
+    "currency": "INR",
+    "inventory_quantity": 15,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 175,
+    "brand": "UrbanRun",
+    "tags": [
+      "backpack",
+      "bag",
+      "trekking",
+      "hiking",
+      "camping",
+      "expedition",
+      "outdoor",
+      "rucksack"
+    ],
+    "features": [
+      "internal_aluminum_stay_frame",
+      "integrated_rain_cover",
+      "sleeping_bag_compartment",
+      "ergonomic_padded_hip_belt"
+    ],
+    "specifications": {
+      "capacity_l": "45",
+      "weight_kg": "1.4",
+      "material": "600D ripstop polyester"
+    },
+    "image_url": "https://images.urbanrun.example/ur_gear_007.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_trail_003",
+      "ur_hyd_006"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_eq_001",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EQ-001",
+    "name": "IronGrip Adjustable Dumbbell Set (2.5kg - 24kg)",
+    "category": "fitness_equipment",
+    "subcategory": "dumbbells",
+    "description": "Quick-turn dial adjustable dumbbell pair replacing 15 sets of weights for home gym strength workouts.",
+    "price_inr": 14999,
+    "compare_at_price_inr": 19999,
+    "cost_inr": 7000,
+    "currency": "INR",
+    "inventory_quantity": 12,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 310,
+    "brand": "UrbanRun",
+    "tags": [
+      "fitness",
+      "gym",
+      "equipment",
+      "dumbbell",
+      "weights",
+      "strength",
+      "home_workout",
+      "muscle"
+    ],
+    "features": [
+      "rapid_dial_weight_selection",
+      "compact_tray_system",
+      "anti_slip_knurled_handle",
+      "steel_weight_plates"
+    ],
+    "specifications": {
+      "weight_range_kg": "2.5 to 24",
+      "increments_kg": "15 settings",
+      "material": "steel and nylon"
+    },
+    "image_url": "https://images.urbanrun.example/ur_eq_001.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_acc_002",
+      "ur_fit_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_eq_002",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EQ-002",
+    "name": "CorePower Multi-Grip Doorway Pull-Up Bar",
+    "category": "fitness_equipment",
+    "subcategory": "pullup_bars",
+    "description": "Heavy-duty steel pull-up bar with non-slip foam grips requiring no screws or door frame damage under \u20b92000.",
+    "price_inr": 1699,
+    "compare_at_price_inr": 2499,
+    "cost_inr": 700,
+    "currency": "INR",
+    "inventory_quantity": 30,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 450,
+    "brand": "UrbanRun",
+    "tags": [
+      "fitness",
+      "gym",
+      "equipment",
+      "pull_up_bar",
+      "calisthenics",
+      "home_gym",
+      "workout",
+      "under_2000",
+      "under_3000"
+    ],
+    "features": [
+      "no_screws_doorway_mount",
+      "multiple_grip_positions",
+      "solid_steel_construction",
+      "max_load_150kg"
+    ],
+    "specifications": {
+      "max_user_weight_kg": "150",
+      "door_width_cm": "65-90",
+      "material": "solid steel"
+    },
+    "image_url": "https://images.urbanrun.example/ur_eq_002.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_acc_002",
+      "ur_acc_004"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_eq_003",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EQ-003",
+    "name": "ProRebound Dual-Wheel Ab Roller with Knee Mat",
+    "category": "fitness_equipment",
+    "subcategory": "ab_rollers",
+    "description": "Automatic rebound ab roller wheel with ergonomic elbow supports and bonus thick foam knee mat under \u20b91500.",
+    "price_inr": 1299,
+    "compare_at_price_inr": 1899,
+    "cost_inr": 500,
+    "currency": "INR",
+    "inventory_quantity": 40,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 390,
+    "brand": "UrbanRun",
+    "tags": [
+      "fitness",
+      "gym",
+      "equipment",
+      "ab_roller",
+      "core",
+      "abs",
+      "workout",
+      "beginner",
+      "under_1500",
+      "under_3000"
+    ],
+    "features": [
+      "automatic_spring_rebound",
+      "elbow_support_pads",
+      "wide_dual_wheel",
+      "silent_smooth_glide"
+    ],
+    "specifications": {
+      "wheel_width_cm": "10",
+      "max_load_kg": "120",
+      "includes": "knee pad mat"
+    },
+    "image_url": "https://images.urbanrun.example/ur_eq_003.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_acc_002",
+      "ur_fit_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_eq_004",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EQ-004",
+    "name": "CastIron Pro Kettlebell 16kg",
+    "category": "fitness_equipment",
+    "subcategory": "kettlebells",
+    "description": "Solid single-piece cast iron kettlebell with color-coded handle band and flat machined base for swings and squats under \u20b93000.",
+    "price_inr": 2999,
+    "compare_at_price_inr": 3999,
+    "cost_inr": 1300,
+    "currency": "INR",
+    "inventory_quantity": 20,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 215,
+    "brand": "UrbanRun",
+    "tags": [
+      "fitness",
+      "gym",
+      "equipment",
+      "kettlebell",
+      "strength",
+      "crossfit",
+      "workout",
+      "under_3000",
+      "under_5000"
+    ],
+    "features": [
+      "single_piece_cast_iron",
+      "wide_textured_handle",
+      "flat_wobble_free_base",
+      "powder_coat_finish"
+    ],
+    "specifications": {
+      "weight_kg": "16",
+      "finish": "matte black powder coat"
+    },
+    "image_url": "https://images.urbanrun.example/ur_eq_004.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_acc_002",
+      "ur_fit_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_eq_005",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EQ-005",
+    "name": "SpeedRope Pro Ball-Bearing Jump Rope",
+    "category": "fitness_equipment",
+    "subcategory": "jump_ropes",
+    "description": "High-speed 360-degree ball bearing wire speed rope for double-unders, boxing footwork, and cardio under \u20b9700.",
+    "price_inr": 599,
+    "compare_at_price_inr": 999,
+    "cost_inr": 200,
+    "currency": "INR",
+    "inventory_quantity": 55,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 620,
+    "brand": "UrbanRun",
+    "tags": [
+      "fitness",
+      "equipment",
+      "jump_rope",
+      "skipping",
+      "cardio",
+      "boxing",
+      "beginner",
+      "budget",
+      "under_1000"
+    ],
+    "features": [
+      "360_dual_ball_bearings",
+      "kink_free_steel_cable",
+      "adjustable_3m_length",
+      "anti_slip_aluminum_handles"
+    ],
+    "specifications": {
+      "cable_length_m": "3.0",
+      "cable_thickness_mm": "2.5",
+      "handle_material": "aluminum"
+    },
+    "image_url": "https://images.urbanrun.example/ur_eq_005.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_acc_002",
+      "ur_fit_001"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_004"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_eq_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EQ-006",
+    "name": "PowerLoop Heavy Resistance Loop Band Set (5 Levels)",
+    "category": "fitness_equipment",
+    "subcategory": "resistance_bands",
+    "description": "Set of 5 natural latex loop resistance bands with carry pouch for glute activation, leg workouts, and mobility under \u20b9900.",
+    "price_inr": 799,
+    "compare_at_price_inr": 1299,
+    "cost_inr": 280,
+    "currency": "INR",
+    "inventory_quantity": 50,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 480,
+    "brand": "UrbanRun",
+    "tags": [
+      "fitness",
+      "equipment",
+      "resistance_bands",
+      "loop_bands",
+      "glutes",
+      "legs",
+      "mobility",
+      "beginner",
+      "under_1000"
+    ],
+    "features": [
+      "5_resistance_levels",
+      "100_natural_malaysian_latex",
+      "anti_snap_durability",
+      "carry_pouch_included"
+    ],
+    "specifications": {
+      "levels": "X-Light, Light, Medium, Heavy, X-Heavy",
+      "material": "natural latex"
+    },
+    "image_url": "https://images.urbanrun.example/ur_eq_006.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_fit_001",
+      "ur_acc_001"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_002"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_eq_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EQ-007",
+    "name": "ErgoPush Rotating Push-Up Stand Handles",
+    "category": "fitness_equipment",
+    "subcategory": "pushup_handles",
+    "description": "Rotating push-up handles designed to reduce wrist strain and engage more chest and tricep muscle fibers under \u20b91200.",
+    "price_inr": 1099,
+    "compare_at_price_inr": 1599,
+    "cost_inr": 420,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 260,
+    "brand": "UrbanRun",
+    "tags": [
+      "fitness",
+      "equipment",
+      "pushup_bars",
+      "wrist_pain",
+      "chest",
+      "calisthenics",
+      "home_workout",
+      "under_1500"
+    ],
+    "features": [
+      "smooth_ball_bearing_rotation",
+      "ergonomic_rubber_grip",
+      "non_skid_base_treads",
+      "supports_135kg"
+    ],
+    "specifications": {
+      "weight_limit_kg": "135",
+      "diameter_cm": "18"
+    },
+    "image_url": "https://images.urbanrun.example/ur_eq_007.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_acc_002",
+      "ur_fit_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_fit_002",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-FIT-002",
+    "name": "ZenCork Natural Organic Cork Yoga Mat (6mm)",
+    "category": "yoga",
+    "subcategory": "yoga_mats",
+    "description": "100% natural organic cork yoga mat with natural rubber base, antimicrobial surface, and superior wet grip under \u20b93000.",
+    "price_inr": 2999,
+    "compare_at_price_inr": 4299,
+    "cost_inr": 1300,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 310,
+    "brand": "UrbanRun",
+    "tags": [
+      "yoga",
+      "mat",
+      "yoga_mat",
+      "cork",
+      "organic",
+      "pilates",
+      "meditation",
+      "non_slip",
+      "under_3000",
+      "under_5000",
+      "gift"
+    ],
+    "features": [
+      "100_percent_natural_cork",
+      "natural_rubber_base",
+      "naturally_antimicrobial",
+      "sweat_activated_grip",
+      "extra_wide_72x26"
+    ],
+    "specifications": {
+      "thickness_mm": "6",
+      "dimensions_cm": "183x66",
+      "material": "organic cork & tree rubber"
+    },
+    "image_url": "https://images.urbanrun.example/ur_fit_002.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_fit_003",
+      "ur_fit_004"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_fit_003",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-FIT-003",
+    "name": "HighDensity Cork Yoga Block Pair",
+    "category": "yoga",
+    "subcategory": "yoga_blocks",
+    "description": "Solid natural cork yoga brick pair providing stable support, balance assistance, and pose deepening under \u20b91000.",
+    "price_inr": 999,
+    "compare_at_price_inr": 1499,
+    "cost_inr": 380,
+    "currency": "INR",
+    "inventory_quantity": 40,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 220,
+    "brand": "UrbanRun",
+    "tags": [
+      "yoga",
+      "yoga_blocks",
+      "blocks",
+      "props",
+      "pilates",
+      "stretching",
+      "beginner",
+      "under_1000",
+      "under_3000"
+    ],
+    "features": [
+      "100_natural_cork",
+      "beveled_edges",
+      "high_density_support",
+      "non_slip_texture"
+    ],
+    "specifications": {
+      "dimensions_cm": "23x15x7.5",
+      "weight_g": "750_each",
+      "quantity": "pair of 2"
+    },
+    "image_url": "https://images.urbanrun.example/ur_fit_003.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_fit_001",
+      "ur_fit_004"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_fit_004",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-FIT-004",
+    "name": "DharmaSpine Yoga Back Roller Wheel (13 inch)",
+    "category": "yoga",
+    "subcategory": "yoga_wheels",
+    "description": "Strong 13-inch yoga wheel with thick TPE foam padding for deep backbends, spinal release, and posture correction under \u20b92000.",
+    "price_inr": 1799,
+    "compare_at_price_inr": 2599,
+    "cost_inr": 750,
+    "currency": "INR",
+    "inventory_quantity": 30,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 180,
+    "brand": "UrbanRun",
+    "tags": [
+      "yoga",
+      "yoga_wheel",
+      "back_pain",
+      "spine",
+      "stretching",
+      "posture",
+      "flexibility",
+      "under_2000",
+      "under_3000"
+    ],
+    "features": [
+      "supports_up_to_250kg",
+      "10mm_thick_tpe_padding",
+      "spinal_relief_groove",
+      "sweat_resistant"
+    ],
+    "specifications": {
+      "diameter_cm": "33",
+      "width_cm": "13",
+      "weight_limit_kg": "250"
+    },
+    "image_url": "https://images.urbanrun.example/ur_fit_004.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_fit_001",
+      "ur_acc_005"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_fit_005",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-FIT-005",
+    "name": "GripFlex Microfiber Hot Yoga Mat Towel",
+    "category": "yoga",
+    "subcategory": "yoga_towels",
+    "description": "Skidless microfiber towel with silicone corner anchors that absorbs sweat and prevents slipping in hot yoga sessions under \u20b91200.",
+    "price_inr": 1199,
+    "compare_at_price_inr": 1699,
+    "cost_inr": 450,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 210,
+    "brand": "UrbanRun",
+    "tags": [
+      "yoga",
+      "towel",
+      "hot_yoga",
+      "sweat_absorbent",
+      "non_slip",
+      "pilates",
+      "under_1500"
+    ],
+    "features": [
+      "corner_anchor_pockets",
+      "ultra_absorbent_microfiber",
+      "silicone_grip_nubs",
+      "machine_washable"
+    ],
+    "specifications": {
+      "dimensions_cm": "183x61",
+      "weight_g": "380"
+    },
+    "image_url": "https://images.urbanrun.example/ur_fit_005.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_fit_001",
+      "ur_fit_002"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_fit_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-FIT-006",
+    "name": "Meditation Zafu Buckwheat Cushion",
+    "category": "yoga",
+    "subcategory": "meditation_cushions",
+    "description": "Ergonomic round meditation cushion filled with organic buckwheat hulls for spinal alignment and hip support under \u20b91800.",
+    "price_inr": 1699,
+    "compare_at_price_inr": 2399,
+    "cost_inr": 680,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 140,
+    "brand": "UrbanRun",
+    "tags": [
+      "yoga",
+      "meditation",
+      "cushion",
+      "zafu",
+      "mindfulness",
+      "posture",
+      "back_support",
+      "under_2000",
+      "gift"
+    ],
+    "features": [
+      "organic_buckwheat_hull_filling",
+      "removable_washable_velvet_cover",
+      "sturdy_carry_handle",
+      "adjustable_height"
+    ],
+    "specifications": {
+      "diameter_cm": "38",
+      "height_cm": "15",
+      "weight_kg": "2.2"
+    },
+    "image_url": "https://images.urbanrun.example/ur_fit_006.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_fit_002",
+      "ur_acc_005"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_rec_001",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-REC-001",
+    "name": "TheraPulse Deep Tissue Percussion Massage Gun",
+    "category": "recovery",
+    "subcategory": "massage_guns",
+    "description": "Professional brushless motor massage gun with 6 massage heads, 30 speed levels, and 6-hour battery life for rapid muscle relief under \u20b95000.",
+    "price_inr": 4299,
+    "compare_at_price_inr": 6999,
+    "cost_inr": 1900,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 640,
+    "brand": "TheraPulse",
+    "tags": [
+      "recovery",
+      "massage_gun",
+      "massage",
+      "muscle_relief",
+      "soreness",
+      "therapy",
+      "runner_recovery",
+      "under_5000",
+      "gift"
+    ],
+    "features": [
+      "brushless_quiet_motor",
+      "12mm_deep_amplitude",
+      "6_interchangeable_heads",
+      "30_speed_levels",
+      "6_hour_battery"
+    ],
+    "specifications": {
+      "speeds": "30",
+      "rpm": "1800-3200",
+      "battery_hours": "6",
+      "weight_kg": "0.9"
+    },
+    "image_url": "https://images.urbanrun.example/ur_rec_001.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle"
+    ],
+    "complementary_product_ids": [
+      "ur_acc_001",
+      "ur_acc_003"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_rec_002",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-REC-002",
+    "name": "IceRelief Reusable Hot & Cold Compression Knee Wrap",
+    "category": "recovery",
+    "subcategory": "cold_therapy",
+    "description": "Gel ice pack knee compression wrap with adjustable straps for joint pain, post-run swelling, and recovery under \u20b91500.",
+    "price_inr": 1199,
+    "compare_at_price_inr": 1699,
+    "cost_inr": 450,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 290,
+    "brand": "UrbanRun",
+    "tags": [
+      "recovery",
+      "ice_pack",
+      "knee_pain",
+      "swelling",
+      "cold_therapy",
+      "joint_relief",
+      "under_1500",
+      "under_3000"
+    ],
+    "features": [
+      "dual_hot_and_cold_use",
+      "flexible_when_frozen",
+      "360_degree_knee_coverage",
+      "adjustable_velcro_straps"
+    ],
+    "specifications": {
+      "size": "universal adjustable",
+      "temperature_hold_mins": "30"
+    },
+    "image_url": "https://images.urbanrun.example/ur_rec_002.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle"
+    ],
+    "complementary_product_ids": [
+      "ur_acc_006",
+      "ur_acc_001"
+    ],
+    "upsell_product_ids": [
+      "ur_rec_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_rec_003",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-REC-003",
+    "name": "AcuPoint Acupressure Mat and Pillow Set",
+    "category": "recovery",
+    "subcategory": "acupressure",
+    "description": "Acupressure spike mat and ergonomic neck pillow for full body tension relief, back stiffness, and improved sleep under \u20b92000.",
+    "price_inr": 1899,
+    "compare_at_price_inr": 2799,
+    "cost_inr": 700,
+    "currency": "INR",
+    "inventory_quantity": 30,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 210,
+    "brand": "UrbanRun",
+    "tags": [
+      "recovery",
+      "acupressure",
+      "back_pain",
+      "relaxation",
+      "sleep",
+      "stress_relief",
+      "under_2000",
+      "under_3000",
+      "gift"
+    ],
+    "features": [
+      "over_7000_acupressure_points",
+      "ergonomic_cervical_pillow",
+      "100_percent_cotton_cover",
+      "portable_carry_bag"
+    ],
+    "specifications": {
+      "mat_size_cm": "68x42",
+      "pillow_size_cm": "37x15"
+    },
+    "image_url": "https://images.urbanrun.example/ur_rec_003.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_recovery_bundle"
+    ],
+    "complementary_product_ids": [
+      "ur_fit_001",
+      "ur_acc_003"
+    ],
+    "upsell_product_ids": [
+      "ur_rec_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_rec_004",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-REC-004",
+    "name": "VibeRoll Vibrating High-Density Foam Roller",
+    "category": "recovery",
+    "subcategory": "vibrating_rollers",
+    "description": "4-speed vibrating foam roller combining trigger point deep tissue myofascial release with therapeutic vibration under \u20b93500.",
+    "price_inr": 3499,
+    "compare_at_price_inr": 4999,
+    "cost_inr": 1400,
+    "currency": "INR",
+    "inventory_quantity": 20,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 165,
+    "brand": "TheraPulse",
+    "tags": [
+      "recovery",
+      "foam_roller",
+      "vibrating",
+      "muscle_release",
+      "massage",
+      "runners",
+      "under_5000"
+    ],
+    "features": [
+      "4_vibration_intensity_levels",
+      "high_density_eco_foam",
+      "rechargeable_lithium_battery",
+      "textured_trigger_grid"
+    ],
+    "specifications": {
+      "length_cm": "30",
+      "battery_hours": "3",
+      "vibration_hz": "20-50"
+    },
+    "image_url": "https://images.urbanrun.example/ur_rec_004.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_acc_003",
+      "ur_rec_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_rec_005",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-REC-005",
+    "name": "FootFlex Plantar Fasciitis Wooden Foot Roller",
+    "category": "recovery",
+    "subcategory": "foot_massage",
+    "description": "Dual-foot acupressure wooden roller specifically crafted to soothe heel spurs, arches, and plantar fasciitis under \u20b9700.",
+    "price_inr": 699,
+    "compare_at_price_inr": 999,
+    "cost_inr": 240,
+    "currency": "INR",
+    "inventory_quantity": 50,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 380,
+    "brand": "UrbanRun",
+    "tags": [
+      "recovery",
+      "foot_roller",
+      "plantar_fasciitis",
+      "heel_pain",
+      "massage",
+      "runners",
+      "budget",
+      "under_1000"
+    ],
+    "features": [
+      "polished_natural_wood",
+      "dual_foot_coverage",
+      "targeted_acupressure_nubs",
+      "anti_slip_base_pads"
+    ],
+    "specifications": {
+      "material": "durable schima superba wood",
+      "dimensions_cm": "27x17x5"
+    },
+    "image_url": "https://images.urbanrun.example/ur_rec_005.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_sock_001",
+      "ur_acc_007"
+    ],
+    "upsell_product_ids": [
+      "ur_acc_001"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_cyc_001",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-CYC-001",
+    "name": "AeroStream Lightweight Cycling Helmet with Rear LED",
+    "category": "cycling",
+    "subcategory": "cycling_helmets",
+    "description": "Aerodynamic EPS foam road cycling helmet with integrated USB-rechargeable safety taillight and 21 cooling air vents under \u20b93000.",
+    "price_inr": 2799,
+    "compare_at_price_inr": 3999,
+    "cost_inr": 1150,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 310,
+    "brand": "UrbanRun",
+    "tags": [
+      "cycling",
+      "helmet",
+      "bike",
+      "safety",
+      "led_light",
+      "road_cycling",
+      "under_3000",
+      "under_5000"
+    ],
+    "features": [
+      "in_mold_polycarbonate_shell",
+      "integrated_usb_rear_led",
+      "21_airflow_vents",
+      "dial_fit_adjustment_system"
+    ],
+    "specifications": {
+      "weight_g": "240",
+      "head_circumference_cm": "56-62",
+      "certifications": "CE EN1078"
+    },
+    "image_url": "https://images.urbanrun.example/ur_cyc_001.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_cyc_002",
+      "ur_cyc_003"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_cyc_002",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-CYC-002",
+    "name": "BeamSafe 1000 Lumen USB Rechargeable Bike Light Set",
+    "category": "cycling",
+    "subcategory": "bike_lights",
+    "description": "Ultra-bright 1000 lumen waterproof front headlight and red warning taillight set with multiple strobe modes under \u20b91600.",
+    "price_inr": 1499,
+    "compare_at_price_inr": 2199,
+    "cost_inr": 600,
+    "currency": "INR",
+    "inventory_quantity": 40,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 420,
+    "brand": "UrbanRun",
+    "tags": [
+      "cycling",
+      "bike_light",
+      "night_riding",
+      "rechargeable",
+      "headlight",
+      "safety",
+      "under_2000",
+      "under_3000"
+    ],
+    "features": [
+      "1000_lumen_cree_led",
+      "ipx6_waterproof_aluminum_body",
+      "type_c_fast_charging",
+      "quick_release_mount"
+    ],
+    "specifications": {
+      "lumens": "1000",
+      "battery_hours": "8",
+      "waterproof": "IPX6"
+    },
+    "image_url": "https://images.urbanrun.example/ur_cyc_002.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_cyc_001",
+      "ur_cyc_004"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_cyc_003",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-CYC-003",
+    "name": "GelPadded Half-Finger Cycling Gloves",
+    "category": "cycling",
+    "subcategory": "cycling_gloves",
+    "description": "Shock-absorbing silicone gel palm gloves with breathable mesh and easy finger pull-tabs under \u20b91000.",
+    "price_inr": 799,
+    "compare_at_price_inr": 1199,
+    "cost_inr": 300,
+    "currency": "INR",
+    "inventory_quantity": 50,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 280,
+    "brand": "UrbanRun",
+    "tags": [
+      "cycling",
+      "gloves",
+      "bike_gloves",
+      "gel_pad",
+      "riding",
+      "hand_protection",
+      "under_1000"
+    ],
+    "features": [
+      "shock_absorbing_gel_padding",
+      "breathable_lycra_back",
+      "terry_cloth_thumb_wipe",
+      "finger_pull_tabs"
+    ],
+    "specifications": {
+      "sizes": "M, L, XL",
+      "material": "lycra and microfiber"
+    },
+    "image_url": "https://images.urbanrun.example/ur_cyc_003.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_cyc_001",
+      "ur_cyc_002"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_cyc_004",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-CYC-004",
+    "name": "MiniPocket High-Pressure Bike Hand Pump (120 PSI)",
+    "category": "cycling",
+    "subcategory": "bike_pumps",
+    "description": "Compact CNC aluminum frame-mounted tire pump compatible with both Presta and Schrader valves under \u20b91000.",
+    "price_inr": 999,
+    "compare_at_price_inr": 1499,
+    "cost_inr": 380,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 190,
+    "brand": "UrbanRun",
+    "tags": [
+      "cycling",
+      "bike_pump",
+      "tire_pump",
+      "emergency_repair",
+      "presta_schrader",
+      "under_1000",
+      "under_3000"
+    ],
+    "features": [
+      "dual_presta_schrader_valve",
+      "120_psi_high_pressure",
+      "cnc_machined_aluminum",
+      "frame_mount_bracket_included"
+    ],
+    "specifications": {
+      "max_pressure_psi": "120",
+      "length_cm": "19",
+      "weight_g": "110"
+    },
+    "image_url": "https://images.urbanrun.example/ur_cyc_004.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_cyc_001",
+      "ur_cyc_002"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_cyc_005",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-CYC-005",
+    "name": "ProGel 3D Padded Cycling Bib Shorts",
+    "category": "cycling",
+    "subcategory": "cycling_apparel",
+    "description": "Breathable high-density 3D gel chamois bib shorts for frictionless long-distance rides over 100km under \u20b92500.",
+    "price_inr": 2299,
+    "compare_at_price_inr": 3299,
+    "cost_inr": 950,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 180,
+    "brand": "UrbanRun",
+    "tags": [
+      "cycling",
+      "bib_shorts",
+      "cycling_shorts",
+      "padded",
+      "long_ride",
+      "bike_wear",
+      "under_3000"
+    ],
+    "features": [
+      "3d_multi_density_gel_chamois",
+      "laser_cut_leg_grippers",
+      "breathable_mesh_bib_straps",
+      "reflective_accents"
+    ],
+    "specifications": {
+      "material": "80% polyamide 20% elastane",
+      "chamois_density": "120kg/m3"
+    },
+    "image_url": "https://images.urbanrun.example/ur_cyc_005.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_cyc_001",
+      "ur_cyc_003"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_cyc_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-CYC-006",
+    "name": "SaddlePack Waterproof Bike Wedge Bag with Tool Pocket",
+    "category": "cycling",
+    "subcategory": "bike_bags",
+    "description": "Aerodynamic under-seat wedge saddle bag with taillight clip loop and expandable storage for spare tube and keys under \u20b91200.",
+    "price_inr": 1099,
+    "compare_at_price_inr": 1599,
+    "cost_inr": 420,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 210,
+    "brand": "UrbanRun",
+    "tags": [
+      "cycling",
+      "saddle_bag",
+      "bike_bag",
+      "under_seat",
+      "repair_kit",
+      "waterproof",
+      "under_1500"
+    ],
+    "features": [
+      "weatherproof_zippers",
+      "reflective_piping",
+      "rear_light_attachment_clip",
+      "expandable_zipper_section"
+    ],
+    "specifications": {
+      "capacity_l": "1.5",
+      "weight_g": "135"
+    },
+    "image_url": "https://images.urbanrun.example/ur_cyc_006.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_cyc_004",
+      "ur_cyc_002"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_el_001",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EL-001",
+    "name": "ChargeMax 20000mAh 65W Fast Charging Power Bank",
+    "category": "electronics",
+    "subcategory": "power_banks",
+    "description": "Heavy-duty 20000mAh portable battery with 65W Power Delivery to charge laptops, phones, and sports watches simultaneously under \u20b93500.",
+    "price_inr": 3299,
+    "compare_at_price_inr": 4999,
+    "cost_inr": 1500,
+    "currency": "INR",
+    "inventory_quantity": 30,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 490,
+    "brand": "GadgetWorld",
+    "tags": [
+      "electronics",
+      "power_bank",
+      "battery",
+      "fast_charging",
+      "laptop_charger",
+      "travel",
+      "under_5000",
+      "gift"
+    ],
+    "features": [
+      "65w_power_delivery",
+      "20000mah_capacity",
+      "triple_output_ports",
+      "led_digital_display",
+      "airplane_safe"
+    ],
+    "specifications": {
+      "capacity_mah": "20000",
+      "max_output_w": "65",
+      "ports": "2x USB-C, 1x USB-A"
+    },
+    "image_url": "https://images.urbanrun.example/ur_el_001.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 2
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_watch_001",
+      "ur_audio_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_el_002",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EL-002",
+    "name": "ChestTrack Dual-Band Bluetooth Heart Rate Monitor",
+    "category": "electronics",
+    "subcategory": "heart_rate_sensors",
+    "description": "ECG-accurate chest strap heart rate monitor with Bluetooth 5.0 and ANT+ for Zwift, Strava, and fitness apps under \u20b92500.",
+    "price_inr": 2299,
+    "compare_at_price_inr": 3299,
+    "cost_inr": 950,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 185,
+    "brand": "PulseTrack",
+    "tags": [
+      "electronics",
+      "heart_rate",
+      "chest_strap",
+      "running",
+      "cycling",
+      "zwift",
+      "strava",
+      "under_3000"
+    ],
+    "features": [
+      "ecg_grade_accuracy",
+      "dual_bluetooth_and_ant_plus",
+      "ip67_sweatproof",
+      "1_year_coin_battery"
+    ],
+    "specifications": {
+      "battery": "CR2032 replaceable",
+      "battery_life_hours": "350",
+      "connectivity": "BLE 5.0 + ANT+"
+    },
+    "image_url": "https://images.urbanrun.example/ur_el_002.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_watch_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_el_003",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EL-003",
+    "name": "SmartScale Body Composition Bluetooth Scale",
+    "category": "electronics",
+    "subcategory": "smart_scales",
+    "description": "13-parameter smart body composition scale measuring body fat %, muscle mass, BMR, and water weight with smartphone sync under \u20b91800.",
+    "price_inr": 1699,
+    "compare_at_price_inr": 2499,
+    "cost_inr": 650,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 380,
+    "brand": "GadgetWorld",
+    "tags": [
+      "electronics",
+      "scale",
+      "smart_scale",
+      "body_fat",
+      "weight_loss",
+      "fitness",
+      "health",
+      "under_2000",
+      "under_3000",
+      "gift"
+    ],
+    "features": [
+      "13_biometric_metrics",
+      "tempered_glass_platform",
+      "unlimited_user_profiles",
+      "auto_sync_apple_health_google_fit"
+    ],
+    "specifications": {
+      "max_weight_kg": "180",
+      "connectivity": "Bluetooth",
+      "display": "LED Hidden Display"
+    },
+    "image_url": "https://images.urbanrun.example/ur_el_003.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_watch_006",
+      "ur_fit_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_el_004",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-EL-004",
+    "name": "SonicBoom Rugged Waterproof Clip-On Bluetooth Speaker",
+    "category": "electronics",
+    "subcategory": "speakers",
+    "description": "Pocket outdoor speaker with integrated carabiner clip, IPX7 waterproof body, and 12-hour punchy bass playback under \u20b92500.",
+    "price_inr": 2299,
+    "compare_at_price_inr": 3299,
+    "cost_inr": 950,
+    "currency": "INR",
+    "inventory_quantity": 30,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 410,
+    "brand": "SoundWave",
+    "tags": [
+      "electronics",
+      "speaker",
+      "bluetooth_speaker",
+      "waterproof",
+      "outdoor",
+      "cycling",
+      "hiking",
+      "under_3000",
+      "gift"
+    ],
+    "features": [
+      "built_in_metal_carabiner",
+      "ipx7_fully_waterproof",
+      "12_hour_battery_life",
+      "party_boost_pairing"
+    ],
+    "specifications": {
+      "power_w": "8",
+      "battery_hours": "12",
+      "waterproof": "IPX7"
+    },
+    "image_url": "https://images.urbanrun.example/ur_el_004.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_gear_002",
+      "ur_hyd_002"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_acc_008",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-ACC-008",
+    "name": "AeroShade UV Protection Running Cap",
+    "category": "accessories",
+    "subcategory": "running_caps",
+    "description": "Ultralight UPF 50+ sun protection running cap with moisture-wicking headband and folding visor for pocket storage under \u20b9800.",
+    "price_inr": 699,
+    "compare_at_price_inr": 1099,
+    "cost_inr": 250,
+    "currency": "INR",
+    "inventory_quantity": 60,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 340,
+    "brand": "UrbanRun",
+    "tags": [
+      "accessories",
+      "cap",
+      "hat",
+      "sun_protection",
+      "running",
+      "outdoor",
+      "summer",
+      "under_1000"
+    ],
+    "features": [
+      "upf_50_plus_sun_shield",
+      "foldable_packable_visor",
+      "quick_dry_mesh_panels",
+      "adjustable_buckle_closure"
+    ],
+    "specifications": {
+      "weight_g": "48",
+      "uv_rating": "UPF 50+"
+    },
+    "image_url": "https://images.urbanrun.example/ur_acc_008.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_shoe_001",
+      "ur_hyd_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_acc_009",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-ACC-009",
+    "name": "NightGlow 360 Rechargeable LED Running Armband Pair",
+    "category": "accessories",
+    "subcategory": "running_safety",
+    "description": "USB rechargeable bright glowing LED armbands for high-visibility night running, dog walking, and cycling under \u20b9900.",
+    "price_inr": 799,
+    "compare_at_price_inr": 1299,
+    "cost_inr": 280,
+    "currency": "INR",
+    "inventory_quantity": 45,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 270,
+    "brand": "UrbanRun",
+    "tags": [
+      "accessories",
+      "armband",
+      "led_light",
+      "night_running",
+      "safety",
+      "reflective",
+      "under_1000"
+    ],
+    "features": [
+      "3_light_modes_strobe_steady",
+      "usb_rechargeable",
+      "sweat_resistant_strap",
+      "fits_arms_and_ankles"
+    ],
+    "specifications": {
+      "battery_hours": "10",
+      "recharge_time_mins": "60",
+      "quantity": "pair of 2"
+    },
+    "image_url": "https://images.urbanrun.example/ur_acc_009.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_shoe_001",
+      "ur_belt_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_acc_010",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-ACC-010",
+    "name": "GlideShield Anti-Chafe Balm Stick (75g)",
+    "category": "accessories",
+    "subcategory": "anti_chafe",
+    "description": "All-natural waterproof barrier stick that stops chafing, blisters, and skin irritation during long runs and marathons under \u20b9600.",
+    "price_inr": 549,
+    "compare_at_price_inr": 799,
+    "cost_inr": 180,
+    "currency": "INR",
+    "inventory_quantity": 70,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 510,
+    "brand": "UrbanRun",
+    "tags": [
+      "accessories",
+      "anti_chafe",
+      "blister_prevention",
+      "marathon",
+      "skincare",
+      "running",
+      "under_1000"
+    ],
+    "features": [
+      "plant_derived_ingredients",
+      "sweat_and_water_resistant",
+      "non_greasy_formula",
+      "safe_on_technical_apparel"
+    ],
+    "specifications": {
+      "net_weight_g": "75",
+      "scent": "unscented"
+    },
+    "image_url": "https://images.urbanrun.example/ur_acc_010.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_sock_003",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_acc_011",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-ACC-011",
+    "name": "FlexTouch Touchscreen Running Gloves",
+    "category": "accessories",
+    "subcategory": "running_gloves",
+    "description": "Windproof thermal lightweight winter running gloves with conductive fingertips for smartphone use under \u20b9900.",
+    "price_inr": 849,
+    "compare_at_price_inr": 1299,
+    "cost_inr": 300,
+    "currency": "INR",
+    "inventory_quantity": 40,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 230,
+    "brand": "UrbanRun",
+    "tags": [
+      "accessories",
+      "gloves",
+      "touchscreen",
+      "winter",
+      "running",
+      "cold_weather",
+      "under_1000"
+    ],
+    "features": [
+      "conductive_thumb_and_index_tips",
+      "brushed_fleece_lining",
+      "silicone_palm_grip",
+      "reflective_print"
+    ],
+    "specifications": {
+      "sizes": "S/M, L/XL",
+      "material": "fleece and spandex"
+    },
+    "image_url": "https://images.urbanrun.example/ur_acc_011.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_app_004",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_acc_012",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-ACC-012",
+    "name": "OpticShield Polarized Anti-Slip Sports Sunglasses",
+    "category": "accessories",
+    "subcategory": "sunglasses",
+    "description": "Polarized UV400 wrap-around sports sunglasses with rubber nose grips that stay anchored during sweaty sprints under \u20b91500.",
+    "price_inr": 1399,
+    "compare_at_price_inr": 1999,
+    "cost_inr": 520,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 310,
+    "brand": "UrbanRun",
+    "tags": [
+      "accessories",
+      "sunglasses",
+      "eyewear",
+      "polarized",
+      "running",
+      "cycling",
+      "uv400",
+      "under_1500",
+      "under_3000",
+      "gift"
+    ],
+    "features": [
+      "polarized_uv400_shatterproof_lenses",
+      "hydrophilic_anti_slip_nose_pads",
+      "tr90_featherlight_frame",
+      "vented_anti_fog_lenses"
+    ],
+    "specifications": {
+      "weight_g": "24",
+      "lens_protection": "UV400 Polarized"
+    },
+    "image_url": "https://images.urbanrun.example/ur_acc_012.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_acc_008",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_hyd_005",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-HYD-005",
+    "name": "HydroGrip Handheld Quick-Grip Running Flask 500ml",
+    "category": "hydration_bottles",
+    "subcategory": "handheld_bottles",
+    "description": "Ergonomic handheld running bottle with breathable adjustable hand strap, bite valve, and zipper key/card pocket under \u20b91000.",
+    "price_inr": 899,
+    "compare_at_price_inr": 1299,
+    "cost_inr": 320,
+    "currency": "INR",
+    "inventory_quantity": 45,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 280,
+    "brand": "UrbanRun",
+    "tags": [
+      "hydration",
+      "bottle",
+      "handheld",
+      "running",
+      "flask",
+      "marathon",
+      "bpa_free",
+      "under_1000"
+    ],
+    "features": [
+      "ergonomic_adjustable_hand_strap",
+      "high_flow_bite_valve",
+      "zipper_card_and_key_pocket",
+      "bpa_free_tpu"
+    ],
+    "specifications": {
+      "capacity_ml": "500",
+      "weight_g": "65",
+      "material": "BPA-free TPU"
+    },
+    "image_url": "https://images.urbanrun.example/ur_hyd_005.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_hydration_week"
+    ],
+    "complementary_product_ids": [
+      "ur_belt_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [
+      "ur_hyd_002"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_hyd_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-HYD-006",
+    "name": "TrailFilter Squeeze Water Purifier Flask 650ml",
+    "category": "hydration_bottles",
+    "subcategory": "filtered_bottles",
+    "description": "Outdoor hollow-fiber membrane filter bottle that purifies fresh water on trail runs and hiking adventures under \u20b92500.",
+    "price_inr": 2199,
+    "compare_at_price_inr": 2999,
+    "cost_inr": 900,
+    "currency": "INR",
+    "inventory_quantity": 25,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 160,
+    "brand": "UrbanRun",
+    "tags": [
+      "hydration",
+      "bottle",
+      "water_filter",
+      "purifier",
+      "trail",
+      "hiking",
+      "outdoor",
+      "under_3000"
+    ],
+    "features": [
+      "0_1_micron_hollow_fiber_filter",
+      "filters_up_to_1000_liters",
+      "removes_99_99_bacteria_and_protozoa",
+      "collapsible_tpu_body"
+    ],
+    "specifications": {
+      "capacity_ml": "650",
+      "filter_pore_size": "0.1 micron",
+      "lifespan_liters": "1000"
+    },
+    "image_url": "https://images.urbanrun.example/ur_hyd_006.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_hydration_week"
+    ],
+    "complementary_product_ids": [
+      "ur_trail_001",
+      "ur_gear_004"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_hyd_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-HYD-007",
+    "name": "ProShaker Protein Shaker Bottle with Storage Compartment 700ml",
+    "category": "hydration_bottles",
+    "subcategory": "shakers",
+    "description": "Leakproof gym protein shaker bottle with wire whisk ball, powder twist-lock compartment, and pill tray under \u20b9600.",
+    "price_inr": 499,
+    "compare_at_price_inr": 799,
+    "cost_inr": 160,
+    "currency": "INR",
+    "inventory_quantity": 60,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 520,
+    "brand": "UrbanRun",
+    "tags": [
+      "hydration",
+      "bottle",
+      "shaker",
+      "protein",
+      "gym",
+      "workout",
+      "fitness",
+      "budget",
+      "under_1000"
+    ],
+    "features": [
+      "surgical_steel_blender_ball",
+      "twist_and_lock_powder_container",
+      "100_percent_leakproof_flip_cap",
+      "bpa_free_tritan"
+    ],
+    "specifications": {
+      "capacity_ml": "700",
+      "material": "BPA-Free EastMan Tritan"
+    },
+    "image_url": "https://images.urbanrun.example/ur_hyd_007.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_eq_001",
+      "ur_gear_005"
+    ],
+    "upsell_product_ids": [
+      "ur_hyd_002"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_hyd_008",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-HYD-008",
+    "name": "HydroGiant 2.2L Motivational Daily Water Jug",
+    "category": "hydration_bottles",
+    "subcategory": "water_jugs",
+    "description": "BPA-free half-gallon daily hydration tracker jug with time markers, leakproof straw lid, and heavy-duty handle under \u20b9900.",
+    "price_inr": 799,
+    "compare_at_price_inr": 1199,
+    "cost_inr": 280,
+    "currency": "INR",
+    "inventory_quantity": 40,
+    "available": true,
+    "rating": 4.6,
+    "review_count": 310,
+    "brand": "UrbanRun",
+    "tags": [
+      "hydration",
+      "bottle",
+      "water_jug",
+      "2_liters",
+      "gym",
+      "workout",
+      "motivational_markers",
+      "under_1000"
+    ],
+    "features": [
+      "hourly_motivational_time_markers",
+      "removable_silicone_straw",
+      "heavy_duty_side_handle",
+      "drop_resistant_build"
+    ],
+    "specifications": {
+      "capacity_ml": "2200",
+      "material": "BPA-free PETG"
+    },
+    "image_url": "https://images.urbanrun.example/ur_hyd_008.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [],
+    "complementary_product_ids": [
+      "ur_gear_005",
+      "ur_eq_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_sock_006",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SOCK-006",
+    "name": "BlisterFree Double Layer Anti-Friction Socks",
+    "category": "running_socks",
+    "subcategory": "anti_blister_socks",
+    "description": "Patented double-layer sock construction that absorbs friction between shoe and foot to eliminate blisters entirely under \u20b9800.",
+    "price_inr": 699,
+    "compare_at_price_inr": 999,
+    "cost_inr": 240,
+    "currency": "INR",
+    "inventory_quantity": 60,
+    "available": true,
+    "rating": 4.9,
+    "review_count": 480,
+    "brand": "UrbanRun",
+    "tags": [
+      "socks",
+      "running_socks",
+      "anti_blister",
+      "double_layer",
+      "marathon",
+      "comfort",
+      "under_1000"
+    ],
+    "features": [
+      "dual_layer_friction_absorption",
+      "coolmax_moisture_wicking",
+      "seamless_hand_linked_toe",
+      "dynamic_arch_band"
+    ],
+    "specifications": {
+      "material": "CoolMax 70%, Nylon 26%, Lycra 4%",
+      "height": "micro crew"
+    },
+    "image_url": "https://images.urbanrun.example/ur_sock_006.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_001",
+      "ur_shoe_005"
+    ],
+    "upsell_product_ids": [
+      "ur_sock_003",
+      "ur_sock_004"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_sock_007",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SOCK-007",
+    "name": "ThermoMerino Cold Weather Winter Running Socks",
+    "category": "running_socks",
+    "subcategory": "merino_wool_socks",
+    "description": "Fine Australian Merino wool running socks providing natural thermal insulation, blister resistance, and odor control.",
+    "price_inr": 1199,
+    "compare_at_price_inr": 1699,
+    "cost_inr": 480,
+    "currency": "INR",
+    "inventory_quantity": 35,
+    "available": true,
+    "rating": 4.8,
+    "review_count": 210,
+    "brand": "UrbanRun",
+    "tags": [
+      "socks",
+      "merino_wool",
+      "winter",
+      "running",
+      "thermal",
+      "hiking",
+      "trail",
+      "under_1500",
+      "under_3000"
+    ],
+    "features": [
+      "fine_merino_wool",
+      "reinforced_heel_and_toe",
+      "temperature_regulating",
+      "natural_antibacterial"
+    ],
+    "specifications": {
+      "material": "65% Merino Wool, 30% Nylon, 5% Elastane",
+      "cushioning": "medium thick"
+    },
+    "image_url": "https://images.urbanrun.example/ur_sock_007.jpg",
+    "shipping": {
+      "free_shipping": true,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_trail_001",
+      "ur_shoe_001"
+    ],
+    "upsell_product_ids": [],
+    "created_at": "2026-06-01T09:00:00Z"
+  },
+  {
+    "id": "ur_sock_008",
+    "merchant_id": "m_urbanrun",
+    "sku": "UR-SOCK-008",
+    "name": "ToeAlign Five-Finger Anatomic Running Socks",
+    "category": "running_socks",
+    "subcategory": "five_finger_socks",
+    "description": "Individual toe-sleeve running socks preventing skin-on-skin friction between toes and promoting natural splay under \u20b9800.",
+    "price_inr": 749,
+    "compare_at_price_inr": 1099,
+    "cost_inr": 260,
+    "currency": "INR",
+    "inventory_quantity": 45,
+    "available": true,
+    "rating": 4.7,
+    "review_count": 195,
+    "brand": "UrbanRun",
+    "tags": [
+      "socks",
+      "running_socks",
+      "toe_socks",
+      "five_finger",
+      "anti_blister",
+      "marathon",
+      "under_1000"
+    ],
+    "features": [
+      "individual_toe_sleeves",
+      "breathable_mesh_top",
+      "arch_support_band",
+      "heel_cushion_pad"
+    ],
+    "specifications": {
+      "material": "78% Cotton, 18% Nylon, 4% Spandex",
+      "cut": "low cut tab"
+    },
+    "image_url": "https://images.urbanrun.example/ur_sock_008.jpg",
+    "shipping": {
+      "free_shipping": false,
+      "estimated_days": 3
+    },
+    "return_policy": {
+      "days": 7,
+      "eligible": true
+    },
+    "eligible_offers": [
+      "offer_shoe_socks_combo"
+    ],
+    "complementary_product_ids": [
+      "ur_shoe_001",
+      "ur_trail_001"
+    ],
+    "upsell_product_ids": [
+      "ur_sock_003"
+    ],
+    "created_at": "2026-06-01T09:00:00Z"
   }
 ]

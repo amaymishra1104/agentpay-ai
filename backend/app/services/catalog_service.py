@@ -225,7 +225,9 @@ def _search_text(product: ProductRecord) -> str:
     fields = [
         product.name,
         product.category,
+        product.category.replace("_", " "),
         product.subcategory,
+        product.subcategory.replace("_", " "),
         product.description,
         product.brand,
         " ".join(product.tags),
@@ -267,7 +269,7 @@ def _relevance_score(
         if term in _normalize(product.name):
             score += 3
 
-        if term in _normalize(product.category):
+        if term in _normalize(product.category.replace("_", " ")):
             score += 2
 
     return score
