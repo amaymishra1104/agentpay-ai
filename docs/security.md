@@ -20,8 +20,8 @@ This document details the security architecture, threat model, cryptographic ver
 | **LLM Tool Argument Forgery** | Attacker prompts LLM to modify another customer's cart or inspect their orders. | **Trusted Tool Argument Injection**: Server overwrites all ownership-sensitive fields (`customer_id`, `cart_id`, `merchant_id`) before tool execution. |
 | **Cross-Tenant Direct API Tampering** | Attacker queries REST endpoints directly with mismatched IDs (e.g. `GET /cart/{b}?customer_id={a}`). | **Service-Level Authorization**: Route handlers and domain services query database ownership and enforce strict `HTTP 403 Forbidden` checks. |
 | **Payment Signature Forgery** | Malicious client submits fake Razorpay order confirmation or tampered amount. | **Server-Side HMAC-SHA256**: All payments are verified using `hmac.compare_digest` against the server-stored `RAZORPAY_KEY_SECRET`. |
-| **Duplicate Payment Callbacks / Idempotency** | Replay of valid payment callbacks to place multiple orders or trigger multiple inventory drops. | **Idempotent Order Creation**: Payment IDs and transaction references are recorded and checked before order insertion. |
-| **Inventory Overselling Race Condition** | Concurrent checkouts for the last in-stock item cause negative inventory. | **Windows-Safe File Locking**: Atomic `O_CREAT | O_EXCL` file lock ensures serialized inventory decrements across OS processes. |
+| **Duplicate Payment Callbacks** | Replay of payment callbacks or repeated checkout requests. | **State-Based Order Processing**: Duplicate callback handling should be treated according to the current order/payment state logic; a dedicated duplicate-callback integration test is not currently part of the verified suite. |
+| **Inventory Overselling Race Condition** | Concurrent checkouts for the last in-stock item cause negative inventory. | **Windows-Safe File Locking**: Atomic `O_CREAT \| O_EXCL` file lock ensures serialized inventory decrements across OS processes. |
 | **Credential Exposure** | API keys or webhook secrets leaked to frontend client or version control. | **Strict Backend Secret Storage**: Razorpay key secret and Groq API keys remain strictly server-side in environment variables. |
 
 ---
@@ -188,7 +188,7 @@ To prevent overselling:
 > [!IMPORTANT]
 > **Authentication vs Authorization Scope:**
 > 
-> **AgentPay does not implement production authentication.** Demo customer IDs are selectable identities rather than cryptographically authenticated identities.
+> **AgentPay does not implement production authentication.** Demo customer IDs are selectable identities (`c_demo_001`, `c_demo_002`) rather than cryptographically authenticated identities via OAuth/JWT.
 > 
 > **Authorization is enforced independently at the REST API and agent tool layers** so that an agent operating under one trusted customer identity cannot use tool arguments to cross into another customer's resources.
 
@@ -197,9 +197,10 @@ To prevent overselling:
 ## 13. Known Limitations
 
 1. **Demo Personas:** Uses selectable customer IDs (`c_demo_001`, `c_demo_002`) instead of OAuth/JWT identity providers.
-2. **Local Storage:** Utilizes SQLite and local filesystem storage.
+2. **Local Storage:** Utilizes SQLite (`agentpay.db`) and local filesystem storage.
 3. **Single-Node Locking:** File-based lock mechanism operates locally rather than using a distributed lock manager (e.g., Redis Redlock).
 4. **Razorpay Test Mode:** Built for test mode credentials and sandboxed webhook events.
+5. **Idempotency Scope:** Duplicate callback handling is governed by current state logic; a dedicated duplicate-callback integration test is not part of the verified automated suite.
 
 ---
 

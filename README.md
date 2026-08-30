@@ -1,17 +1,17 @@
 # AgentPay — AI-Powered Agentic Commerce Platform
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Next.js](https://img.shields.io/badge/Next.js-15.1-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![Next.js](https://img.shields.io/badge/Next.js-15.4-black?style=flat-square&logo=next.js)](https://nextjs.org)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-blueviolet?style=flat-square)](https://github.com/langchain-ai/langgraph)
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Test%20Mode-0C2340?style=flat-square&logo=razorpay)](https://razorpay.com)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python)](https://python.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![Tests](https://img.shields.io/badge/Tests-124%20Passing-success?style=flat-square)](https://pytest.org)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 **Submission for Razorpay AI Buildathon 2026 — Track 1: AI Growth & Agentic Commerce**
 
-AgentPay is an autonomous commerce platform that combines natural-language product discovery across 113+ catalog products, multi-turn conversational refinement, persistent customer carts, Razorpay Test Mode checkout, server-side cryptographic verification, and strict customer authorization isolation where the language model is never trusted with resource ownership.
+AgentPay is an autonomous commerce platform that connects natural-language product discovery across 113+ catalog products, multi-turn conversational refinement, persistent customer carts, Razorpay Test Mode checkout, server-side cryptographic verification, and strict customer authorization isolation where the language model is never trusted with resource ownership.
 
 ---
 
@@ -21,6 +21,7 @@ AgentPay is an autonomous commerce platform that combines natural-language produ
 | :--- | :--- | :--- |
 | **AI Product Discovery** | **Implemented** | Semantic search, price constraints, ratings, and comparisons across 113 SKUs |
 | **Natural-Language Cart Management** | **Implemented** | Conversational add/update/remove with context pronoun resolution |
+| **Markdown / GFM Response Rendering** | **Implemented** | Polished GitHub Flavored Markdown in Buyer chat with responsive tables, bolding, lists, and safe links |
 | **Persistent Cart** | **Implemented** | Persistent cart state across page transitions (`Buyer ↔ Cart`) |
 | **Persistent Conversation** | **Implemented** | Scoped multi-turn chat history preserved across sessions |
 | **Checkout Orchestration** | **Implemented** | Cart validation, stock reservation, and transaction assembly |
@@ -29,25 +30,24 @@ AgentPay is an autonomous commerce platform that combines natural-language produ
 | **Customer Authorization Isolation** | **Implemented** | Cross-tenant access rejected with `HTTP 403 Forbidden` across all routes |
 | **Inventory Concurrency Protection** | **Implemented** | Atomic cross-process file locking (`O_CREAT \| O_EXCL`) with Windows safety |
 | **Order Tracking & Lifecycle** | **Implemented** | Real-time timeline, demo status advancement, cancellation, refunds, returns |
+| **Related Products / Cross-sell** | **Implemented** | User-requested / reactive product recommendations and complementary item discovery |
 | **Production Authentication** | *Not Implemented* | Demo personas (`c_demo_001`, `c_demo_002`) used for buildathon evaluation |
 
 ---
 
-## Why AgentPay
-
-An AI shopping agent is useful only if it can act across multiple commerce systems without being allowed to invent ownership, hallucinate permissions, or cross customer boundaries.
+## Core Engineering Principles
 
 Traditional conversational commerce demos connect language models directly to CRUD APIs. If the model is prompted maliciously (or hallucinates), it can emit tool arguments targeting another user's cart or order.
 
-AgentPay solves this by treating the LLM as an **untrusted reasoning engine**. The system focuses on seven core engineering principles:
+AgentPay addresses this by treating the LLM as an **untrusted reasoning engine**:
 
 1. **Agentic Commerce:** Autonomous discovery, comparison, and cart actions powered by a cyclic LangGraph state machine.
-2. **Persistent State:** Multi-turn conversation and cart state persist across page navigation.
-3. **Trusted Server-Side Identity:** The server overwrites model-supplied identity arguments with verified session state before tool execution.
+2. **Persistent State:** Multi-turn conversation and cart state persist across page navigation and session reloads.
+3. **Trusted Server-Side Identity Injection:** The server intercepts model tool calls and forcefully overwrites identity arguments (`customer_id`, `cart_id`, `merchant_id`) with verified session state.
 4. **Strict Authorization Boundaries:** All API routes and domain services independently enforce customer ownership checks (`HTTP 403`).
-5. **Cryptographic Payment Verification:** Razorpay signatures are recalculated and verified server-side before order placement.
+5. **Cryptographic Payment Verification:** Razorpay signatures are recalculated and verified server-side using constant-time comparison before order placement.
 6. **Concurrency-Safe Inventory:** File locking ensures serialized inventory decrements during concurrent checkouts.
-7. **Transactional Order Creation:** Atomically bundles stock deduction, payment verification, and order insertion.
+7. **Rich Assistant Presentation:** Shopping responses are parsed as structured GitHub Flavored Markdown with clean responsive tables, styled headings, and readable typography.
 
 ---
 
@@ -112,18 +112,18 @@ In `backend/app/agents/graph.py`, `_inject_trusted_tool_arguments()` intercepts 
 
 ## How the Demo Works (Step-by-Step)
 
-Follow this 17-step flow to evaluate the complete system:
+Follow this flow to evaluate the complete system:
 
-1. **Open `/buyer`:** Land on the AI Buyer Assistant interface.
+1. **Open `/buyer`:** Land on the AI Buyer Assistant interface. The composer is persistently pinned to the bottom.
 2. **Search Naturally:** Type `"Find running shoes under ₹5,000 with high ratings"`.
-3. **Inspect Ranked Cards:** The agent queries the 113-product catalog and renders interactive product cards.
-4. **Contextual Refinement:** Type `"Compare the top two"` or `"Which one is lighter?"`.
-5. **Add to Cart:** Type `"Add the first one to my cart"` or click **Add to Cart**.
+3. **Inspect Markdown & Cards:** The agent queries the 113-product catalog and renders a structured Markdown table along with interactive product recommendation cards.
+4. **Contextual Refinement:** Type `"Compare the first two"` or `"Which one would you recommend?"`.
+5. **Add to Cart:** Type `"Add the first one to my cart"` or click **Add to Cart** on the recommendation card.
 6. **Cart Persistence Check:** Navigate to `/cart`; verify line items, subtotal, and auto-applied offers.
-7. **Return to Buyer:** Click `← Continue Shopping`; verify the conversation history remains fully intact.
+7. **Return to Buyer:** Click `← Continue Shopping` or the top navigation; verify the conversation history and cart remain fully intact.
 8. **Initiate Checkout:** On `/cart`, click **Proceed to Checkout**.
 9. **Select Razorpay:** Choose **Razorpay (Test Mode)** and click **Pay with Razorpay**.
-10. **Test Payment:** Complete test payment in the standard Razorpay Checkout modal (or use mock fallback).
+10. **Test Payment:** Complete test payment in the standard Razorpay Checkout modal (or use the mock fallback).
 11. **Signature Verification:** Server recalculates HMAC-SHA256 signature using `hmac.compare_digest`.
 12. **Atomic Inventory Lock:** Inventory file lock is acquired, and product stock is decremented transactionally.
 13. **Order Confirmation:** Order success screen displays Order ID, total, and fulfillment summary.
@@ -178,7 +178,7 @@ To prevent overselling when multiple buyers checkout the last item concurrently:
 
 - **Atomic File Creation:** Uses `os.O_CREAT | os.O_EXCL` flags for cross-process mutual exclusion.
 - **Dead Process Recovery:** Reads `<pid>:<uuid_token>` metadata and inspects process liveness via `psutil.pid_exists(pid)`.
-- **Windows-Safe Semantics:** Automatically retries on transient Windows `WinError 32` (`ERROR_SHARING_VIOLATION`) and avoids POSIX `os.kill(pid, 0)` bugs.
+- **Windows-Safe Semantics:** Automatically retries on transient Windows `WinError 32` (`ERROR_SHARING_VIOLATION`) and avoids POSIX `os.kill(pid, 0)` limitations.
 - **Stress Tested:** Verified with `mp_lock_stress.py` running 4 concurrent OS worker processes contending for the inventory lock (`RESULT: PASS`).
 
 ---
@@ -187,15 +187,18 @@ To prevent overselling when multiple buyers checkout the last item concurrently:
 
 ### 1. Authentication vs. Authorization
 ```text
-Authentication: "Are you really Customer A?" (Out of scope for buildathon)
-Authorization:  "Can this operation access Customer A's resources?" (Fully implemented)
+Authentication: "Are you really Customer A?" (Out of scope for buildathon evaluation)
+Authorization:  "Can this operation access Customer A's resources?" (Fully implemented and tested)
 ```
-AgentPay focuses on **authorization and tenant isolation**. The frontend provides selectable **Demo Customer identities** (`Customer A: c_demo_001`, `Customer B: c_demo_002`) rather than an OAuth/JWT authentication flow.
+AgentPay focuses on **authorization and tenant isolation**. The frontend provides selectable **Demo Customer personas** (`Customer A: c_demo_001`, `Customer B: c_demo_002`) rather than an OAuth/JWT authentication flow.
 
 ### 2. Local Storage Architecture
 - Database state is stored in SQLite (`agentpay.db`).
 - Catalog data is stored in `data/products.json` (113 SKUs across 19 categories).
 - Concurrency locking is single-node filesystem locking (`file_lock.py`) rather than a distributed lock manager (e.g. Redis Redlock).
+
+### 3. Duplicate Callbacks & Idempotency Scope
+- Duplicate callback handling should be treated according to the current order/payment state logic; a dedicated duplicate-callback integration test is not currently part of the verified automated suite.
 
 ---
 
@@ -226,10 +229,10 @@ Open application: `http://localhost:3000/buyer`
 
 ---
 
-## Testing
+## Testing & Verification
 
 ```powershell
-# Run full backend test suite (124 passed)
+# Run full backend test suite (124 passed, 2 skipped, 2 warnings)
 cd backend
 .venv\Scripts\activate
 python -m pytest -q

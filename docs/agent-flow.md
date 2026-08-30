@@ -12,7 +12,7 @@ The buyer agent is built on **LangGraph** using a cyclic graph that alternates b
 flowchart TD
     START((Start)) --> INIT[Initialize Session State\nBuyerAgentState]
     INIT --> PREP[Prepare Context & Compact History]
-    PREP --> CALL_MODEL[Invoke Buyer Model\nGroq Llama 3.3 70B]
+    PREP --> CALL_MODEL[Invoke Buyer Model\nGroq LLM / Mock Fallback]
     
     CALL_MODEL --> HAS_TOOL{Model Emits\nTool Call?}
     
@@ -54,7 +54,7 @@ class BuyerAgentState(BaseModel):
 | `search_products` | Search catalog with filters, price constraints, and sorting | `catalog_service.search_products` |
 | `get_product` | Retrieve full product details by product ID | `catalog_service.get_product_by_id` |
 | `compare_products` | Side-by-side comparison of 2 or more products | `catalog_service.get_products_by_ids` |
-| `get_related_products` | Discover matching accessories, apparel, or related items | `catalog_service.get_related_products` |
+| `get_related_products` | Discover matching accessories, apparel, or related items (reactive cross-sell) | `catalog_service.get_related_products` |
 | `create_cart` | Initialize a new shopping cart for the customer | `cart_service.create_cart` |
 | `add_to_cart` | Add a product SKU and quantity to the customer's cart | `cart_service.add_item_to_cart` |
 | `get_cart` | View items, applied discounts, and totals in active cart | `cart_service.get_cart_by_id` |
@@ -76,3 +76,13 @@ When a user says:
 - *"Add it to cart"*
 
 The agent graph's `_resolve_product_arguments` function resolves these references against the **actual historical catalog tool results** stored in application memory, rather than allowing the LLM to guess or fabricate a synthetic product ID. This guarantees deterministic behavior and prevents hallucinations from creating invalid cart items.
+
+---
+
+## 5. Markdown Presentation in Buyer UI
+
+When the agent responds with product comparisons, feature tables, bullet lists, or bolded product recommendations:
+- The frontend pre-processes and normalizes markdown boundaries.
+- Responses are rendered via `react-markdown` + `remark-gfm`.
+- Tables are enclosed in responsive containers with light styled headers and padded cells.
+- Raw HTML is disabled by default to prevent script injection.

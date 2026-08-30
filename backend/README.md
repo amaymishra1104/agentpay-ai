@@ -70,7 +70,7 @@ flowchart TD
 - **State Schema:** `BuyerAgentState` (`app/agents/state.py`)
 - **Execution Loop:**
   1. `prepare_context`: Compacts historical tool outputs and prepares chat memory.
-  2. `call_model`: Invokes Groq Llama 3.3 70B (or `MockBuyerModel` fallback in `app/agents/model.py`).
+  2. `call_model`: Invokes configured LLM (Groq Llama 3.3 70B / GPT-OSS 120B, or `MockBuyerModel` fallback in `app/agents/model.py`).
   3. `has_tool_calls`: Conditional edge checking if model returned tool calls.
   4. `execute_tools`: Invokes `_inject_trusted_tool_arguments()`, resolves contextual references, runs deterministic tool functions, compacts results, and loops back.
   5. `format_response`: Assembles final assistant text and persists session state.
@@ -84,6 +84,7 @@ flowchart TD
   - `search_products(query, category, min_price, max_price, min_rating, sort_by)`
   - `get_product(product_id)`
   - `compare_products(product_ids)`
+  - `get_related_products(product_id)` (reactive cross-sell and complementary accessories discovery)
   - `create_cart(customer_id, merchant_id)`
   - `add_to_cart(cart_id, customer_id, product_id, quantity)`
   - `get_cart(cart_id, customer_id)`
@@ -123,31 +124,17 @@ flowchart TD
 
 ---
 
-## 5. Catalog Service
+## 5. Domain Services
 
-- **File Path:** `app/services/catalog_service.py`
-- **Data Source:** `data/products.json` (113 SKUs across 19 categories).
-- **Features:** Multi-attribute filtering, price range parsing, full-text matching, in-memory caching, and stock verification.
-
----
-
-## 6. Cart Service
-
-- **File Path:** `app/services/cart_service.py`
-- **Features:** Cart lifecycle management, line-item pricing snapshots, rule-based offer evaluation (`data/offers.json`), and subtotal/tax/discount calculation.
+- **Catalog Service (`app/services/catalog_service.py`):** Loads 113 products across 19 categories from `data/products.json`, supports multi-attribute filtering, price range parsing, full-text matching, and in-memory caching.
+- **Cart Service (`app/services/cart_service.py`):** Handles cart lifecycle, line-item pricing snapshots, rule-based offer evaluation (`data/offers.json`), and discount calculation.
+- **Checkout Service (`app/services/checkout_service.py`):** Performs pre-checkout cart validation, Razorpay order generation, HMAC-SHA256 signature verification, inventory locking, and order persistence.
+- **Tracking Service (`app/services/tracking_service.py`):** Tracks order timelines, demo status advancement, cancellations, and return policies.
 
 ---
 
-## 7. Checkout Service
+## 6. Razorpay Service & Signature Verification
 
-- **File Path:** `app/services/checkout_service.py`
-- **Features:** Pre-checkout cart validation, Razorpay order generation, HMAC-SHA256 signature verification, inventory locking, and transactional order persistence.
-
----
-
-## 8. Razorpay Service
-
-- **File Path:** `app/services/checkout_service.py`
 - **Integration:** Official `razorpay.Client` SDK.
 - **Verification:**
   ```python
@@ -160,26 +147,18 @@ flowchart TD
 
 ---
 
-## 9. Inventory Locking & Concurrency
+## 7. Inventory Locking & Concurrency
 
 - **File Path:** `app/services/file_lock.py`
 - **Mechanism:** Cross-process atomic file creation via `os.O_CREAT | os.O_EXCL | os.O_WRONLY`.
 - **Windows Safety:** Retries on transient `WinError 32` (`ERROR_SHARING_VIOLATION`) and checks PID liveness with `psutil.pid_exists(pid)`.
-- **Stress Test:** Verified with `mp_lock_stress.py`.
+- **Stress Test:** Verified with `mp_lock_stress.py` (4 worker processes, `RESULT: PASS`).
 
 ---
 
-## 10. Database / Persistence
+## 8. Authorization Model
 
-- **File Path:** `app/db/models.py`, `app/db/session.py`
-- **Database:** SQLite with SQLAlchemy 2.0 ORM.
-- **Models:** `Cart`, `CartItem`, `Order`, `OrderItem`, `AgentSession`, `ReturnRequest`.
-
----
-
-## 11. Authorization Model
-
-All API endpoints and services verify that the requesting `customer_id` matches the stored resource owner:
+All API endpoints and domain services verify that the requesting `customer_id` matches the stored resource owner:
 ```python
 if cart.customer_id != customer_id:
     raise HTTPException(status_code=403, detail="Access denied: Cart belongs to another customer")
@@ -187,10 +166,10 @@ if cart.customer_id != customer_id:
 
 ---
 
-## 12. Testing
+## 9. Testing & Verification
 
 ```powershell
-# Run full suite (124 passed, 2 skipped)
+# Run full suite (124 passed, 2 skipped, 2 warnings)
 .venv\Scripts\python -m pytest -q
 
 # Run customer isolation tests
@@ -202,7 +181,7 @@ if cart.customer_id != customer_id:
 
 ---
 
-## 13. Running Locally
+## 10. Running Locally
 
 ```powershell
 cd backend

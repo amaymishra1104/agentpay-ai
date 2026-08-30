@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bot,
   ChevronRight,
@@ -26,6 +26,8 @@ import {
 } from "../../lib/api";
 import { useCustomer } from "../../lib/customer";
 import { CustomerSwitcher } from "../../components/ui/CustomerSwitcher";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 
 type Product = {
@@ -156,6 +158,11 @@ export default function BuyerPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [addingIds, setAddingIds] = useState<Record<string, boolean>>({});
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   const cartCount = useMemo(() => {
     if (!cart || cart.status === "checked_out") {
@@ -718,26 +725,230 @@ export default function BuyerPage() {
     }
   }
 
-  function cleanMessageContent(content: string, hasProducts: boolean): string {
-    if (!hasProducts) return content;
-    const lines = content.split("\n");
-    const filteredLines = lines.filter((line) => {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("|") || trimmed.endsWith("|")) {
-        return false;
-      }
-      if (trimmed.startsWith(":-") || trimmed.startsWith("-:") || trimmed.startsWith("---")) {
-        return false;
-      }
-      return true;
-    });
-    return filteredLines.join("\n").trim();
+function isTableDelimiterRow(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed.includes("-")) return false;
+  return /^\|?\s*:?-+:?\s*(\|?\s*:?-+:?\s*)+\|?$/.test(trimmed);
+}
+
+function isTableRow(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  return (trimmed.startsWith("|") && trimmed.endsWith("|")) || isTableDelimiterRow(trimmed);
+}
+
+function formatAssistantMarkdown(rawContent: string): string {
+  if (!rawContent) return "";
+
+  let text = rawContent;
+
+  // Handle literal escaped newlines if any
+  if (text.includes("\\n") && !text.includes("\n")) {
+    text = text.replace(/\\n/g, "\n");
   }
 
+  const rawLines = text.split("\n");
+  const normalizedLines: string[] = [];
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const current = rawLines[i];
+    const next = i < rawLines.length - 1 ? rawLines[i + 1] : "";
+
+    // Check if line contains text immediately stuck to a table header
+    // e.g. '**Why it stands out**| Factor | Details |' where next line is '|---|---|'
+    const trimmed = current.trim();
+    if (!trimmed.startsWith("|") && trimmed.includes("|") && isTableDelimiterRow(next)) {
+      const firstPipe = current.indexOf("|");
+      const textBefore = current.slice(0, firstPipe).trim();
+      const tableHeader = current.slice(firstPipe).trim();
+      if (textBefore) {
+        normalizedLines.push(textBefore);
+      }
+      normalizedLines.push(tableHeader);
+    } else {
+      normalizedLines.push(current);
+    }
+  }
+
+  const processedLines: string[] = [];
+
+  for (let i = 0; i < normalizedLines.length; i++) {
+    const current = normalizedLines[i];
+    const prev = i > 0 ? normalizedLines[i - 1] : "";
+    const next = i < normalizedLines.length - 1 ? normalizedLines[i + 1] : "";
+
+    const currentIsRow = isTableRow(current);
+    const prevIsRow = isTableRow(prev);
+    const prevIsEmpty = prev.trim() === "";
+    const nextIsRow = isTableRow(next);
+    const nextIsEmpty = next.trim() === "";
+
+    // Blank line before table starts
+    if (currentIsRow && !prevIsRow && !prevIsEmpty && i > 0) {
+      processedLines.push("");
+    }
+
+    // Blank line before headings or lists if preceded by plain text
+    const isHeading = /^\s*#{1,6}\s+/.test(current);
+    const isList = /^\s*([-*+]|\d+\.)\s+/.test(current);
+    if (
+      (isHeading || isList) &&
+      !prevIsEmpty &&
+      !prevIsRow &&
+      !/^\s*([-*+]|\d+\.)\s+/.test(prev) &&
+      !/^\s*#{1,6}\s+/.test(prev)
+    ) {
+      processedLines.push("");
+    }
+
+    processedLines.push(current);
+
+    // Blank line after table ends
+    if (currentIsRow && !nextIsRow && !nextIsEmpty && i < normalizedLines.length - 1) {
+      processedLines.push("");
+    }
+  }
+
+  return processedLines.join("\n");
+}
+
+function AssistantMessageMarkdown({ content }: { content: string }) {
+  const formattedContent = useMemo(() => formatAssistantMarkdown(content), [content]);
+
   return (
-    <main className="min-h-screen bg-[#f7f8fa] text-slate-950">
+    <div className="assistant-markdown text-sm leading-relaxed text-slate-700">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          p: ({ children }) => (
+            <p className="my-2 first:mt-0 last:mb-0 leading-relaxed text-slate-700">
+              {children}
+            </p>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-semibold text-slate-900">
+              {children}
+            </strong>
+          ),
+          em: ({ children }) => (
+            <em className="italic text-slate-800">
+              {children}
+            </em>
+          ),
+          h1: ({ children }) => (
+            <h1 className="mt-3.5 mb-1.5 text-base font-bold text-slate-950 first:mt-0">
+              {children}
+            </h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="mt-3 mb-1.5 text-sm font-bold text-slate-950 first:mt-0">
+              {children}
+            </h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="mt-2.5 mb-1 text-xs font-bold uppercase tracking-wider text-slate-800 first:mt-0">
+              {children}
+            </h3>
+          ),
+          h4: ({ children }) => (
+            <h4 className="mt-2 mb-1 text-xs font-semibold text-slate-900 first:mt-0">
+              {children}
+            </h4>
+          ),
+          ul: ({ children }) => (
+            <ul className="my-2 ml-4 list-disc space-y-1 text-slate-700 marker:text-slate-400">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="my-2 ml-4 list-decimal space-y-1 text-slate-700 marker:text-slate-500">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => (
+            <li className="pl-0.5 leading-relaxed">
+              {children}
+            </li>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="my-2 rounded-r-lg border-l-2 border-slate-300 bg-slate-50 px-3 py-1.5 text-xs italic text-slate-600">
+              {children}
+            </blockquote>
+          ),
+          table: ({ children }) => (
+            <div className="my-3 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+                  {children}
+                </table>
+              </div>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-slate-50 font-semibold text-slate-900">
+              {children}
+            </thead>
+          ),
+          tbody: ({ children }) => (
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {children}
+            </tbody>
+          ),
+          tr: ({ children }) => (
+            <tr className="transition-colors hover:bg-slate-50/60">
+              {children}
+            </tr>
+          ),
+          th: ({ children }) => (
+            <th className="px-3.5 py-2 text-left text-xs font-semibold text-slate-800">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-3.5 py-2 text-xs text-slate-600 whitespace-normal">
+              {children}
+            </td>
+          ),
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-sky-600 underline decoration-sky-300 underline-offset-2 transition hover:text-sky-800"
+            >
+              {children}
+            </a>
+          ),
+          code: ({ className, children, ...props }) => {
+            const isCodeBlock = /language-(\w+)/.test(className || "");
+            return isCodeBlock ? (
+              <pre className="my-2 overflow-x-auto rounded-xl bg-slate-900 p-3 font-mono text-xs text-slate-100">
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              </pre>
+            ) : (
+              <code
+                className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-800 border border-slate-200/60"
+                {...props}
+              >
+                {children}
+              </code>
+            );
+          },
+          hr: () => <hr className="my-3 border-slate-200" />,
+        }}
+      >
+        {formattedContent}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+  return (
+    <main className="flex h-screen flex-col overflow-hidden bg-[#f7f8fa] text-slate-950">
       {/* Top navigation */}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="flex-shrink-0 border-b border-slate-200 bg-white/90 backdrop-blur z-30">
         <div className="mx-auto flex h-16 max-w-[1500px] items-center justify-between px-5 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-white">
@@ -800,10 +1011,10 @@ export default function BuyerPage() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1500px] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="mx-auto grid w-full max-w-[1500px] flex-1 min-h-0 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_420px]">
         {/* Conversation */}
-        <section className="flex min-h-[calc(100vh-64px)] flex-col border-r border-slate-200">
-          <div className="flex-1 overflow-y-auto px-5 py-8 lg:px-12">
+        <section className="flex h-full min-h-0 flex-1 flex-col overflow-hidden border-r border-slate-200 bg-[#f7f8fa]">
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-8 scroll-smooth lg:px-12">
             <div className="mx-auto max-w-4xl">
               <div className="mb-10">
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm">
@@ -848,11 +1059,15 @@ export default function BuyerPage() {
                     <div
                       className={`max-w-[min(720px,85%)] rounded-2xl px-4 py-3 text-sm leading-6 ${
                         message.role === "user"
-                          ? "rounded-br-md bg-slate-950 text-white"
+                          ? "rounded-br-md bg-slate-950 text-white whitespace-pre-wrap"
                           : "rounded-bl-md border border-slate-200 bg-white text-slate-700 shadow-sm"
                       }`}
                     >
-                      {cleanMessageContent(message.content, !!message.products)}
+                      {message.role === "assistant" ? (
+                        <AssistantMessageMarkdown content={message.content} />
+                      ) : (
+                        message.content
+                      )}
 
                       {message.products &&
                         message.products.length > 0 && (
@@ -912,12 +1127,14 @@ export default function BuyerPage() {
                     </div>
                   </div>
                 )}
+
+                <div ref={messagesEndRef} />
               </div>
             </div>
           </div>
 
-          {/* Composer */}
-          <div className="border-t border-slate-200 bg-white px-5 py-5 lg:px-12">
+          {/* Composer (Persistently visible at bottom of workspace) */}
+          <div className="flex-shrink-0 border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur-sm shadow-[0_-4px_16px_rgba(0,0,0,0.03)] z-10 lg:px-12">
             <div className="mx-auto max-w-4xl">
               {messages.length === 1 && (
                 <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
@@ -974,8 +1191,7 @@ export default function BuyerPage() {
         </section>
 
         {/* Intelligence / product panel */}
-        <aside className="hidden bg-white lg:block">
-          <div className="sticky top-16 h-[calc(100vh-64px)] overflow-y-auto">
+        <aside className="hidden h-full min-h-0 overflow-y-auto bg-white lg:block">
             <div className="border-b border-slate-200 px-6 py-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -1125,7 +1341,6 @@ export default function BuyerPage() {
                 </div>
               </div>
             </div>
-          </div>
         </aside>
       </div>
 
