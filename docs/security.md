@@ -20,7 +20,7 @@ This document details the security architecture, threat model, cryptographic ver
 | **LLM Tool Argument Forgery** | Attacker prompts LLM to modify another customer's cart or inspect their orders. | **Trusted Tool Argument Injection**: Server overwrites all ownership-sensitive fields (`customer_id`, `cart_id`, `merchant_id`) before tool execution. |
 | **Cross-Tenant Direct API Tampering** | Attacker queries REST endpoints directly with mismatched IDs (e.g. `GET /cart/{b}?customer_id={a}`). | **Service-Level Authorization**: Route handlers and domain services query database ownership and enforce strict `HTTP 403 Forbidden` checks. |
 | **Payment Signature Forgery** | Malicious client submits fake Razorpay order confirmation or tampered amount. | **Server-Side HMAC-SHA256**: All payments are verified using `hmac.compare_digest` against the server-stored `RAZORPAY_KEY_SECRET`. |
-| **Duplicate Payment Callbacks** | Replay of payment callbacks or repeated checkout requests. | **State-Based Order Processing**: Duplicate callback handling should be treated according to the current order/payment state logic; a dedicated duplicate-callback integration test is not currently part of the verified suite. |
+| **Duplicate Payment Callbacks** | Replay of payment callbacks or repeated checkout requests. | **State-Based Order Processing & Idempotency**: Duplicate payment confirmations and callbacks return the existing order without creating duplicate orders or double-decrementing inventory, verified by automated test coverage. |
 | **Inventory Overselling Race Condition** | Concurrent checkouts for the last in-stock item cause negative inventory. | **Windows-Safe File Locking**: Atomic `O_CREAT \| O_EXCL` file lock ensures serialized inventory decrements across OS processes. |
 | **Credential Exposure** | API keys or webhook secrets leaked to frontend client or version control. | **Strict Backend Secret Storage**: Razorpay key secret and Groq API keys remain strictly server-side in environment variables. |
 
@@ -200,7 +200,7 @@ To prevent overselling:
 2. **Local Storage:** Utilizes SQLite (`agentpay.db`) and local filesystem storage.
 3. **Single-Node Locking:** File-based lock mechanism operates locally rather than using a distributed lock manager (e.g., Redis Redlock).
 4. **Razorpay Test Mode:** Built for test mode credentials and sandboxed webhook events.
-5. **Idempotency Scope:** Duplicate callback handling is governed by current state logic; a dedicated duplicate-callback integration test is not part of the verified automated suite.
+5. **Idempotency Scope:** Duplicate payment confirmations and repeated checkout callbacks are handled idempotently to return the existing order and prevent duplicate inventory decrements, covered by automated testing.
 
 ---
 

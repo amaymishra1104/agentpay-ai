@@ -18,7 +18,7 @@ def get_or_create_session(
             if customer_id is not None and session.customer_id != customer_id:
                 if session.customer_id is None:
                     session.customer_id = customer_id
-                    session.updated_at = datetime.utcnow()
+                    session.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
                     db.commit()
                     db.refresh(session)
                     return session

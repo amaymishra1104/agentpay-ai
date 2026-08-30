@@ -317,7 +317,10 @@ def test_buyer_agent_handles_rate_limit_cleanly(monkeypatch):
 def test_groq_buyer_model_bounded_retry(monkeypatch):
     from app.agents.model_provider import GroqBuyerModel
     from app.config import Settings
-    monkeypatch.setattr("app.config.get_settings", lambda: Settings(groq_api_key="dummy_key", groq_model="dummy_model"))
+    monkeypatch.setattr(
+        "app.agents.model_provider.get_settings",
+        lambda: Settings(groq_api_key="dummy_key", groq_model="dummy_model"),
+    )
 
     call_count = 0
 
@@ -350,7 +353,10 @@ def test_groq_buyer_model_bounded_retry(monkeypatch):
 def test_groq_buyer_model_fail_fast_long_wait(monkeypatch):
     from app.agents.model_provider import GroqBuyerModel
     from app.config import Settings
-    monkeypatch.setattr("app.config.get_settings", lambda: Settings(groq_api_key="dummy_key", groq_model="dummy_model"))
+    monkeypatch.setattr(
+        "app.agents.model_provider.get_settings",
+        lambda: Settings(groq_api_key="dummy_key", groq_model="dummy_model"),
+    )
 
     call_count = 0
 

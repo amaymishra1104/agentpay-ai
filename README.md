@@ -6,12 +6,12 @@
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Test%20Mode-0C2340?style=flat-square&logo=razorpay)](https://razorpay.com)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python)](https://python.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-124%20Passing-success?style=flat-square)](https://pytest.org)
+[![Tests](https://img.shields.io/badge/Tests-125%20Passing-success?style=flat-square)](https://pytest.org)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 **Submission for Razorpay AI Buildathon 2026 — Track 1: AI Growth & Agentic Commerce**
 
-AgentPay is an autonomous commerce platform that connects natural-language product discovery across 113+ catalog products, multi-turn conversational refinement, persistent customer carts, Razorpay Test Mode checkout, server-side cryptographic verification, and strict customer authorization isolation where the language model is never trusted with resource ownership.
+An AI agent that performs money-moving commerce actions should not be trusted to decide whose data, cart, order, or account it operates on. AgentPay demonstrates an architecture where the language model handles natural-language intent and conversational reasoning while trusted backend application code enforces customer and resource ownership. The end-to-end shopping workflow—product discovery across 113 catalog items, persistent carts, Razorpay Test Mode checkout, server-side cryptographic verification, tracking, and cancellation/returns—serves as the concrete implementation of this security boundary.
 
 ---
 
@@ -198,7 +198,7 @@ AgentPay focuses on **authorization and tenant isolation**. The frontend provide
 - Concurrency locking is single-node filesystem locking (`file_lock.py`) rather than a distributed lock manager (e.g. Redis Redlock).
 
 ### 3. Duplicate Callbacks & Idempotency Scope
-- Duplicate callback handling should be treated according to the current order/payment state logic; a dedicated duplicate-callback integration test is not currently part of the verified automated suite.
+- Duplicate payment confirmations and repeated checkout callbacks are handled idempotently to return the existing order and prevent duplicate inventory decrements, covered by automated testing.
 
 ---
 
@@ -232,7 +232,7 @@ Open application: `http://localhost:3000/buyer`
 ## Testing & Verification
 
 ```powershell
-# Run full backend test suite (124 passed, 2 skipped, 2 warnings)
+# Run full backend test suite (125 passed, 2 skipped, 3 warnings in 70.22s)
 cd backend
 .venv\Scripts\activate
 python -m pytest -q

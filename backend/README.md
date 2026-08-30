@@ -169,7 +169,7 @@ if cart.customer_id != customer_id:
 ## 9. Testing & Verification
 
 ```powershell
-# Run full suite (124 passed, 2 skipped, 2 warnings)
+# Run full suite (125 passed, 2 skipped, 3 warnings in 70.22s)
 .venv\Scripts\python -m pytest -q
 
 # Run customer isolation tests

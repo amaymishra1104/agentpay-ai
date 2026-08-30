@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.db.models import Order, OrderItem, ReturnRequest, ReturnItem
@@ -124,7 +124,7 @@ def advance_order_status(order_id: str, next_status: str | None, db: Session) ->
             raise ValueError(f"Invalid next status state: {next_status}")
 
     # Set timestamps
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     order.status = next_status
     order.updated_at = now
 
@@ -189,8 +189,8 @@ def cancel_order(order_id: str, db: Session, customer_id: str) -> Order:
     # Update states
     order.status = "cancelled"
     order.payment_status = "refunded"
-    order.cancelled_at = datetime.utcnow()
-    order.updated_at = datetime.utcnow()
+    order.cancelled_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    order.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
     db.commit()
     return order
@@ -245,7 +245,7 @@ def request_return(
             # Check return window (fallback to 7 days if not defined)
             policy_days = getattr(policy, "days", 7) or 7
             delivery_date = order.delivered_at or order.created_at
-            if datetime.utcnow() > delivery_date + timedelta(days=policy_days):
+            if datetime.now(timezone.utc).replace(tzinfo=None) > delivery_date + timedelta(days=policy_days):
                 raise ValueError(f"The return period of {policy_days} days for this product has expired.")
 
     # Prevent duplicate returns on the same order item
@@ -262,8 +262,8 @@ def request_return(
         order_id=order_id,
         customer_id=order.customer_id,
         status="requested",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     db.add(ret_req)
 
@@ -278,7 +278,7 @@ def request_return(
 
     # Update order state optionally
     order.status = "returned" if order.status != "returned" else order.status
-    order.updated_at = datetime.utcnow()
+    order.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
     db.commit()
     return ret_req

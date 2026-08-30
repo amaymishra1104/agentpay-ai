@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -142,8 +142,8 @@ def checkout_cart(
             payment_id=payment_id,
             payment_method=payment_method,
             transaction_reference=transaction_ref,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
         )
 
         db.add(order)
@@ -163,7 +163,7 @@ def checkout_cart(
 
         # 10. Mark cart as checked out.
         cart.status = "checked_out"
-        cart.updated_at = datetime.utcnow()
+        cart.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
         # 11. Clear cart references from active agent sessions.
         sessions = (
@@ -174,7 +174,7 @@ def checkout_cart(
 
         for session in sessions:
             session.cart_id = None
-            session.updated_at = datetime.utcnow()
+            session.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
         # 12. Commit the database transaction.
         db.commit()

@@ -1,9 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class AuditLog(Base):
@@ -33,8 +37,8 @@ class Cart(Base):
     shipping_inr: Mapped[int] = mapped_column(Integer, default=0)
     total_inr: Mapped[int] = mapped_column(Integer, default=0)
     applied_offers_json: Mapped[str] = mapped_column(String(2000), default="[]")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
     # selectin loading works well for many-to-one or one-to-many relationships in async/sync setups
     items: Mapped[list["CartItem"]] = relationship(
@@ -75,13 +79,13 @@ class AgentSession(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
         nullable=False,
     )
 
@@ -121,7 +125,7 @@ class AgentMessage(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
 
@@ -148,8 +152,8 @@ class Order(Base):
     payment_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
     transaction_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
     # Fulfillment step timestamps
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -185,8 +189,8 @@ class ReturnRequest(Base):
     order_id: Mapped[str] = mapped_column(String(100), ForeignKey("orders.order_id"), nullable=False)
     customer_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="requested")  # requested, approved, rejected, completed
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
     items: Mapped[list["ReturnItem"]] = relationship(
         "ReturnItem", back_populates="return_request", cascade="all, delete-orphan", lazy="selectin"
