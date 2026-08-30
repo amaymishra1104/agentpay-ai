@@ -9,34 +9,34 @@ FastAPI + LangGraph backend service for AgentPay, an AI-native autonomous commer
 ```mermaid
 flowchart TD
     subgraph API_Routers["FastAPI Routers (/api/v1)"]
-        AGENT_ROUTER["agent.py\n/agent/chat, /agent/sessions"]
-        CART_ROUTER["cart.py\n/cart, /cart/{id}/items, /validate"]
-        CHECKOUT_ROUTER["checkout.py\n/cart/{id}/checkout, /order/{id}"]
-        CATALOG_ROUTER["catalog.py\n/catalog/products, /categories"]
+        AGENT_ROUTER["agent.py<br/>/agent/chat, /agent/sessions"]
+        CART_ROUTER["cart.py<br/>/cart, /cart/{id}/items, /validate"]
+        CHECKOUT_ROUTER["checkout.py<br/>/cart/{id}/checkout, /order/{id}"]
+        CATALOG_ROUTER["catalog.py<br/>/catalog/products, /categories"]
     end
 
     subgraph Agent_Core["Agentic Core (LangGraph)"]
-        GRAPH["BuyerAgent Graph\nStateGraph(BuyerAgentState)"]
-        INJECT["_inject_trusted_tool_arguments\n(Trusted Identity Injection)"]
-        TOOLS["Tool Registry\nsearch_products, add_to_cart, etc."]
+        GRAPH["BuyerAgent Graph<br/>StateGraph(BuyerAgentState)"]
+        INJECT["_inject_trusted_tool_arguments<br/>Trusted Identity Injection"]
+        TOOLS["Tool Registry<br/>search_products, add_to_cart, etc."]
     end
 
     subgraph Domain_Services["Domain Service Layer"]
-        CATALOG_SVC["CatalogService\n113 products, search, inventory"]
-        CART_SVC["CartService\npricing, rule-based offers"]
-        CHECKOUT_SVC["CheckoutService\norder creation, Razorpay HMAC"]
-        TRACKING_SVC["TrackingService\norder timeline, returns, refunds"]
+        CATALOG_SVC["CatalogService<br/>113 products, search, inventory"]
+        CART_SVC["CartService<br/>pricing, rule-based offers"]
+        CHECKOUT_SVC["CheckoutService<br/>order creation, Razorpay HMAC"]
+        TRACKING_SVC["TrackingService<br/>order timeline, returns, refunds"]
     end
 
-    subgraph Security_Concur["Security & Concurrency Layer"]
-        AUTHZ_CHK["Route & Service AuthZ Checks\n(customer_id ownership)"]
-        FILE_LOCK["file_lock.py\nAtomic O_CREAT | O_EXCL Lock"]
-        HMAC_VERIFY["HMAC-SHA256\nhmac.compare_digest"]
+    subgraph Security_Concur["Security and Concurrency Layer"]
+        AUTHZ_CHK["Route and Service AuthZ Checks<br/>customer_id ownership"]
+        FILE_LOCK["file_lock.py<br/>Atomic O_CREAT and O_EXCL Lock"]
+        HMAC_VERIFY["HMAC-SHA256<br/>hmac.compare_digest"]
     end
 
     subgraph Persistence["Storage Layer"]
-        SQLITE[("SQLite (agentpay.db)\nSQLAlchemy 2.0 ORM")]
-        JSON_DATA[("data/products.json\ndata/offers.json")]
+        SQLITE[("SQLite Database<br/>SQLAlchemy 2.0 ORM")]
+        JSON_DATA[("data/products.json<br/>data/offers.json")]
     end
 
     AGENT_ROUTER --> GRAPH

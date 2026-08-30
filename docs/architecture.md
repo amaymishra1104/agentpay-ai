@@ -11,8 +11,8 @@ AgentPay connects conversational natural-language discovery directly to a transa
 ```mermaid
 flowchart TB
     subgraph Frontend_App["Frontend Layer (Next.js 15 App Router)"]
-        BUYER_UI["/buyer (Agent Chat & Markdown UX)"]
-        CART_UI["/cart (Cart & Razorpay Checkout)"]
+        BUYER_UI["/buyer (Agent Chat and Markdown UX)"]
+        CART_UI["/cart (Cart and Razorpay Checkout)"]
         ORDERS_UI["/orders (Order History)"]
         TRACKING_UI["/tracking/[orderId] (Fulfillment Timeline)"]
         SWITCHER["CustomerSwitcher (Demo Identity Personas)"]
@@ -20,7 +20,7 @@ flowchart TB
 
     subgraph API_Gateway["FastAPI Gateway (Port 8000)"]
         ROUTERS["REST API Routers (/api/v1/*)"]
-        MIDDLEWARE["CORS & Error Handlers"]
+        MIDDLEWARE["CORS and Error Handlers"]
     end
 
     subgraph Agent_Engine["Agent Engine (LangGraph)"]
@@ -37,8 +37,8 @@ flowchart TB
         LOCK_SVC["FileLock (atomic Windows-safe locking)"]
     end
 
-    subgraph External_Storage["Data & External Gateways"]
-        SQLITE[("SQLite Database (agentpay.db)")]
+    subgraph External_Storage["Data and External Gateways"]
+        SQLITE[("SQLite Database")]
         JSON_DATA[("JSON Data Files (products, offers, merchants)")]
         RZP_GATEWAY["Razorpay Payment Gateway (Test Mode)"]
     end

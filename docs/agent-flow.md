@@ -10,21 +10,21 @@ The buyer agent is built on **LangGraph** using a cyclic graph that alternates b
 
 ```mermaid
 flowchart TD
-    START((Start)) --> INIT[Initialize Session State\nBuyerAgentState]
-    INIT --> PREP[Prepare Context & Compact History]
-    PREP --> CALL_MODEL[Invoke Buyer Model\nGroq LLM / Mock Fallback]
+    START((Start)) --> INIT["Initialize Session State<br/>BuyerAgentState"]
+    INIT --> PREP["Prepare Context and Compact History"]
+    PREP --> CALL_MODEL["Invoke Buyer Model<br/>Groq LLM / Mock Fallback"]
     
-    CALL_MODEL --> HAS_TOOL{Model Emits\nTool Call?}
+    CALL_MODEL --> HAS_TOOL{"Model Emits<br/>Tool Call?"}
     
-    HAS_TOOL -->|Yes| INJECT_ARGS[Trusted Argument Injection\nOverwrites customer_id, cart_id]
-    INJECT_ARGS --> RESOLVE_REFS[Resolve Contextual Refs\ne.g., 'first one', 'cheaper']
-    RESOLVE_REFS --> RUN_TOOL[Execute Deterministic Tool]
-    RUN_TOOL --> COMPACT_RESULT[Compact Tool Result]
-    COMPACT_RESULT --> APPEND_STATE[Append Tool Result to State]
+    HAS_TOOL -->|Yes| INJECT_ARGS["Trusted Argument Injection<br/>Overwrites customer_id, cart_id"]
+    INJECT_ARGS --> RESOLVE_REFS["Resolve Contextual Refs<br/>e.g. 'first one', 'cheaper'"]
+    RESOLVE_REFS --> RUN_TOOL["Execute Deterministic Tool"]
+    RUN_TOOL --> COMPACT_RESULT["Compact Tool Result"]
+    COMPACT_RESULT --> APPEND_STATE["Append Tool Result to State"]
     APPEND_STATE --> CALL_MODEL
     
-    HAS_TOOL -->|No| FINAL_RESP[Format Final Assistant Message]
-    FINAL_RESP --> SYNC_SESSION[Persist Session & Cart to SQLite]
+    HAS_TOOL -->|No| FINAL_RESP["Format Final Assistant Message"]
+    FINAL_RESP --> SYNC_SESSION["Persist Session and Cart to SQLite"]
     SYNC_SESSION --> END_NODE((End Turn))
 ```
 

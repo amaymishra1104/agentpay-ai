@@ -55,26 +55,26 @@ AgentPay addresses this by treating the LLM as an **untrusted reasoning engine**
 
 ```mermaid
 flowchart TD
-    U[Customer] --> UI[Next.js 15 Buyer UI / Cart / Orders]
-    SW[Demo Customer Switcher] -->|c_demo_001 / c_demo_002| UI
+    U["Customer"] --> UI["Next.js 15 Buyer UI, Cart and Orders"]
+    SW["Demo Customer Switcher"] -->|"c_demo_001 / c_demo_002"| UI
 
-    UI --> API[FastAPI REST API /api/v1]
+    UI --> API["FastAPI REST API /api/v1"]
 
-    API --> AGENT[LangGraph Buyer Agent]
-    AGENT --> INJECT[_inject_trusted_tool_arguments\nTrusted Identity Injection]
+    API --> AGENT["LangGraph Buyer Agent"]
+    AGENT --> INJECT["_inject_trusted_tool_arguments<br/>Trusted Identity Injection"]
 
-    INJECT --> SEARCH[Product Search Tools]
-    INJECT --> CART[Cart Tools]
-    INJECT --> CHECKOUT[Checkout Tools]
-    INJECT --> TRACK[Tracking Tools]
+    INJECT --> SEARCH["Product Search Tools"]
+    INJECT --> CART["Cart Tools"]
+    INJECT --> CHECKOUT["Checkout Tools"]
+    INJECT --> TRACK["Tracking Tools"]
 
-    SEARCH --> CATALOG[(Catalog Service\n113 Products · 19 Categories)]
-    CART --> DB[(SQLite Database)]
-    CHECKOUT --> RZP[Razorpay Test API]
-    CHECKOUT --> VERIFY[Server HMAC-SHA256\nhmac.compare_digest]
-    VERIFY --> LOCK[Windows-Safe File Lock\nAtomic O_CREAT | O_EXCL]
-    LOCK --> ORDER[(Transactional Order)]
-    ORDER --> TRACK[(Tracking Service)]
+    SEARCH --> CATALOG[("Catalog Service<br/>113 Products, 19 Categories")]
+    CART --> DB[("SQLite Database")]
+    CHECKOUT --> RZP["Razorpay Test API"]
+    CHECKOUT --> VERIFY["Server HMAC-SHA256<br/>hmac.compare_digest"]
+    VERIFY --> LOCK["Windows-Safe File Lock<br/>Atomic O_CREAT and O_EXCL"]
+    LOCK --> ORDER[("Transactional Order")]
+    ORDER --> TRACK[("Tracking Service")]
 ```
 
 ---

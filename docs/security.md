@@ -30,22 +30,22 @@ This document details the security architecture, threat model, cryptographic ver
 
 ```mermaid
 flowchart TD
-    subgraph Untrusted_Zone["Untrusted Client & Model Zone"]
-        CLIENT[Frontend Client / User Input]
-        LLM[LLM Output / Tool Calls]
+    subgraph Untrusted_Zone["Untrusted Client and Model Zone"]
+        CLIENT["Frontend Client / User Input"]
+        LLM["LLM Output / Tool Calls"]
     end
 
-    subgraph Security_Perimeter["Security Gateway & Injection Layer"]
-        GATEWAY[FastAPI Request Validation]
-        INJECT[_inject_trusted_tool_arguments]
+    subgraph Security_Perimeter["Security Gateway and Injection Layer"]
+        GATEWAY["FastAPI Request Validation"]
+        INJECT["_inject_trusted_tool_arguments"]
     end
 
     subgraph Trusted_Zone["Trusted Backend Core"]
-        AUTHZ{Service AuthZ Checks}
-        SERVICES[Cart, Checkout, Tracking Services]
-        CRYPTO[HMAC-SHA256 Verification]
-        LOCK[Atomic File Lock]
-        DB[(SQLite Persistence)]
+        AUTHZ{"Service AuthZ Checks"}
+        SERVICES["Cart, Checkout, Tracking Services"]
+        CRYPTO["HMAC-SHA256 Verification"]
+        LOCK["Atomic File Lock"]
+        DB[("SQLite Persistence")]
     end
 
     CLIENT --> GATEWAY
