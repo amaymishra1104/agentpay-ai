@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type {
   CatalogProduct,
   CategoriesResponse,
@@ -108,10 +109,22 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight">UrbanRun Catalog Playground</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Deterministic catalog slice for AI-native commerce experimentation.
-      </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-6 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">UrbanRun Catalog Explorer</h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Complete 113-product deterministic catalog with active offers and real-time inventory.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/buyer"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition shadow-xs"
+          >
+            Launch AI Buyer &rarr;
+          </Link>
+        </div>
+      </div>
 
       <form className="mt-6 grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-4">
         <input

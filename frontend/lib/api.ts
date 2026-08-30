@@ -3,11 +3,13 @@ export const API_BASE_URL =
 
 export const DEFAULT_CUSTOMER_ID = "c_demo_001";
 export const SESSION_STORAGE_KEY = "agentpay_buyer_session_id";
+export const SESSION_STORAGE_KEY_PREFIX = "agentpay_session_id:";
 export const CONVERSATION_STORAGE_KEY_PREFIX = "agentpay_conversation:";
 export const CART_STORAGE_KEY_PREFIX = "agentpay_cart_id:";
 
-export function getCartStorageKey(sessionId?: string | null): string {
+export function getCartStorageKey(sessionId?: string | null, customerId?: string | null): string {
   if (sessionId) return `${CART_STORAGE_KEY_PREFIX}${sessionId}`;
+  if (customerId) return `${CART_STORAGE_KEY_PREFIX}customer_${customerId}`;
   if (typeof window !== "undefined") {
     const session = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (session) return `${CART_STORAGE_KEY_PREFIX}${session}`;
@@ -15,26 +17,35 @@ export function getCartStorageKey(sessionId?: string | null): string {
   return "agentpay_cart_id";
 }
 
-export function getStoredCartId(sessionId?: string | null): string | null {
+export function getStoredCartId(sessionId?: string | null, customerId?: string | null): string | null {
   if (typeof window === "undefined") return null;
-  const specificKey = getCartStorageKey(sessionId);
-  return window.localStorage.getItem(specificKey) || window.localStorage.getItem("agentpay_cart_id");
+  const specificKey = getCartStorageKey(sessionId, customerId);
+  return (
+    window.localStorage.getItem(specificKey) ||
+    (customerId ? window.localStorage.getItem(`${CART_STORAGE_KEY_PREFIX}customer_${customerId}`) : null) ||
+    window.localStorage.getItem("agentpay_cart_id")
+  );
 }
 
-export function setStoredCartId(cartId: string, sessionId?: string | null): void {
+export function setStoredCartId(cartId: string, sessionId?: string | null, customerId?: string | null): void {
   if (typeof window === "undefined") return;
-  const specificKey = getCartStorageKey(sessionId);
+  const specificKey = getCartStorageKey(sessionId, customerId);
   window.localStorage.setItem(specificKey, cartId);
+  if (customerId) {
+    window.localStorage.setItem(`${CART_STORAGE_KEY_PREFIX}customer_${customerId}`, cartId);
+  }
   window.localStorage.setItem("agentpay_cart_id", cartId);
 }
 
-export function clearStoredCartId(sessionId?: string | null): void {
+export function clearStoredCartId(sessionId?: string | null, customerId?: string | null): void {
   if (typeof window === "undefined") return;
-  const specificKey = getCartStorageKey(sessionId);
+  const specificKey = getCartStorageKey(sessionId, customerId);
   window.localStorage.removeItem(specificKey);
+  if (customerId) {
+    window.localStorage.removeItem(`${CART_STORAGE_KEY_PREFIX}customer_${customerId}`);
+  }
   window.localStorage.removeItem("agentpay_cart_id");
 }
-
 
 export class ApiError extends Error {
   status: number;

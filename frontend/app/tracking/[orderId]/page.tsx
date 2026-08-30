@@ -2,19 +2,21 @@
 
 import { useEffect, useState, use, useCallback } from "react";
 import Link from "next/link";
-import { API_BASE_URL, DEFAULT_CUSTOMER_ID } from "../../../lib/api";
+import { API_BASE_URL } from "../../../lib/api";
+import { useCustomer } from "../../../lib/customer";
 import type { TrackingInfo, Order } from "../../../lib/types";
-
-const CUSTOMER_ID = DEFAULT_CUSTOMER_ID;
+import { ShieldAlert } from "lucide-react";
 
 export default function TrackingPage({ params }: { params: Promise<{ orderId: string }> }) {
   const resolvedParams = use(params);
   const orderId = resolvedParams.orderId;
+  const { customer, customerId } = useCustomer();
 
   const [tracking, setTracking] = useState<TrackingInfo | null>(null);
   const [orderDetails, setOrderDetails] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [is403, setIs403] = useState<boolean>(false);
 
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -26,14 +28,18 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
   const [showReturnForm, setShowReturnForm] = useState(false);
 
   const fetchTrackingAndOrder = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setIs403(false);
     try {
       // 1. Fetch tracking timeline
       const trackRes = await fetch(
-        `${API_BASE_URL}/checkout/order/${orderId}/tracking?customer_id=${CUSTOMER_ID}`
+        `${API_BASE_URL}/checkout/order/${orderId}/tracking?customer_id=${customerId}`
       );
       if (!trackRes.ok) {
         if (trackRes.status === 403) {
-          throw new Error("Access Denied: You do not own this order.");
+          setIs403(true);
+          throw new Error(`HTTP 403 Forbidden: Active demo customer ${customer.name} (${customerId}) is not authorized to access order ${orderId} belonging to a different customer.`);
         }
         throw new Error("Order tracking details not found.");
       }
@@ -42,7 +48,7 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
 
       // 2. Fetch order items/total
       const orderRes = await fetch(
-        `${API_BASE_URL}/checkout/order/${orderId}?customer_id=${CUSTOMER_ID}`
+        `${API_BASE_URL}/checkout/order/${orderId}?customer_id=${customerId}`
       );
       if (orderRes.ok) {
         const orderData = await orderRes.json();
@@ -57,7 +63,7 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
     } finally {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, customerId, customer.name]);
 
   useEffect(() => {
     fetchTrackingAndOrder();
@@ -99,7 +105,7 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
       const res = await fetch(`${API_BASE_URL}/checkout/order/${orderId}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: CUSTOMER_ID }),
+        body: JSON.stringify({ customer_id: customerId }),
       });
 
       if (!res.ok) {
@@ -128,7 +134,7 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer_id: CUSTOMER_ID,
+          customer_id: customerId,
           product_id: selectedProductId,
           quantity: 1,
           reason: returnReason,
@@ -162,13 +168,52 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
 
   if (error || !tracking) {
     return (
-      <main className="mx-auto max-w-xl px-6 py-16 text-center">
-        <div className="rounded-xl bg-red-50 border border-red-200 p-6 text-sm text-red-800">
-          {error || "Order tracking details not found."}
+      <main className="mx-auto max-w-2xl px-6 py-16">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">Shipment Tracking</h1>
+          <div className="flex items-center gap-3">
+            <Link href="/orders" className="text-xs font-semibold text-indigo-600 hover:text-indigo-500">
+              Orders &rarr;
+            </Link>
+          </div>
         </div>
-        <div className="mt-8">
+
+        {is403 ? (
+          <div className="rounded-2xl border border-amber-300/80 bg-gradient-to-b from-amber-50/90 to-amber-100/40 p-6 text-slate-800 shadow-sm">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-white shadow-xs">
+                <ShieldAlert className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
+                    ACCESS DENIED
+                  </span>
+                  <span className="rounded bg-amber-200/70 px-1.5 py-0.5 text-[10px] font-mono font-bold text-amber-900">
+                    HTTP 403 FORBIDDEN
+                  </span>
+                </div>
+                <h3 className="mt-1 text-sm font-bold text-slate-900">
+                  This resource belongs to another customer identity.
+                </h3>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                  The request was rejected by the server-side authorization boundary. The active demo customer (<strong className="text-slate-800">{customer.name} · {customerId}</strong>) is not the owner of this order.
+                </p>
+                <div className="mt-4 rounded-xl bg-white/90 p-3.5 border border-amber-200 text-[11px] text-slate-600">
+                  <span className="font-bold text-slate-800">Security Architecture Note:</span> This demonstrates that AgentPay enforces strict customer isolation at the backend service layer. LLM prompt injection or client tampering cannot bypass this boundary. Use the Demo Customer Switcher above to switch identities.
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl bg-red-50 border border-red-200 p-6 text-sm text-red-800 text-center">
+            {error || "Order tracking details not found."}
+          </div>
+        )}
+
+        <div className="mt-8 text-center">
           <Link href="/orders" className="text-sm font-semibold text-indigo-600 hover:text-indigo-500">
-            Back to your orders &rarr;
+            &larr; Back to your orders
           </Link>
         </div>
       </main>
@@ -177,17 +222,21 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
 
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Track Shipment</h1>
-          <p className="mt-1 text-xs text-slate-500">Carrier details & fulfillment steps</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Order <code className="font-mono text-slate-700 font-semibold">{orderId}</code> · {customer.name}
+          </p>
         </div>
-        <Link
-          href="/orders"
-          className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition"
-        >
-          Back to Orders
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/orders"
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition"
+          >
+            Back to Orders
+          </Link>
+        </div>
       </div>
 
       {actionError && (
@@ -248,30 +297,28 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
                 : "Pending";
 
               return (
-                <div key={idx} className="relative text-xs">
-                  {/* Timeline indicator node */}
-                  <div className={`absolute left-[-27px] top-1.5 h-3.5 w-3.5 rounded-full border-2 bg-white transition ${
-                    event.completed
-                      ? event.status === "cancelled"
-                        ? "border-rose-600 bg-rose-50"
-                        : "border-emerald-600 bg-emerald-50"
-                      : "border-slate-300"
-                  }`} />
-                  
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className={`font-semibold ${event.completed ? "text-slate-900" : "text-slate-400"}`}>
+                <div key={idx} className="relative group">
+                  <span
+                    className={`absolute -left-8 top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-white text-[10px] font-bold ${
+                      event.completed
+                        ? "border-emerald-500 text-emerald-600 shadow-xs"
+                        : "border-slate-200 text-slate-400"
+                    }`}
+                  >
+                    {event.completed ? "✓" : idx + 1}
+                  </span>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h3
+                        className={`text-xs font-semibold ${
+                          event.completed ? "text-slate-900" : "text-slate-400"
+                        }`}
+                      >
                         {event.label}
-                      </p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{formattedTime}</p>
+                      </h3>
+                      <span className="text-[10px] text-slate-400">{formattedTime}</span>
                     </div>
-                    {event.completed && (
-                      <span className={`text-[10px] font-bold ${
-                        event.status === "cancelled" ? "text-rose-600" : "text-emerald-600"
-                      }`}>
-                        {event.status === "cancelled" ? "Cancelled" : "Completed ✓"}
-                      </span>
-                    )}
+                    <p className="mt-0.5 text-xs text-slate-500 capitalize">Stage: {event.status.replace("_", " ")}</p>
                   </div>
                 </div>
               );
@@ -279,104 +326,115 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
           </div>
         </div>
 
-        {/* Order Items Summary */}
-        {orderDetails && (
+        {/* Order Items Preview */}
+        {orderDetails && orderDetails.items && (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs">
-            <h2 className="text-sm font-semibold text-slate-900 border-b border-slate-100 pb-3 mb-4">Items Shipped</h2>
-            <ul className="divide-y divide-slate-100 text-xs">
+            <h2 className="text-sm font-semibold text-slate-900 border-b border-slate-100 pb-3 mb-4">Items in Package</h2>
+            <div className="divide-y divide-slate-100">
               {orderDetails.items.map((item, idx) => (
-                <li key={idx} className="flex justify-between py-2.5 first:pt-0 last:pb-0">
-                  <span className="text-slate-700">{item.name} <span className="text-slate-400">x{item.quantity}</span></span>
-                  <span className="font-semibold text-slate-900">₹{item.line_total.toLocaleString("en-IN")}</span>
-                </li>
+                <div key={idx} className="flex justify-between py-2 text-xs">
+                  <div>
+                    <p className="font-semibold text-slate-800">{item.name}</p>
+                    <p className="text-[10px] text-slate-400">Qty: {item.quantity} · SKU: {item.sku}</p>
+                  </div>
+                  <span className="font-semibold text-slate-800">₹{item.line_total}</span>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
 
-        {/* Sandbox Debug Console Panel */}
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6 shadow-2xs">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">🛠️</span>
-            <h3 className="text-sm font-bold text-amber-800">Sandbox Control Center</h3>
-          </div>
-          <p className="text-[11px] text-amber-700 leading-relaxed mb-5">
-            DEMO ONLY: Use these options to simulate package transitions or submit cancels/returns.
-          </p>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleAdvanceStatus}
-              disabled={actionLoading || tracking.status === "delivered" || tracking.status === "cancelled"}
-              className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {actionLoading ? "Processing..." : "Advance Status ➔"}
-            </button>
-
-            <button
-              onClick={handleCancelOrder}
-              disabled={actionLoading || !["placed", "confirmed", "packed"].includes(tracking.status)}
-              className="rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 px-4 py-2.5 text-xs font-semibold shadow-2xs transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel Order ✖
-            </button>
-
-            {tracking.status === "delivered" && (
+        {/* Order Lifecycle Actions */}
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-semibold text-slate-900">Order Management</h3>
+              <p className="text-[11px] text-slate-500">Advance fulfillment states, cancel, or initiate returns</p>
+            </div>
+            {tracking.status !== "delivered" && tracking.status !== "cancelled" && (
               <button
-                onClick={() => setShowReturnForm(!showReturnForm)}
-                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition"
+                type="button"
+                onClick={handleAdvanceStatus}
+                disabled={actionLoading}
+                className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 transition shadow-xs disabled:opacity-50"
               >
-                Request Return ↺
+                {actionLoading ? "Updating..." : "Advance Status (Demo)"}
               </button>
             )}
           </div>
 
-          {showReturnForm && orderDetails && (
-            <div className="mt-5 border-t border-amber-200 pt-5 space-y-4 text-xs">
-              <h4 className="font-bold text-slate-800">Select Item to Return</h4>
-              <div>
-                <label className="block text-slate-500 font-medium mb-1">Product</label>
-                <select
-                  value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-hidden text-xs"
-                >
-                  {orderDetails.items.map((item) => (
-                    <option key={item.product_id} value={item.product_id}>
-                      {item.name} (x{item.quantity})
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="flex flex-wrap gap-3 pt-2">
+            {(tracking.status === "placed" || tracking.status === "confirmed" || tracking.status === "packed") && (
+              <button
+                type="button"
+                onClick={handleCancelOrder}
+                disabled={actionLoading}
+                className="rounded-xl border border-rose-200 bg-rose-50/60 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
+              >
+                Cancel Order &amp; Refund
+              </button>
+            )}
 
-              <div>
-                <label className="block text-slate-500 font-medium mb-1">Reason for Return</label>
-                <select
-                  value={returnReason}
-                  onChange={(e) => setReturnReason(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-hidden text-xs"
-                >
-                  <option value="Defective/broken item">Defective/broken item</option>
-                  <option value="Incorrect item received">Incorrect item received</option>
-                  <option value="Size/Fit issue">Size/Fit issue</option>
-                  <option value="No longer needed">No longer needed</option>
-                </select>
-              </div>
+            {tracking.status === "delivered" && (
+              <button
+                type="button"
+                onClick={() => setShowReturnForm((prev) => !prev)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
+              >
+                {showReturnForm ? "Close Return Form" : "Request Return"}
+              </button>
+            )}
+          </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={handleReturnItem}
-                  disabled={actionLoading}
-                  className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 text-xs font-semibold"
-                >
-                  Confirm Return
-                </button>
-                <button
-                  onClick={() => setShowReturnForm(false)}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold"
-                >
-                  Cancel
-                </button>
+          {/* Interactive Return Form Modal/Panel */}
+          {showReturnForm && (
+            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+              <h4 className="text-xs font-semibold text-slate-900">Select Item for Return</h4>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-[10px] text-slate-500 font-medium">Product</label>
+                  <select
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800"
+                  >
+                    {orderDetails?.items.map((item) => (
+                      <option key={item.product_id} value={item.product_id}>
+                        {item.name} (Qty: {item.quantity})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 font-medium">Return Reason</label>
+                  <select
+                    value={returnReason}
+                    onChange={(e) => setReturnReason(e.target.value)}
+                    className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800"
+                  >
+                    <option value="Defective/broken item">Defective or damaged product</option>
+                    <option value="Incorrect size/fit">Incorrect size or fit</option>
+                    <option value="Item not as described">Item did not match description</option>
+                    <option value="Changed mind">Customer changed mind</option>
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowReturnForm(false)}
+                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReturnItem}
+                    disabled={actionLoading}
+                    className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {actionLoading ? "Submitting..." : "Submit Return"}
+                  </button>
+                </div>
               </div>
             </div>
           )}

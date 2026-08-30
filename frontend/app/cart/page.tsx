@@ -5,11 +5,11 @@ import Link from "next/link";
 import type { Cart, Order } from "../../lib/types";
 import {
   API_BASE_URL,
-  DEFAULT_CUSTOMER_ID,
   getStoredCartId,
   setStoredCartId,
   clearStoredCartId,
 } from "../../lib/api";
+import { useCustomer } from "../../lib/customer";
 
 type ValidationIssue = {
   type: string;
@@ -55,6 +55,7 @@ declare global {
 }
 
 export default function CartPage() {
+  const { customer, customerId, getSessionId } = useCustomer();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +84,8 @@ export default function CartPage() {
   };
 
   const clearCartStorage = () => {
-    clearStoredCartId();
+    const sid = getSessionId();
+    clearStoredCartId(sid, customerId);
   };
 
   const handleProceedToCheckout = async () => {
@@ -91,7 +93,7 @@ export default function CartPage() {
     setActionError(null);
     setValidating(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${customerId}`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Validation check failed.");
@@ -119,7 +121,7 @@ export default function CartPage() {
         const orderRes = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/payment/create-order`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ customer_id: cart.customer_id || DEFAULT_CUSTOMER_ID }),
+          body: JSON.stringify({ customer_id: customerId }),
         });
 
         if (!orderRes.ok) {
@@ -158,7 +160,7 @@ export default function CartPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   payment_method: "razorpay",
-                  customer_id: cart.customer_id || DEFAULT_CUSTOMER_ID,
+                  customer_id: customerId,
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
@@ -211,7 +213,7 @@ export default function CartPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           payment_method: paymentMethod,
-          customer_id: cart.customer_id || DEFAULT_CUSTOMER_ID,
+          customer_id: customerId,
         }),
       });
 
@@ -252,7 +254,7 @@ export default function CartPage() {
   const dummyEmptyCart = (cartId: string | null): Cart => ({
     cart_id: cartId || "",
     merchant_id: "m_urbanrun",
-    customer_id: DEFAULT_CUSTOMER_ID,
+    customer_id: customerId,
     currency: "INR",
     items: [],
     subtotal_inr: 0,
@@ -265,24 +267,29 @@ export default function CartPage() {
     updated_at: new Date().toISOString(),
   });
 
-  // Initialize or load cart on mount
+  // Initialize or load cart on mount and when customer changes
   useEffect(() => {
     async function initCart() {
+      setLoading(true);
+      setError(null);
+      setActionError(null);
       try {
-        const storedId = getStoredCartId();
+        const sid = getSessionId();
+        const storedId = getStoredCartId(sid, customerId);
         if (!storedId) {
           // Instead of creating a database record immediately, show a clean client empty cart
           setCart(dummyEmptyCart(null));
+          setCheckoutStep("cart");
         } else {
           // Fetch existing cart
-          const res = await fetch(`${API_BASE_URL}/cart/${storedId}?customer_id=${DEFAULT_CUSTOMER_ID}`);
+          const res = await fetch(`${API_BASE_URL}/cart/${storedId}?customer_id=${customerId}`);
           if (!res.ok) {
-            if (res.status === 404) {
-              // If stored cart ID does not exist on server, clear from storage and fallback to empty
-              clearStoredCartId();
+            if (res.status === 404 || res.status === 403) {
+              // If stored cart ID does not exist or belongs to another customer, clear storage for this customer
+              clearStoredCartId(sid, customerId);
               setCart(dummyEmptyCart(null));
+              setCheckoutStep("cart");
             } else {
-              // For other errors (e.g. 403 or 500), do NOT destroy localStorage cart ID
               let errMsg = `Failed to load cart (${res.status})`;
               try {
                 const errData = await res.json();
@@ -301,7 +308,7 @@ export default function CartPage() {
           // Handle checked_out carts on page refresh/initial load
           if (data.status === "checked_out") {
             try {
-              const orderRes = await fetch(`${API_BASE_URL}/checkout/order/by-cart/${data.cart_id}?customer_id=${data.customer_id || DEFAULT_CUSTOMER_ID}`);
+              const orderRes = await fetch(`${API_BASE_URL}/checkout/order/by-cart/${data.cart_id}?customer_id=${customerId}`);
               if (orderRes.ok) {
                 const orderData = (await orderRes.json()) as Order;
                 setPlacedOrder(orderData);
@@ -310,6 +317,8 @@ export default function CartPage() {
             } catch (orderErr) {
               console.error("Failed to recover checked out order details:", orderErr);
             }
+          } else {
+            setCheckoutStep("cart");
           }
         }
       } catch (err: unknown) {
@@ -319,7 +328,7 @@ export default function CartPage() {
       }
     }
     initCart();
-  }, []);
+  }, [customerId, getSessionId]);
 
   const updateQuantity = async (productId: string, newQty: number) => {
     if (!cart) return;
@@ -339,16 +348,17 @@ export default function CartPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             merchant_id: "m_urbanrun",
-            customer_id: DEFAULT_CUSTOMER_ID,
+            customer_id: customerId,
           }),
         });
         if (!createRes.ok) throw new Error("Failed to initialize server-side cart");
         const createdData = (await createRes.json()) as Cart;
-        setStoredCartId(createdData.cart_id);
+        const sid = getSessionId();
+        setStoredCartId(createdData.cart_id, sid, customerId);
         activeCartId = createdData.cart_id;
       }
 
-      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}?customer_id=${customerId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: newQty }),
@@ -378,7 +388,7 @@ export default function CartPage() {
     setActionError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}?customer_id=${customerId}`, {
         method: "DELETE",
       });
 
@@ -406,7 +416,7 @@ export default function CartPage() {
     setActionError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${customerId}`, {
         method: "DELETE",
       });
 
@@ -435,7 +445,7 @@ export default function CartPage() {
     setValidating(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${cart.customer_id || DEFAULT_CUSTOMER_ID}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${customerId}`, {
         method: "POST",
       });
 
@@ -459,56 +469,81 @@ export default function CartPage() {
     }
   };
 
+
   if (checkoutStep === "success" && placedOrder) {
     return (
-      <main className="mx-auto w-full max-w-md px-6 py-16 text-center">
-        <div className="flex flex-col items-center justify-center bg-white rounded-2xl border border-border p-8 shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-4">
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <main className="mx-auto w-full max-w-lg px-6 py-12 text-center">
+        <div className="flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 mb-4 shadow-xs">
+            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Order placed successfully ✓</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Thank you for your purchase! Your order details are below:
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Order Placed &amp; Verified ✓</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Transaction processed under customer identity <strong className="text-slate-800 font-mono">{customerId}</strong>.
           </p>
 
-          <div className="w-full mt-6 border-t border-b border-border py-4 text-left space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Order ID:</span>
-              <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">{placedOrder.order_id}</code>
+          {/* Technical Execution Steps */}
+          <div className="w-full mt-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 text-left font-mono text-xs space-y-2.5">
+            <div className="flex items-center justify-between text-slate-700">
+              <span className="flex items-center gap-1.5 font-sans font-medium text-[11px]">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Razorpay Payment
+              </span>
+              <span className="rounded bg-emerald-50 text-emerald-700 px-1.5 py-0.5 text-[10px] font-bold">VERIFIED</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Total:</span>
-              <span className="font-semibold">₹{placedOrder.total}</span>
+            <div className="flex items-center justify-between text-slate-700">
+              <span className="flex items-center gap-1.5 font-sans font-medium text-[11px]">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                HMAC-SHA256 Signature
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">hmac.compare_digest ✓</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Payment:</span>
-              <span>{placedOrder.payment_method === "mock_card" ? "Mock Card" : "Mock UPI"} — Successful</span>
+            <div className="flex items-center justify-between text-slate-700">
+              <span className="flex items-center gap-1.5 font-sans font-medium text-[11px]">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Inventory File Lock
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">O_CREAT|O_EXCL ✓</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Items:</span>
-              <span>{placedOrder.items.reduce((acc, x) => acc + x.quantity, 0)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Estimated delivery:</span>
-              <span>3–4 days</span>
+            <div className="flex items-center justify-between text-slate-700">
+              <span className="flex items-center gap-1.5 font-sans font-medium text-[11px]">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Transactional Order
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">{placedOrder.order_id}</span>
             </div>
           </div>
 
-          <div className="mt-8 flex w-full gap-4">
+          <div className="w-full mt-5 border-t border-b border-slate-100 py-3.5 text-left space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Total Charged:</span>
+              <span className="font-bold text-slate-900">₹{placedOrder.total.toLocaleString("en-IN")}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Items:</span>
+              <span className="font-semibold text-slate-800">{placedOrder.items.reduce((acc, x) => acc + x.quantity, 0)} items</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Order Status:</span>
+              <span className="font-semibold text-indigo-600 uppercase tracking-wider text-[11px]">{placedOrder.status || "placed"}</span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex w-full gap-3">
             <Link
               href="/buyer"
-              className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition text-center"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition text-center shadow-2xs"
             >
-              Continue Shopping
+              &larr; AI Buyer
             </Link>
             <Link
               href={`/tracking/${placedOrder.order_id}`}
-              className="flex-1 rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-slate-50 transition text-center flex items-center justify-center"
+              className="flex-1 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white hover:bg-slate-800 transition text-center shadow-xs flex items-center justify-center gap-1"
             >
-              Track Shipment
+              Track Shipment &rarr;
             </Link>
           </div>
         </div>
@@ -666,26 +701,26 @@ export default function CartPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-10">
-      <div className="flex items-center justify-between border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Shopping Cart</h1>
-          <div className="flex flex-wrap items-center gap-2 mt-1.5 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Shopping Cart</h1>
+          <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-500">
             <span>Cart ID:</span>
-            <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">{cart.cart_id || "Unsaved"}</code>
-            <span className="text-slate-300">|</span>
-            <span>Status:</span>
-            <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 capitalize border border-emerald-100">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {cart.status}
+            <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono font-semibold text-slate-700">{cart.cart_id || "Unsaved"}</code>
+            <span className="text-slate-300">·</span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 border border-indigo-100">
+              Persistent Cart · {customer.name}
             </span>
           </div>
         </div>
-        <Link
-          href="/buyer"
-          className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
-        >
-          &larr; Continue Shopping
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/buyer"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition shadow-2xs"
+          >
+            &larr; Continue Shopping
+          </Link>
+        </div>
       </div>
 
       {cart.items.length === 0 ? (

@@ -19,15 +19,14 @@ import {
 
 import {
   API_BASE_URL,
-  DEFAULT_CUSTOMER_ID,
-  SESSION_STORAGE_KEY,
   CONVERSATION_STORAGE_KEY_PREFIX,
   getStoredCartId,
   setStoredCartId,
   clearStoredCartId,
 } from "../../lib/api";
+import { useCustomer } from "../../lib/customer";
+import { CustomerSwitcher } from "../../components/ui/CustomerSwitcher";
 
-const CUSTOMER_ID = DEFAULT_CUSTOMER_ID;
 
 type Product = {
   product_id: string;
@@ -123,26 +122,29 @@ type Cart = {
 };
 
 const starterPrompts = [
-  "Find something under ₹3,000",
+  "Find something useful under ₹3,000",
   "Help me choose something for running",
-  "Show me the best-rated products",
+  "Show me highly rated products",
   "Find a good gift under ₹5,000",
-  "What can I buy for my workout?",
-  "Show me some good deals",
+  "I need something for a home workout",
+  "Show me useful recovery products",
+  "Find something for college",
+  "What are today's best-value options?",
 ];
 
 export default function BuyerPage() {
+  const { customerId, getSessionId } = useCustomer();
   const [input, setInput] = useState("");
   const [sessionId, setSessionId] = useState<string>("");
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "Hi! I'm your AgentPay shopping agent. Tell me what you're looking for, your budget, or what you're trying to accomplish.",
-    },
-  ]);
+  const defaultWelcomeMessage: Message = {
+    id: "welcome",
+    role: "assistant",
+    content:
+      "Hi! I'm your AgentPay shopping agent. Tell me what you're looking for, your budget, or what you're trying to accomplish.",
+  };
+
+  const [messages, setMessages] = useState<Message[]>([defaultWelcomeMessage]);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -167,21 +169,10 @@ export default function BuyerPage() {
   }, [cart]);
 
   useEffect(() => {
-    let activeSessionId = window.sessionStorage.getItem(
-      SESSION_STORAGE_KEY,
-    );
-
-    if (!activeSessionId) {
-      activeSessionId = `buyer-${crypto.randomUUID()}`;
-      window.sessionStorage.setItem(
-        SESSION_STORAGE_KEY,
-        activeSessionId,
-      );
-    }
-
+    const activeSessionId = getSessionId();
     setSessionId(activeSessionId);
 
-    // 1. Immediately restore cached conversation from sessionStorage
+    // 1. Immediately restore cached conversation from sessionStorage for this customer/session
     const cachedConversation = window.sessionStorage.getItem(
       `${CONVERSATION_STORAGE_KEY_PREFIX}${activeSessionId}`
     );
@@ -195,27 +186,37 @@ export default function BuyerPage() {
           );
           if (lastWithProducts?.products) {
             setProducts(lastWithProducts.products);
+          } else {
+            setProducts([]);
           }
+        } else {
+          setMessages([defaultWelcomeMessage]);
+          setProducts([]);
         }
       } catch (e) {
         console.error("Failed to parse cached conversation:", e);
+        setMessages([defaultWelcomeMessage]);
+        setProducts([]);
       }
+    } else {
+      setMessages([defaultWelcomeMessage]);
+      setProducts([]);
     }
 
     // 2. Load cart and synchronize from backend
     void loadExistingCart(activeSessionId);
     void restoreSessionFromBackend(activeSessionId);
-  }, []);
+  }, [customerId, getSessionId]);
 
   async function restoreSessionFromBackend(activeSessionId: string) {
     try {
       const res = await fetch(
-        `${API_BASE_URL}/agent/sessions/${activeSessionId}?customer_id=${CUSTOMER_ID}`
+        `${API_BASE_URL}/agent/sessions/${activeSessionId}?customer_id=${customerId}`
       );
       if (!res.ok) return;
       const data = await res.json();
-      if (data.cart_id && !getStoredCartId(activeSessionId)) {
-        setStoredCartId(data.cart_id, activeSessionId);
+      if (data.cart_id && !getStoredCartId(activeSessionId, customerId)) {
+        setStoredCartId(data.cart_id, activeSessionId, customerId);
         void loadExistingCart(activeSessionId);
       }
 
@@ -272,27 +273,29 @@ export default function BuyerPage() {
   }
 
   async function loadExistingCart(activeSessionId: string) {
-    const storedCartId = getStoredCartId(activeSessionId);
+    const storedCartId = getStoredCartId(activeSessionId, customerId);
 
     if (!storedCartId) {
+      setCart(null);
       return;
     }
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${storedCartId}?customer_id=${CUSTOMER_ID}`,
+        `${API_BASE_URL}/cart/${storedCartId}?customer_id=${customerId}`,
       );
 
       if (!response.ok) {
-        if (response.status === 404) {
-          clearStoredCartId(activeSessionId);
+        if (response.status === 404 || response.status === 403) {
+          clearStoredCartId(activeSessionId, customerId);
+          setCart(null);
         }
         return;
       }
 
       const data: Cart = await response.json();
       if (data.status === "checked_out") {
-        clearStoredCartId(activeSessionId);
+        clearStoredCartId(activeSessionId, customerId);
         setCart(null);
         return;
       }
@@ -304,7 +307,7 @@ export default function BuyerPage() {
 
   async function refreshCart(cartId: string) {
     const response = await fetch(
-      `${API_BASE_URL}/cart/${cartId}?customer_id=${CUSTOMER_ID}`,
+      `${API_BASE_URL}/cart/${cartId}?customer_id=${customerId}`,
     );
 
     if (!response.ok) {
@@ -322,7 +325,7 @@ export default function BuyerPage() {
 
     setCart(updatedCart);
 
-    setStoredCartId(updatedCart.cart_id, sessionId);
+    setStoredCartId(updatedCart.cart_id, sessionId, customerId);
 
     return updatedCart;
   }
@@ -346,7 +349,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}?customer_id=${CUSTOMER_ID}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}?customer_id=${customerId}`,
         {
           method: "PATCH",
           headers: {
@@ -396,7 +399,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}?customer_id=${CUSTOMER_ID}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}?customer_id=${customerId}`,
         {
           method: "DELETE",
         },
@@ -440,7 +443,7 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${CUSTOMER_ID}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${customerId}`,
         {
           method: "DELETE",
         },
@@ -511,7 +514,7 @@ export default function BuyerPage() {
           },
           body: JSON.stringify({
             session_id: sessionId,
-            customer_id: CUSTOMER_ID,
+            customer_id: customerId,
             message: text,
           }),
         },
@@ -585,7 +588,7 @@ export default function BuyerPage() {
        * synchronize that server-side cart with the UI.
        */
       if (data.cart_id) {
-        setStoredCartId(data.cart_id, sessionId);
+        setStoredCartId(data.cart_id, sessionId, customerId);
 
         try {
           await refreshCart(data.cart_id);
@@ -652,7 +655,7 @@ export default function BuyerPage() {
       }
       
       if (!activeCartId) {
-        const storedCartId = getStoredCartId(sessionId);
+        const storedCartId = getStoredCartId(sessionId, customerId);
         if (storedCartId) {
           activeCartId = storedCartId;
         }
@@ -666,7 +669,7 @@ export default function BuyerPage() {
           },
           body: JSON.stringify({
             merchant_id: "m_urbanrun",
-            customer_id: CUSTOMER_ID,
+            customer_id: customerId,
           }),
         });
 
@@ -677,10 +680,10 @@ export default function BuyerPage() {
         const newCartData: Cart = await createRes.json();
         activeCartId = newCartData.cart_id;
         setCart(newCartData);
-        setStoredCartId(newCartData.cart_id, sessionId);
+        setStoredCartId(newCartData.cart_id, sessionId, customerId);
       }
 
-      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items?customer_id=${CUSTOMER_ID}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items?customer_id=${customerId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -753,6 +756,8 @@ export default function BuyerPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <CustomerSwitcher />
+
             <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 sm:flex">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               Agent online
@@ -853,9 +858,10 @@ export default function BuyerPage() {
                         message.products.length > 0 && (
                           <div className="mt-4 grid gap-3 sm:grid-cols-2">
                             {message.products.map(
-                              (product) => (
+                              (product, idx) => (
                                 <ProductMiniCard
                                   key={product.product_id}
+                                  index={idx + 1}
                                   product={product}
                                   onSelect={() =>
                                     setSelectedProduct(
@@ -1060,9 +1066,10 @@ export default function BuyerPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {products.map((product) => (
+                    {products.map((product, idx) => (
                       <ProductPanelCard
                         key={product.product_id}
+                        index={idx + 1}
                         product={product}
                         onSelect={() =>
                           setSelectedProduct(product)
@@ -1492,6 +1499,7 @@ export default function BuyerPage() {
 
 function ProductMiniCard({
   product,
+  index,
   onSelect,
   onAdd,
   onCompare,
@@ -1501,6 +1509,7 @@ function ProductMiniCard({
   error,
 }: {
   product: Product;
+  index?: number;
   onSelect: () => void;
   onAdd: () => void;
   onCompare: () => void;
@@ -1528,6 +1537,12 @@ function ProductMiniCard({
               />
             ) : (
               <Package size={40} className="text-slate-300" />
+            )}
+
+            {index !== undefined && (
+              <span className="absolute top-2 right-2 rounded-lg bg-slate-900/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-mono font-bold text-white shadow-xs">
+                #{String(index).padStart(2, "0")}
+              </span>
             )}
 
             {product.offers && product.offers.length > 0 && (
@@ -1648,6 +1663,7 @@ function ProductMiniCard({
 
 function ProductPanelCard({
   product,
+  index,
   onSelect,
   onAdd,
   adding,
@@ -1655,6 +1671,7 @@ function ProductPanelCard({
   cartQty,
 }: {
   product: Product;
+  index?: number;
   onSelect: () => void;
   onAdd: () => void;
   adding: boolean;
@@ -1666,7 +1683,7 @@ function ProductPanelCard({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 hover:shadow-sm">
       <div className="flex gap-3">
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 border border-slate-100">
+        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 border border-slate-100">
           {product.image_url ? (
             <img
               src={product.image_url}
@@ -1679,11 +1696,17 @@ function ProductPanelCard({
               className="text-slate-300"
             />
           )}
+
+          {index !== undefined && (
+            <span className="absolute top-1 left-1 rounded bg-slate-900/90 px-1.5 py-0.5 text-[9px] font-mono font-bold text-white shadow-2xs">
+              #{String(index).padStart(2, "0")}
+            </span>
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            {product.brand || "UrbanRun"}
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <span>{product.brand || "UrbanRun"}</span>
           </div>
 
           <button

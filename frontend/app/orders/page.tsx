@@ -2,20 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { API_BASE_URL, DEFAULT_CUSTOMER_ID } from "../../lib/api";
+import { Receipt } from "lucide-react";
+import { API_BASE_URL } from "../../lib/api";
+import { useCustomer } from "../../lib/customer";
 import type { Order } from "../../lib/types";
 
-const CUSTOMER_ID = DEFAULT_CUSTOMER_ID;
-
 export default function OrdersPage() {
+  const { customer, customerId } = useCustomer();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchOrders() {
+      setLoading(true);
+      setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/checkout/orders?customer_id=${CUSTOMER_ID}`);
+        const res = await fetch(`${API_BASE_URL}/checkout/orders?customer_id=${customerId}`);
         if (!res.ok) {
           throw new Error("Failed to load order history.");
         }
@@ -29,39 +32,49 @@ export default function OrdersPage() {
       }
     }
     fetchOrders();
-  }, []);
+  }, [customerId]);
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-12">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Your Orders</h1>
-          <p className="mt-1 text-sm text-slate-500">Track and manage your order history.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Your Orders</h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Order history for <span className="font-semibold text-slate-700">{customer.name}</span> ({customer.id})
+          </p>
         </div>
-        <Link
-          href="/buyer"
-          className="mt-4 sm:mt-0 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition shadow-sm"
-        >
-          Back to Shopping
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/buyer"
+            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition shadow-sm"
+          >
+            Launch AI Buyer &rarr;
+          </Link>
+        </div>
       </div>
 
       {loading ? (
         <div className="py-16 text-center text-slate-500 text-sm">
-          Loading order history...
+          Loading order history for {customer.name}...
         </div>
       ) : error ? (
         <div className="mt-6 rounded-xl border border-red-100 bg-red-50/50 p-4 text-sm text-red-700">
           {error}
         </div>
       ) : orders.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-slate-500 text-sm">No orders found.</p>
+        <div className="py-20 text-center bg-white rounded-3xl border border-slate-200 mt-8 p-8 shadow-2xs">
+          <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-slate-100 text-slate-500 mb-3">
+            <Receipt size={22} />
+          </div>
+          <h3 className="text-sm font-semibold text-slate-900">No orders yet</h3>
+          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
+            Complete your first purchase through the AI Buyer or browse the catalog.
+          </p>
           <Link
             href="/buyer"
-            className="mt-4 inline-block text-sm font-semibold text-indigo-600 hover:text-indigo-500"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition shadow-xs"
           >
-            Start shopping now &rarr;
+            Start shopping with AI Buyer &rarr;
           </Link>
         </div>
       ) : (
