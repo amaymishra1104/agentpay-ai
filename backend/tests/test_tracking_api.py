@@ -10,15 +10,33 @@ from app.db.database import SessionLocal
 from app.db.models import Order
 from app.services.catalog_service import _load_products
 
+from app.services.auth_service import create_session_token
+import urllib.parse
+
+
 class ClientWrapper:
     def __init__(self, client):
         self.client = client
         self.last_customer_id = "c_post_001"
 
+    def _auth_kwargs(self, url, kwargs):
+        kwargs = dict(kwargs)
+        headers = dict(kwargs.get("headers") or {})
+        if "Authorization" not in headers:
+            cust = self.last_customer_id
+            if "customer_id=" in url:
+                parsed = urllib.parse.urlparse(url)
+                qs = urllib.parse.parse_qs(parsed.query)
+                if "customer_id" in qs and qs["customer_id"]:
+                    cust = qs["customer_id"][0]
+            elif isinstance(kwargs.get("json"), dict) and kwargs["json"].get("customer_id"):
+                cust = kwargs["json"]["customer_id"]
+            headers["Authorization"] = f"Bearer {create_session_token(cust)}"
+        kwargs["headers"] = headers
+        return kwargs
+
     def get(self, url, *args, **kwargs):
-        if "/api/v1/cart/" in url and "customer_id" not in url:
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        kwargs = self._auth_kwargs(url, kwargs)
         return self.client.get(url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
@@ -26,22 +44,15 @@ class ClientWrapper:
         if url == "/api/v1/cart":
             if isinstance(json_data, dict) and "customer_id" in json_data:
                 self.last_customer_id = json_data["customer_id"]
-        has_cust = ("customer_id" in url) or (isinstance(json_data, dict) and "customer_id" in json_data)
-        if "/api/v1/cart/" in url and not has_cust and not url.endswith("/checkout"):
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        kwargs = self._auth_kwargs(url, kwargs)
         return self.client.post(url, *args, **kwargs)
 
     def patch(self, url, *args, **kwargs):
-        if "/api/v1/cart/" in url and "customer_id" not in url:
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        kwargs = self._auth_kwargs(url, kwargs)
         return self.client.patch(url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
-        if "/api/v1/cart/" in url and "customer_id" not in url:
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}customer_id={self.last_customer_id}"
+        kwargs = self._auth_kwargs(url, kwargs)
         return self.client.delete(url, *args, **kwargs)
 
 client = ClientWrapper(TestClient(app))

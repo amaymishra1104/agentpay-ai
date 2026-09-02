@@ -1,13 +1,43 @@
 from uuid import uuid4
-
+import urllib.parse
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.config import get_settings
 from app.services.agent_session_service import get_messages
+from app.services.auth_service import create_session_token
 
 
-client = TestClient(app)
+class ClientWrapper:
+    def __init__(self, client):
+        self.client = client
+
+    def _auth_kwargs(self, url, kwargs):
+        kwargs = dict(kwargs)
+        headers = dict(kwargs.get("headers") or {})
+        if "Authorization" not in headers:
+            cust = "c_demo_001"
+            if "customer_id=" in url:
+                parsed = urllib.parse.urlparse(url)
+                qs = urllib.parse.parse_qs(parsed.query)
+                if "customer_id" in qs and qs["customer_id"]:
+                    cust = qs["customer_id"][0]
+            elif isinstance(kwargs.get("json"), dict) and kwargs["json"].get("customer_id"):
+                cust = kwargs["json"]["customer_id"]
+            headers["Authorization"] = f"Bearer {create_session_token(cust)}"
+        kwargs["headers"] = headers
+        return kwargs
+
+    def get(self, url, *args, **kwargs):
+        kwargs = self._auth_kwargs(url, kwargs)
+        return self.client.get(url, *args, **kwargs)
+
+    def post(self, url, *args, **kwargs):
+        kwargs = self._auth_kwargs(url, kwargs)
+        return self.client.post(url, *args, **kwargs)
+
+
+client = ClientWrapper(TestClient(app))
 
 
 def new_session_id() -> str:

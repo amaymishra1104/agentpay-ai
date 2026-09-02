@@ -4,12 +4,13 @@ import json
 from datetime import date, datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.agents.graph import build_buyer_graph
 from app.agents.model_provider import GroqBuyerModel
 from app.agents.state import BuyerAgentState
 from app.config import get_settings
+from app.services import auth_service
 from app.services.agent_session_service import (
     get_session,
     get_messages,
@@ -129,30 +130,23 @@ def _persist_generated_messages(
 )
 def chat_with_buyer_agent(
     request: AgentChatRequest,
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
 ) -> AgentChatResponse:
     """
-    Execute one conversational turn with the AgentPay
-    Buyer Agent.
-
-    The API owns the transaction orchestration boundary.
-    The model may request allowlisted tools, but tools are
-    always executed server-side.
+    Execute one conversational turn with the AgentPay Buyer Agent.
+    Strictly scoped to the authenticated customer token identity.
     """
 
     try:
-        existing_session = get_session(request.session_id)
-        if not request.customer_id and (
-            existing_session is None
-            or not existing_session.customer_id
-        ):
-            raise ValueError(
-                "customer_id is required when starting a buyer session."
-            )
-
         session = get_or_create_session(
             session_id=request.session_id,
-            customer_id=request.customer_id,
+            customer_id=customer_id,
         )
+        if session.customer_id and session.customer_id != customer_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: Session belongs to another customer",
+            )
 
         persisted_messages = get_messages(request.session_id)
         conversation = [
@@ -295,7 +289,7 @@ def chat_with_buyer_agent(
 )
 def get_buyer_session(
     session_id: str,
-    customer_id: str | None = None,
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
 ) -> AgentSessionResponse:
     """
     Retrieve an existing buyer agent session along with all of its
@@ -309,8 +303,7 @@ def get_buyer_session(
         )
 
     if (
-        customer_id
-        and session.customer_id
+        session.customer_id
         and session.customer_id != customer_id
     ):
         raise HTTPException(

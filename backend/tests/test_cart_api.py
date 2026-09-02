@@ -9,36 +9,44 @@ from app.main import app
 from app.services.catalog_service import _load_products, ProductRecord
 
 
+from app.services.auth_service import create_session_token
+import urllib.parse
+
+
 class ClientWrapper:
     def __init__(self, client):
         self.client = client
 
+    def _auth_kwargs(self, url, kwargs):
+        kwargs = dict(kwargs)
+        headers = dict(kwargs.get("headers") or {})
+        if "Authorization" not in headers:
+            cust = "c_demo_001"
+            if "customer_id=" in url:
+                parsed = urllib.parse.urlparse(url)
+                qs = urllib.parse.parse_qs(parsed.query)
+                if "customer_id" in qs and qs["customer_id"]:
+                    cust = qs["customer_id"][0]
+            elif isinstance(kwargs.get("json"), dict) and kwargs["json"].get("customer_id"):
+                cust = kwargs["json"]["customer_id"]
+            headers["Authorization"] = f"Bearer {create_session_token(cust)}"
+        kwargs["headers"] = headers
+        return kwargs
+
     def get(self, url, *args, **kwargs):
-        if "/api/v1/cart/" in url and "customer_id" not in url:
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}customer_id=c_demo_001"
+        kwargs = self._auth_kwargs(url, kwargs)
         return self.client.get(url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
-        json_data = kwargs.get("json", {})
-        has_cust = ("customer_id" in url) or (isinstance(json_data, dict) and "customer_id" in json_data)
-        if "/api/v1/cart/" in url and not has_cust:
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}customer_id=c_demo_001"
+        kwargs = self._auth_kwargs(url, kwargs)
         return self.client.post(url, *args, **kwargs)
 
     def patch(self, url, *args, **kwargs):
-        json_data = kwargs.get("json", {})
-        has_cust = ("customer_id" in url) or (isinstance(json_data, dict) and "customer_id" in json_data)
-        if "/api/v1/cart/" in url and not has_cust:
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}customer_id=c_demo_001"
+        kwargs = self._auth_kwargs(url, kwargs)
         return self.client.patch(url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
-        if "/api/v1/cart/" in url and "customer_id" not in url:
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}customer_id=c_demo_001"
+        kwargs = self._auth_kwargs(url, kwargs)
         return self.client.delete(url, *args, **kwargs)
 
 client = ClientWrapper(TestClient(app))
@@ -363,26 +371,27 @@ def test_17_invalid_product_id_returns_404() -> None:
 
 
 def test_18_cart_validation_detects_inventory_changes() -> None:
+    _load_products.cache_clear()
     create_res = client.post("/api/v1/cart", json={
         "merchant_id": "m_urbanrun",
         "customer_id": "c_demo_001"
     })
     cart_id = create_res.json()["cart_id"]
 
-    # Add AeroRun X1 (quantity 10)
+    # Add AeroRun X1 (quantity 2)
     client.post(f"/api/v1/cart/{cart_id}/items", json={
         "product_id": "ur_shoe_001",
-        "quantity": 10
+        "quantity": 2
     })
 
     # Validate passes initially
     val_res = client.post(f"/api/v1/cart/{cart_id}/validate")
     assert val_res.json()["valid"] is True
 
-    # Mock catalog so product stock is now less than 10
+    # Mock catalog so product stock is now less than 2
     mock_products = _load_products()
     modified_product = mock_products["ur_shoe_001"].model_copy()
-    modified_product.inventory_quantity = 5
+    modified_product.inventory_quantity = 1
 
     with patch("app.services.cart_service._load_products") as mock_load:
         # Return a copy with reduced stock

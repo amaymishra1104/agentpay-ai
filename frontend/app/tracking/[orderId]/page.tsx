@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use, useCallback } from "react";
 import Link from "next/link";
-import { API_BASE_URL } from "../../../lib/api";
+import { API_BASE_URL, getStoredSessionToken } from "../../../lib/api";
 import { useCustomer } from "../../../lib/customer";
 import type { TrackingInfo, Order } from "../../../lib/types";
 import { ShieldAlert } from "lucide-react";
@@ -27,6 +27,14 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
   const [returnReason, setReturnReason] = useState<string>("Defective/broken item");
   const [showReturnForm, setShowReturnForm] = useState(false);
 
+  const getAuthHeaders = useCallback(() => {
+    const token = getStoredSessionToken(customerId);
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }, [customerId]);
+
   const fetchTrackingAndOrder = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -34,7 +42,8 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
     try {
       // 1. Fetch tracking timeline
       const trackRes = await fetch(
-        `${API_BASE_URL}/checkout/order/${orderId}/tracking?customer_id=${customerId}`
+        `${API_BASE_URL}/checkout/order/${orderId}/tracking`,
+        { headers: getAuthHeaders() }
       );
       if (!trackRes.ok) {
         if (trackRes.status === 403) {
@@ -48,7 +57,8 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
 
       // 2. Fetch order items/total
       const orderRes = await fetch(
-        `${API_BASE_URL}/checkout/order/${orderId}?customer_id=${customerId}`
+        `${API_BASE_URL}/checkout/order/${orderId}`,
+        { headers: getAuthHeaders() }
       );
       if (orderRes.ok) {
         const orderData = await orderRes.json();
@@ -63,7 +73,7 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
     } finally {
       setLoading(false);
     }
-  }, [orderId, customerId, customer.name]);
+  }, [orderId, customerId, customer.name, getAuthHeaders]);
 
   useEffect(() => {
     fetchTrackingAndOrder();
@@ -77,7 +87,7 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
     try {
       const res = await fetch(`${API_BASE_URL}/checkout/order/${orderId}/advance-status`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({}),
       });
 
@@ -104,7 +114,7 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
     try {
       const res = await fetch(`${API_BASE_URL}/checkout/order/${orderId}/cancel`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ customer_id: customerId }),
       });
 
@@ -132,7 +142,7 @@ export default function TrackingPage({ params }: { params: Promise<{ orderId: st
     try {
       const res = await fetch(`${API_BASE_URL}/checkout/order/${orderId}/return`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           customer_id: customerId,
           product_id: selectedProductId,

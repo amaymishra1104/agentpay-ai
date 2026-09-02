@@ -139,7 +139,7 @@ class Order(Base):
     __tablename__ = "orders"
 
     order_id: Mapped[str] = mapped_column(String(100), primary_key=True, index=True)
-    cart_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    cart_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False, unique=True)
     customer_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     merchant_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     currency: Mapped[str] = mapped_column(String(10), default="INR")
@@ -149,7 +149,7 @@ class Order(Base):
     total: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="placed")
     payment_status: Mapped[str] = mapped_column(String(50), default="successful")
-    payment_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    payment_id: Mapped[str | None] = mapped_column(String(100), nullable=True, unique=True, index=True)
     payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
     transaction_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
@@ -182,6 +182,45 @@ class OrderItem(Base):
     order: Mapped["Order"] = relationship("Order", back_populates="items")
 
 
+class PaymentOrder(Base):
+    __tablename__ = "payment_orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    razorpay_order_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    cart_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    customer_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    amount_paise: Mapped[int] = mapped_column(Integer, nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), default="INR")
+    status: Mapped[str] = mapped_column(String(50), default="created")  # created, captured, failed
+    razorpay_payment_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
+
+
+class WebhookEvent(Base):
+    __tablename__ = "webhook_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    event_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="processed")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+
+
+class OrderConfirmation(Base):
+    __tablename__ = "order_confirmations"
+
+    confirmation_id: Mapped[str] = mapped_column(String(100), primary_key=True, index=True)
+    cart_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    customer_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
+    cart_hash: Mapped[str] = mapped_column(String(100), nullable=False)
+    amount_paise: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="approved")  # approved, used, expired, invalidated
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+
+
 class ReturnRequest(Base):
     __tablename__ = "return_requests"
 
@@ -207,5 +246,3 @@ class ReturnItem(Base):
     reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     return_request: Mapped["ReturnRequest"] = relationship("ReturnRequest", back_populates="items")
-
-

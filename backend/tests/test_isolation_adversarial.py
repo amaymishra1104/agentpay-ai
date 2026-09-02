@@ -11,6 +11,7 @@ from app.agents.graph import build_buyer_graph
 from app.agents.state import BuyerAgentState
 from app.tools.cart_tools import get_cart, add_to_cart, remove_from_cart, update_cart_item
 from app.tools.payment_tools import get_order, get_order_tracking, cancel_order, request_return, checkout_cart
+from app.services.auth_service import create_session_token
 
 client = TestClient(app)
 
@@ -76,73 +77,89 @@ def setup_test_data():
 
 def test_adversarial_cart_isolation_via_api():
     setup_test_data()
+    headers_a = {"Authorization": f"Bearer {create_session_token('customer_a')}"}
 
     # Attack 1: Customer A fetches Customer B's cart
-    res = client.get("/api/v1/cart/cart_cust_b_100?customer_id=customer_a")
+    res = client.get("/api/v1/cart/cart_cust_b_100", headers=headers_a)
     assert res.status_code == 403
 
     # Attack 2: Customer A adds to Customer B's cart
     res = client.post(
-        "/api/v1/cart/cart_cust_b_100/items?customer_id=customer_a",
+        "/api/v1/cart/cart_cust_b_100/items",
         json={"product_id": "ur_shoe_002", "quantity": 1},
+        headers=headers_a,
     )
     assert res.status_code == 403
 
     # Attack 3: Customer A modifies Customer B's cart item
     res = client.patch(
-        "/api/v1/cart/cart_cust_b_100/items/ur_shoe_001?customer_id=customer_a",
+        "/api/v1/cart/cart_cust_b_100/items/ur_shoe_001",
         json={"quantity": 3},
+        headers=headers_a,
     )
     assert res.status_code == 403
 
     # Attack 4: Customer A removes item from Customer B's cart
     res = client.delete(
-        "/api/v1/cart/cart_cust_b_100/items/ur_shoe_001?customer_id=customer_a"
+        "/api/v1/cart/cart_cust_b_100/items/ur_shoe_001",
+        headers=headers_a,
     )
     assert res.status_code == 403
 
     # Attack 5: Customer A clears Customer B's cart
     res = client.delete(
-        "/api/v1/cart/cart_cust_b_100?customer_id=customer_a"
+        "/api/v1/cart/cart_cust_b_100",
+        headers=headers_a,
     )
     assert res.status_code == 403
 
     # Attack 6: Customer A validates Customer B's cart
     res = client.post(
-        "/api/v1/cart/cart_cust_b_100/validate?customer_id=customer_a"
+        "/api/v1/cart/cart_cust_b_100/validate",
+        headers=headers_a,
     )
     assert res.status_code == 403
 
     # Attack 7: Customer A checks out Customer B's cart
     res = client.post(
         "/api/v1/cart/cart_cust_b_100/checkout",
-        json={"payment_method": "mock_upi", "customer_id": "customer_a"},
+        json={"payment_method": "mock_upi"},
+        headers=headers_a,
     )
     assert res.status_code in (400, 403)
 
 
 def test_adversarial_order_isolation_via_api():
     setup_test_data()
+    headers_a = {"Authorization": f"Bearer {create_session_token('customer_a')}"}
 
     # Attack 8: Customer A fetches Customer B's order
-    res = client.get("/api/v1/checkout/order/ord_b_100?customer_id=customer_a")
+    res = client.get("/api/v1/checkout/order/ord_b_100", headers=headers_a)
     assert res.status_code == 403
 
     # Attack 9: Customer A tracks Customer B's order
-    res = client.get("/api/v1/checkout/order/ord_b_100/tracking?customer_id=customer_a")
+    res = client.get("/api/v1/checkout/order/ord_b_100/tracking", headers=headers_a)
     assert res.status_code == 403
 
     # Attack 10: Customer A cancels Customer B's order
     res = client.post(
         "/api/v1/checkout/order/ord_b_100/cancel",
-        json={"customer_id": "customer_a"},
+        headers=headers_a,
     )
     assert res.status_code == 403
 
     # Attack 11: Customer A requests return on Customer B's order
     res = client.post(
         "/api/v1/checkout/order/ord_b_100/return",
-        json={"product_id": "ur_shoe_001", "quantity": 1, "customer_id": "customer_a"},
+        json={"product_id": "ur_shoe_001", "quantity": 1},
+        headers=headers_a,
+    )
+    assert res.status_code == 403
+
+    # Attack 12: Customer A attempts to advance status on Customer B's order
+    res = client.post(
+        "/api/v1/checkout/order/ord_b_100/advance-status",
+        headers=headers_a,
     )
     assert res.status_code == 403
 
@@ -207,4 +224,3 @@ def test_agent_graph_trusted_customer_id_override():
     # Trusted state.customer_id ("customer_a") MUST overwrite the model-supplied value
     assert injected_args["customer_id"] == "customer_a"
     assert injected_args["customer_id"] != "customer_b"
-

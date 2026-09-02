@@ -7,6 +7,9 @@ import {
   getStoredCartId,
   setStoredCartId,
   clearStoredCartId,
+  getStoredSessionToken,
+  setStoredSessionToken,
+  API_BASE_URL,
 } from "./api";
 
 export interface DemoCustomer {
@@ -56,16 +59,38 @@ const CustomerContext = createContext<CustomerContextType | undefined>(undefined
 export function CustomerProvider({ children }: { children: React.ReactNode }) {
   const [customerId, setCustomerIdState] = useState<string>(DEFAULT_CUSTOMER_ID);
 
+  const fetchSessionToken = useCallback(async (targetId: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_id: targetId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.access_token) {
+          setStoredSessionToken(data.access_token, targetId);
+        }
+      }
+    } catch {
+      // Backend may be booting
+    }
+  }, []);
+
   useEffect(() => {
     const saved = window.localStorage.getItem(ACTIVE_CUSTOMER_STORAGE_KEY);
+    const initialId = saved && DEMO_CUSTOMERS.some((c) => c.id === saved) ? saved : DEFAULT_CUSTOMER_ID;
     if (saved && DEMO_CUSTOMERS.some((c) => c.id === saved)) {
       setCustomerIdState(saved);
     }
+    fetchSessionToken(initialId);
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key === ACTIVE_CUSTOMER_STORAGE_KEY && e.newValue) {
         if (DEMO_CUSTOMERS.some((c) => c.id === e.newValue)) {
           setCustomerIdState(e.newValue);
+          fetchSessionToken(e.newValue);
         }
       }
     };
@@ -74,6 +99,7 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
       const detail = (e as CustomEvent<{ customerId: string }>).detail;
       if (detail?.customerId && DEMO_CUSTOMERS.some((c) => c.id === detail.customerId)) {
         setCustomerIdState(detail.customerId);
+        fetchSessionToken(detail.customerId);
       }
     };
 
@@ -83,18 +109,19 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener(CUSTOMER_CHANGE_EVENT, handleCustomChange);
     };
-  }, []);
+  }, [fetchSessionToken]);
 
   const setCustomerId = useCallback((newId: string) => {
     if (!DEMO_CUSTOMERS.some((c) => c.id === newId)) return;
     setCustomerIdState(newId);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(ACTIVE_CUSTOMER_STORAGE_KEY, newId);
+      fetchSessionToken(newId);
       window.dispatchEvent(
         new CustomEvent(CUSTOMER_CHANGE_EVENT, { detail: { customerId: newId } })
       );
     }
-  }, []);
+  }, [fetchSessionToken]);
 
   const customer =
     DEMO_CUSTOMERS.find((c) => c.id === customerId) || DEMO_CUSTOMERS[0];

@@ -1,12 +1,24 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_CONFIG_DIR = Path(__file__).resolve().parent
+_BACKEND_DIR = _CONFIG_DIR.parent
+_ROOT_DIR = _BACKEND_DIR.parent
+
+_ENV_FILES = (
+    str(_BACKEND_DIR / ".env"),
+    str(_ROOT_DIR / ".env"),
+    str(_ROOT_DIR / "backend" / ".env"),
+    ".env",
+)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_ENV_FILES,
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -118,6 +130,35 @@ class Settings(BaseSettings):
     webhook_secret: str | None = Field(
         default=None,
         alias="WEBHOOK_SECRET",
+    )
+
+    # ---------------------------------------------------------
+    # Security & Spending Limits
+    # ---------------------------------------------------------
+
+    session_secret: str = Field(
+        default="agentpay_secure_session_secret_key_2026",
+        alias="SESSION_SECRET",
+    )
+
+    session_expiry_seconds: int = Field(
+        default=86400,
+        alias="SESSION_EXPIRY_SECONDS",
+    )
+
+    max_transaction_inr: int = Field(
+        default=80000,
+        alias="MAX_TRANSACTION_INR",
+    )
+
+    daily_spend_limit_inr: int = Field(
+        default=200000,
+        alias="DAILY_SPEND_LIMIT_INR",
+    )
+
+    confirmation_expiry_seconds: int = Field(
+        default=900,
+        alias="CONFIRMATION_EXPIRY_SECONDS",
     )
 
 

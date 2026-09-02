@@ -4,6 +4,7 @@ import type {
   CategoriesResponse,
   ProductSearchResponse,
 } from "../../lib/types";
+import { InventoryBadge } from "../../components/ui/InventoryBadge";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
@@ -49,9 +50,7 @@ function ProductCard({ product }: { product: CatalogProduct }) {
             {product.category.replaceAll("_", " ")} · {product.subcategory.replaceAll("_", " ")}
           </p>
         </div>
-        <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-800">
-          {product.availability.in_stock ? "In stock" : "Out of stock"}
-        </span>
+        <InventoryBadge availability={product.availability} size="sm" />
       </div>
 
       <p className="mt-3 text-sm text-muted-foreground">{product.description}</p>

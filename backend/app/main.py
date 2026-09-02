@@ -9,6 +9,7 @@ from app.db.database import Base, engine, init_db
 from app.api.routes import (
     agent,
     audit,
+    auth,
     cart,
     catalog,
     checkout,
@@ -58,6 +59,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix=settings.api_v1_prefix)
+app.include_router(auth.router, prefix=settings.api_v1_prefix)
 app.include_router(catalog.router, prefix=settings.api_v1_prefix)
 app.include_router(cart.router, prefix=settings.api_v1_prefix)
 app.include_router(checkout.router, prefix=settings.api_v1_prefix)

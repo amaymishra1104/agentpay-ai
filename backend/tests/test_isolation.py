@@ -5,8 +5,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.db.models import Cart, Order
+from app.db.models import Cart, Order, OrderItem, ReturnRequest, ReturnItem
 from app.db.database import SessionLocal, init_db
+from app.services.auth_service import create_session_token
 
 client = TestClient(app)
 
@@ -16,8 +17,11 @@ def test_customer_isolation_and_missing_id():
     db_session = SessionLocal()
     try:
         # Clean up existing test records if any to prevent UNIQUE constraint errors
-        db_session.query(Order).filter(Order.order_id == "ord_cust_a").delete()
-        db_session.query(Cart).filter(Cart.id == "cart_cust_a").delete()
+        db_session.query(ReturnItem).delete()
+        db_session.query(ReturnRequest).delete()
+        db_session.query(OrderItem).filter(OrderItem.order_id.in_(["ord_cust_a", "ord_cust_a_deliv"])).delete()
+        db_session.query(Order).filter(Order.order_id.in_(["ord_cust_a", "ord_cust_a_deliv"])).delete()
+        db_session.query(Cart).filter(Cart.id.in_(["cart_cust_a", "cart_cust_a_deliv"])).delete()
         db_session.commit()
 
         # Create test data for Customer A
@@ -45,76 +49,126 @@ def test_customer_isolation_and_missing_id():
             total=1000,
             status="placed",
         )
+        item_a = OrderItem(
+            order_id="ord_cust_a",
+            product_id="ur_shoe_001",
+            sku="UR-RS-001",
+            name="AeroRun X1",
+            unit_price=1000,
+            quantity=1,
+            line_total=1000,
+        )
+        order_a.items.append(item_a)
         db_session.add(order_a)
         db_session.commit()
 
-        # 1. Test GET /order/{order_id} isolation
-        # Missing customer_id query parameter
-        res = client.get("/api/v1/checkout/order/ord_cust_a")
-        assert res.status_code == 422  # Missing query param validation
+        headers_a = {"Authorization": f"Bearer {create_session_token('cust_a')}"}
+        headers_b = {"Authorization": f"Bearer {create_session_token('cust_b')}"}
 
-        # Mismatched customer_id (Customer B)
-        res = client.get("/api/v1/checkout/order/ord_cust_a?customer_id=cust_b")
+        # 1. Test GET /order/{order_id} isolation
+        # Missing token
+        res = client.get("/api/v1/checkout/order/ord_cust_a")
+        assert res.status_code == 401
+
+        # Customer B token accessing Customer A order
+        res = client.get("/api/v1/checkout/order/ord_cust_a", headers=headers_b)
         assert res.status_code == 403
         assert "Access denied" in res.json()["detail"]
 
-        # Correct customer_id (Customer A)
-        res = client.get("/api/v1/checkout/order/ord_cust_a?customer_id=cust_a")
+        # Correct customer token (Customer A)
+        res = client.get("/api/v1/checkout/order/ord_cust_a", headers=headers_a)
         assert res.status_code == 200
 
         # 2. Test GET /order/by-cart/{cart_id} isolation
-        # Missing customer_id
+        # Missing token
         res = client.get("/api/v1/checkout/order/by-cart/cart_cust_a")
-        assert res.status_code == 422
+        assert res.status_code == 401
 
-        # Mismatched customer_id
-        res = client.get("/api/v1/checkout/order/by-cart/cart_cust_a?customer_id=cust_b")
+        # Mismatched customer token
+        res = client.get("/api/v1/checkout/order/by-cart/cart_cust_a", headers=headers_b)
         assert res.status_code == 403
 
-        # Correct customer_id
-        res = client.get("/api/v1/checkout/order/by-cart/cart_cust_a?customer_id=cust_a")
+        # Correct customer token
+        res = client.get("/api/v1/checkout/order/by-cart/cart_cust_a", headers=headers_a)
         assert res.status_code == 200
 
         # 3. Test GET /order/{order_id}/tracking isolation
-        # Missing customer_id
+        # Missing token
         res = client.get("/api/v1/checkout/order/ord_cust_a/tracking")
-        assert res.status_code == 422
+        assert res.status_code == 401
 
-        # Mismatched customer_id
-        res = client.get("/api/v1/checkout/order/ord_cust_a/tracking?customer_id=cust_b")
+        # Mismatched customer token
+        res = client.get("/api/v1/checkout/order/ord_cust_a/tracking", headers=headers_b)
         assert res.status_code == 403
 
-        # Correct customer_id
-        res = client.get("/api/v1/checkout/order/ord_cust_a/tracking?customer_id=cust_a")
+        # Correct customer token
+        res = client.get("/api/v1/checkout/order/ord_cust_a/tracking", headers=headers_a)
         assert res.status_code == 200
 
         # 4. Test POST /order/{order_id}/cancel isolation
-        # Missing customer_id in CancelOrderRequest
+        # Missing token
         res = client.post("/api/v1/checkout/order/ord_cust_a/cancel", json={})
-        assert res.status_code == 422
+        assert res.status_code == 401
 
-        # Mismatched customer_id in CancelOrderRequest
-        res = client.post("/api/v1/checkout/order/ord_cust_a/cancel", json={"customer_id": "cust_b"})
+        # Mismatched customer token
+        res = client.post("/api/v1/checkout/order/ord_cust_a/cancel", json={}, headers=headers_b)
         assert res.status_code == 403
 
-        # Correct customer_id
-        res = client.post("/api/v1/checkout/order/ord_cust_a/cancel", json={"customer_id": "cust_a"})
+        # Correct customer token
+        res = client.post("/api/v1/checkout/order/ord_cust_a/cancel", json={}, headers=headers_a)
         assert res.status_code == 200
 
         # 5. Test POST /order/{order_id}/return isolation
-        # Set status to delivered first for return eligibility
-        order_a.status = "delivered"
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+        db_session.query(OrderItem).filter(OrderItem.order_id == "ord_cust_a_deliv").delete()
+        db_session.query(Order).filter(Order.order_id == "ord_cust_a_deliv").delete()
         db_session.commit()
 
-        # Missing customer_id in ReturnRequestInput
-        res = client.post("/api/v1/checkout/order/ord_cust_a/return", json={"product_id": "ur_shoe_001"})
-        assert res.status_code == 422
+        order_deliv = Order(
+            order_id="ord_cust_a_deliv",
+            cart_id="cart_cust_a_deliv",
+            customer_id="cust_a",
+            merchant_id="m_urbanrun",
+            currency="INR",
+            subtotal=1000,
+            total=1000,
+            status="delivered",
+            created_at=now,
+            delivered_at=now,
+        )
+        item_deliv = OrderItem(
+            order_id="ord_cust_a_deliv",
+            product_id="ur_shoe_001",
+            sku="UR-RS-001",
+            name="AeroRun X1",
+            unit_price=1000,
+            quantity=1,
+            line_total=1000,
+        )
+        order_deliv.items.append(item_deliv)
+        db_session.add(order_deliv)
+        db_session.commit()
 
-        # Mismatched customer_id
+        # Missing token
+        res = client.post("/api/v1/checkout/order/ord_cust_a_deliv/return", json={"product_id": "ur_shoe_001"})
+        assert res.status_code == 401
+
+        # Mismatched customer token
         res = client.post(
-            "/api/v1/checkout/order/ord_cust_a/return",
-            json={"product_id": "ur_shoe_001", "customer_id": "cust_b", "quantity": 1}
+            "/api/v1/checkout/order/ord_cust_a_deliv/return",
+            json={"product_id": "ur_shoe_001", "quantity": 1},
+            headers=headers_b,
         )
         assert res.status_code == 403
+
+        # Correct customer token
+        res = client.post(
+            "/api/v1/checkout/order/ord_cust_a_deliv/return",
+            json={"product_id": "ur_shoe_001", "quantity": 1},
+            headers=headers_a,
+        )
+        assert res.status_code == 200
     finally:
         db_session.close()

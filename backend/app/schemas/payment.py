@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class CreatePaymentOrderRequest(BaseModel):
-    customer_id: str = Field(min_length=1)
+    customer_id: str | None = None
 
 
 class CreatePaymentOrderResponse(BaseModel):

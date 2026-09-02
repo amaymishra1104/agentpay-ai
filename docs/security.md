@@ -1,214 +1,166 @@
-# AgentPay Security Model & Threat Specification
+# AgentPay Security Architecture & Payment Hardening
 
-This document details the security architecture, threat model, cryptographic verifications, and customer isolation guarantees implemented in **AgentPay**.
-
----
-
-## 1. Security Goals
-
-1. **Protect Tenant Boundaries:** Prevent any customer persona from viewing, modifying, checking out, or tracking another customer's resources.
-2. **Prevent LLM Identity Spoofing:** Ensure that LLM reasoning or prompt injection attacks cannot manipulate ownership-sensitive parameters.
-3. **Guarantee Cryptographic Payment Integrity:** Ensure that orders are only finalized when verified by server-calculated HMAC-SHA256 digests.
-4. **Serialize Inventory Updates:** Eliminate race conditions during concurrent checkouts for constrained inventory items.
+## Overview
+AgentPay is an autonomous AI agent commerce platform designed with rigorous defense-in-depth principles. This document details the cryptographic protocols, server-authoritative identity models, cross-tenant isolation mechanisms, and payment-hardening guarantees enforced across the backend and frontend systems.
 
 ---
 
-## 2. Threat Model
+## 1. Server-Authoritative Customer Identity
 
-| Threat Vector | Potential Impact | Mitigation Strategy |
-| :--- | :--- | :--- |
-| **LLM Tool Argument Forgery** | Attacker prompts LLM to modify another customer's cart or inspect their orders. | **Trusted Tool Argument Injection**: Server overwrites all ownership-sensitive fields (`customer_id`, `cart_id`, `merchant_id`) before tool execution. |
-| **Cross-Tenant Direct API Tampering** | Attacker queries REST endpoints directly with mismatched IDs (e.g. `GET /cart/{b}?customer_id={a}`). | **Service-Level Authorization**: Route handlers and domain services query database ownership and enforce strict `HTTP 403 Forbidden` checks. |
-| **Payment Signature Forgery** | Malicious client submits fake Razorpay order confirmation or tampered amount. | **Server-Side HMAC-SHA256**: All payments are verified using `hmac.compare_digest` against the server-stored `RAZORPAY_KEY_SECRET`. |
-| **Duplicate Payment Callbacks** | Replay of payment callbacks or repeated checkout requests. | **State-Based Order Processing & Idempotency**: Duplicate payment confirmations and callbacks return the existing order without creating duplicate orders or double-decrementing inventory, verified by automated test coverage. |
-| **Inventory Overselling Race Condition** | Concurrent checkouts for the last in-stock item cause negative inventory. | **Windows-Safe File Locking**: Atomic `O_CREAT \| O_EXCL` file lock ensures serialized inventory decrements across OS processes. |
-| **Credential Exposure** | API keys or webhook secrets leaked to frontend client or version control. | **Strict Backend Secret Storage**: Razorpay key secret and Groq API keys remain strictly server-side in environment variables. |
+### Threat Addressed
+- **Client Impersonation**: Malicious clients or compromised frontends asserting arbitrary `customer_id` parameters in query strings or JSON request payloads to manipulate other customers' carts, inspect order history, or hijack deliveries.
 
----
-
-## 3. Trust Boundaries
-
-```mermaid
-flowchart TD
-    subgraph Untrusted_Zone["Untrusted Client and Model Zone"]
-        CLIENT["Frontend Client / User Input"]
-        LLM["LLM Output / Tool Calls"]
-    end
-
-    subgraph Security_Perimeter["Security Gateway and Injection Layer"]
-        GATEWAY["FastAPI Request Validation"]
-        INJECT["_inject_trusted_tool_arguments"]
-    end
-
-    subgraph Trusted_Zone["Trusted Backend Core"]
-        AUTHZ{"Service AuthZ Checks"}
-        SERVICES["Cart, Checkout, Tracking Services"]
-        CRYPTO["HMAC-SHA256 Verification"]
-        LOCK["Atomic File Lock"]
-        DB[("SQLite Persistence")]
-    end
-
-    CLIENT --> GATEWAY
-    GATEWAY --> LLM
-    LLM --> INJECT
-    INJECT --> AUTHZ
-    AUTHZ -->|Authorized| SERVICES
-    SERVICES --> CRYPTO
-    CRYPTO --> LOCK
-    LOCK --> DB
-```
+### Implementation
+- **Cryptographic Session Tokens**: All requests interacting with customer-scoped data must present a signed HMAC-SHA256 token in the standard HTTP `Authorization: Bearer <session_token>` header.
+- **Session Issuance (`POST /api/v1/auth/session`)**:
+  - The server generates a base64url-encoded payload containing `customer_id`, issued-at timestamp (`iat`), and expiration timestamp (`exp`).
+  - The payload is cryptographically signed using the server-secret key (`SESSION_SECRET`).
+  - Tokens expire after 24 hours (86,400 seconds) by default.
+- **FastAPI Authentication Dependency (`Depends(get_authenticated_customer_id)`)**:
+  - Validates cryptographic signatures using constant-time comparison (`hmac.compare_digest`).
+  - Enforces expiration timestamps against UTC system time.
+  - Resolves the caller's server-authoritative `customer_id`. Any client-supplied `customer_id` in request query strings or request bodies is strictly ignored or rejected.
 
 ---
 
-## 4. Customer Isolation
+## 2. Resource Ownership & Cross-Tenant Access Control
 
-AgentPay implements strict customer tenant isolation:
-- **Cart Isolation:** Cart records in SQLite are bound to a specific `customer_id`.
-- **Order Isolation:** Order records are linked to the owning `customer_id`.
-- **Tracking Isolation:** Tracking timelines are only accessible to the owning `customer_id`.
-- **Cross-Tenant Prevention:** Any request with a mismatched `customer_id` is immediately rejected with `HTTP 403 Forbidden`.
+### Threat Addressed
+- **Cross-Tenant Horizontal Privilege Escalation**: Customer B accessing, modifying, checking out, cancelling, or returning Customer A's carts or orders.
 
----
+### Access Control Matrix
 
-## 5. Trusted Argument Injection
-
-### The Principle: LLM Output ≠ Trusted Identity
-
-In `backend/app/agents/graph.py`, `_inject_trusted_tool_arguments()` intercepts every tool call emitted by the model before invocation:
-
-```python
-def _inject_trusted_tool_arguments(
-    state: BuyerAgentState,
-    tool_name: str,
-    arguments: dict[str, Any],
-) -> dict[str, Any]:
-    safe_arguments = dict(arguments)
-
-    # Injected from verified application session state
-    if tool_name in {
-        "add_to_cart", "get_cart", "update_cart_item", "remove_from_cart",
-        "validate_cart", "checkout_cart", "get_order", "get_order_tracking",
-        "cancel_order", "request_return"
-    }:
-        safe_arguments["customer_id"] = state.customer_id
-
-    if tool_name in {"add_to_cart", "get_cart", "update_cart_item", "remove_from_cart", "validate_cart", "checkout_cart"}:
-        if state.cart_id:
-            safe_arguments["cart_id"] = state.cart_id
-
-    return safe_arguments
-```
-
-Regardless of what `customer_id` or `cart_id` the model generates in its tool call, the server intercepts and overwrites those arguments with the session's verified context.
+| Endpoint | Operation | Security Enforcement | Violation Result |
+| :--- | :--- | :--- | :--- |
+| `POST /api/v1/cart` | Create Cart | Binds new cart strictly to authenticated customer | N/A |
+| `GET /api/v1/cart/{cart_id}` | Read Cart | Enforces `cart.customer_id == auth_customer_id` | `403 Forbidden` |
+| `POST /api/v1/cart/{cart_id}/items` | Add Item | Enforces `cart.customer_id == auth_customer_id` | `403 Forbidden` |
+| `PATCH /api/v1/cart/{cart_id}/items/{id}` | Update Item | Enforces `cart.customer_id == auth_customer_id` | `403 Forbidden` |
+| `DELETE /api/v1/cart/{cart_id}/items/{id}` | Remove Item | Enforces `cart.customer_id == auth_customer_id` | `403 Forbidden` |
+| `POST /api/v1/cart/{cart_id}/checkout` | Checkout | Enforces `cart.customer_id == auth_customer_id` | `403 Forbidden` |
+| `GET /api/v1/checkout/orders` | List Orders | Filters orders strictly where `order.customer_id == auth_customer_id` | Empty / Own Only |
+| `GET /api/v1/checkout/order/{order_id}` | Read Order | Enforces `order.customer_id == auth_customer_id` | `403 Forbidden` |
+| `GET /api/v1/checkout/order/{order_id}/tracking` | Tracking | Enforces `order.customer_id == auth_customer_id` | `403 Forbidden` |
+| `POST /api/v1/checkout/order/{order_id}/cancel` | Cancel | Enforces `order.customer_id == auth_customer_id` | `403 Forbidden` |
+| `POST /api/v1/checkout/order/{order_id}/return` | Return | Enforces `order.customer_id == auth_customer_id` | `403 Forbidden` |
+| `POST /api/v1/checkout/order/{order_id}/advance-status`| Advance | Enforces `order.customer_id == auth_customer_id` | `403 Forbidden` |
+| `POST /api/v1/agent/chat` | Agent Chat | Validates session token and scopes agent memory to customer | `401 Unauthorized` |
 
 ---
 
-## 6. Agent Tool Authorization
+## 3. Razorpay Payment-Order Binding & Anti-Tampering
 
-Tools executed by the LangGraph agent do not trust caller input:
-- Each tool receives the sanitized, server-injected arguments.
-- If a tool is called directly in Python tests with an unauthorized customer ID, it raises a `PermissionError` or `ValueError`.
+### Threat Addressed
+- **Cart Substitution / Amount Tampering Attack**:
+  1. Attacker initializes Razorpay payment order for a cheap item (₹299).
+  2. Attacker modifies their cart or creates a second cart with expensive items (₹8,998).
+  3. Attacker submits checkout for the expensive cart using the valid Razorpay order ID and signature from the cheap item.
 
----
-
-## 7. API Authorization
-
-All REST API endpoints (`/api/v1/cart/*`, `/api/v1/checkout/*`) enforce database ownership checks:
-```python
-if cart.customer_id != customer_id:
-    raise HTTPException(status_code=403, detail="Access denied: Cart belongs to another customer")
-```
-Missing `customer_id` query parameters are rejected by FastAPI with `HTTP 422 Unprocessable Entity`.
-
----
-
-## 8. Razorpay Payment Verification
-
-When a payment completes in the client-side Razorpay modal:
-1. The client sends `razorpay_order_id`, `razorpay_payment_id`, and `razorpay_signature` to `/api/v1/cart/{id}/checkout`.
-2. The server recalculates the cryptographic signature using the server-side `RAZORPAY_KEY_SECRET`.
-3. The order is only committed if the signature matches exactly.
+### Implementation (`app/services/razorpay_service.py`)
+- **Persistent `PaymentOrder` Record**:
+  - When `POST /api/v1/cart/{cart_id}/payment/create-order` is called, the server persists a record binding `razorpay_order_id` to `(cart_id, customer_id, amount_paise)`.
+  - Database schema includes a `UNIQUE` index on `payment_orders.razorpay_order_id`.
+- **Checkout Verification Pipeline (`verify_and_bind_payment_order`)**:
+  1. **Intent Lookup**: Fetches persistent `PaymentOrder` by `razorpay_order_id`.
+  2. **Customer Verification**: Asserts `payment_order.customer_id == authenticated_customer_id`.
+  3. **Cart Verification**: Asserts `payment_order.cart_id == cart.id`.
+  4. **Amount Verification**: Recalculates cart total and asserts `payment_order.amount_paise == (cart.total_inr * 100)`.
+  5. **Cryptographic Verification**: Verifies HMAC-SHA256 signature (`msg = f"{order_id}|{payment_id}"`) against `RAZORPAY_KEY_SECRET`.
 
 ---
 
-## 9. HMAC-SHA256
+## 4. Authoritative Webhook Processing & Replay Protection
 
-In `backend/app/services/checkout_service.py`:
-```python
-def verify_payment_signature(
-    razorpay_order_id: str,
-    razorpay_payment_id: str,
-    razorpay_signature: str,
-    key_secret: str,
-) -> bool:
-    message = f"{razorpay_order_id}|{razorpay_payment_id}".encode("utf-8")
-    expected = hmac.new(
-        key_secret.encode("utf-8"),
-        message,
-        hashlib.sha256,
-    ).hexdigest()
-    return hmac.compare_digest(expected, razorpay_signature)
-```
-Using `hmac.compare_digest` ensures constant-time execution, preventing timing side-channel attacks.
+### Threat Addressed
+- **Forged Webhooks & Duplicate Delivery**: Attackers injecting fake webhook calls, or payment gateway retries causing duplicate inventory deductions or order duplications.
+
+### Implementation (`app/services/webhook_service.py`, `POST /api/v1/webhooks/razorpay`)
+- **Signature Verification**:
+  - Validates `X-Razorpay-Signature` against the raw payload bytes using `WEBHOOK_SECRET` with constant-time comparison. Rejects unsigned or forged requests with `400 Bad Request`.
+- **Idempotency & Replay Deduplication**:
+  - Extracts unique event identifier from `X-Razorpay-Event-Id` header or JSON body `event_id`/`id` (with payload SHA-256 fallback).
+  - Attempts to insert into `webhook_events` table (enforced with `UNIQUE` constraint on `event_id`).
+  - If event already exists (or raises `IntegrityError` under concurrent execution), returns `{"status": "already_processed"}` immediately without duplicate state mutations.
+- **Event Lifecycle Handlers**:
+  - `payment.captured`: Updates `PaymentOrder` to `captured` and `Order` to `successful`.
+  - `payment.failed`: Updates status to `failed`.
+  - `refund.processed`: Marks order as `refunded` and automatically restocks inventory.
 
 ---
 
-## 10. Inventory Concurrency & Locking
+## 5. Database-Level Concurrency & Idempotency Controls
 
-To prevent overselling:
-- `backend/app/services/file_lock.py` uses atomic `os.O_CREAT | os.O_EXCL` flags.
-- Stale process deadlocks are prevented by inspecting process liveness with `psutil.pid_exists(pid)`.
-- Windows `WinError 32` (`ERROR_SHARING_VIOLATION`) is handled with exponential backoff retries.
+### Database Constraints
+- `orders.cart_id`: `UNIQUE` constraint prevents duplicate orders for the same cart instance.
+- `orders.payment_id`: `UNIQUE` constraint prevents double-charging or reusing transaction references.
+- `payment_orders.razorpay_order_id`: `UNIQUE` constraint prevents duplicate payment intents.
+- `webhook_events.event_id`: `UNIQUE` constraint prevents re-executing webhook events.
 
----
-
-## 11. Adversarial Test Matrix
-
-| # | Attack Scenario | Endpoint / Function | Expected Response | Status |
-| :---: | :--- | :--- | :---: | :---: |
-| 1 | Customer A fetches Customer B's cart | `GET /api/v1/cart/{b_id}?customer_id=a` | `403 Forbidden` | **PASS** |
-| 2 | Customer A adds item to Customer B's cart | `POST /api/v1/cart/{b_id}/items?customer_id=a` | `403 Forbidden` | **PASS** |
-| 3 | Customer A modifies item in B's cart | `PATCH /api/v1/cart/{b_id}/items/{pid}?customer_id=a` | `403 Forbidden` | **PASS** |
-| 4 | Customer A removes item from B's cart | `DELETE /api/v1/cart/{b_id}/items/{pid}?customer_id=a` | `403 Forbidden` | **PASS** |
-| 5 | Customer A deletes B's cart | `DELETE /api/v1/cart/{b_id}?customer_id=a` | `403 Forbidden` | **PASS** |
-| 6 | Customer A validates Customer B's cart | `POST /api/v1/cart/{b_id}/validate?customer_id=a` | `403 Forbidden` | **PASS** |
-| 7 | Customer A checks out Customer B's cart | `POST /api/v1/cart/{b_id}/checkout` | `400 / 403 Forbidden` | **PASS** |
-| 8 | Customer A reads Customer B's order | `GET /api/v1/checkout/order/{b_id}?customer_id=a` | `403 Forbidden` | **PASS** |
-| 9 | Customer A tracks Customer B's shipment | `GET /api/v1/checkout/order/{b_id}/tracking?customer_id=a` | `403 Forbidden` | **PASS** |
-| 10 | Customer A cancels Customer B's order | `POST /api/v1/checkout/order/{b_id}/cancel` | `403 Forbidden` | **PASS** |
-| 11 | Customer A requests return on B's order | `POST /api/v1/checkout/order/{b_id}/return` | `403 Forbidden` | **PASS** |
-| 12 | Tool execution with forged customer ID | `get_cart(..., customer_id="a")` on B | `PermissionError / ValueError` | **PASS** |
-| 13 | Agent LLM emits forged `customer_id="b"` | LangGraph `_inject_trusted_tool_arguments` | Injected as `"a"` | **PASS** |
-| 14 | Missing customer ID in API route | `GET /api/v1/checkout/order/{id}` (no param) | `422 Unprocessable Entity` | **PASS** |
+### Atomic Concurrency Handling
+- Under concurrent race conditions, any secondary thread attempting a duplicate insert triggers an `IntegrityError`. The transaction is rolled back and the existing order/event record is returned safely.
 
 ---
 
-## 12. Authentication vs. Authorization
+## 6. Spending Limits Enforcement
 
-> [!IMPORTANT]
-> **Authentication vs Authorization Scope:**
-> 
-> **AgentPay does not implement production authentication.** Demo customer IDs are selectable identities (`c_demo_001`, `c_demo_002`) rather than cryptographically authenticated identities via OAuth/JWT.
-> 
-> **Authorization is enforced independently at the REST API and agent tool layers** so that an agent operating under one trusted customer identity cannot use tool arguments to cross into another customer's resources.
+### Threat Addressed
+- **Rogue Agent Runaway Spend**: Unconstrained autonomous agent spending or accidental large purchases.
 
----
-
-## 13. Known Limitations
-
-1. **Demo Personas:** Uses selectable customer IDs (`c_demo_001`, `c_demo_002`) instead of OAuth/JWT identity providers.
-2. **Local Storage:** Utilizes SQLite (`agentpay.db`) and local filesystem storage.
-3. **Single-Node Locking:** File-based lock mechanism operates locally rather than using a distributed lock manager (e.g., Redis Redlock).
-4. **Razorpay Test Mode:** Built for test mode credentials and sandboxed webhook events.
-5. **Idempotency Scope:** Duplicate payment confirmations and repeated checkout callbacks are handled idempotently to return the existing order and prevent duplicate inventory decrements, covered by automated testing.
+### Implementation (`app/services/spending_limit_service.py`)
+- **Per-Transaction Ceiling**: Maximum allowed single transaction is **₹80,000** (8,000,000 paise). Cart totals exceeding ₹80,000 are rejected at checkout.
+- **Daily Spending Limit**: Maximum aggregate spend across all successful orders for a customer within the UTC calendar day is **₹200,000** (20,000,000 paise).
+- **Real-Time Database Aggregation**: Calculates `sum(Order.total)` for all non-cancelled orders created between `start_of_day_utc` and current time.
 
 ---
 
-## 14. Security Checklist
+## 7. Human Confirmation Gate & Cart Invalidation
 
-- [x] Secrets stored exclusively in server `.env`
-- [x] LLM tool arguments intercepted and overwritten server-side
-- [x] REST API routes reject unauthorized customer access with HTTP 403
-- [x] Razorpay signatures verified with constant-time `hmac.compare_digest`
-- [x] Concurrent checkouts protected with atomic file lock
-- [x] Adversarial test suite passing with 100% success rate
+### Threat Addressed
+- **Silent Cart Mutation**: Items being added or prices mutating between the time the user approves a purchase and final checkout execution.
+
+### Implementation (`app/services/confirmation_service.py`)
+- **Deterministic Cart Hashing**: Computes SHA-256 hash over sorted items: `f"{sku}:{quantity}:{unit_price}"` concatenated with `f"|total:{cart.total_inr}"`.
+- **Confirmation Request (`POST /api/v1/cart/{cart_id}/confirm`)**:
+  - Computes active cart hash.
+  - Persists `OrderConfirmation` record valid for 15 minutes.
+- **Checkout Verification**:
+  - When `confirmation_id` is supplied, recalculates active cart hash and asserts exact match.
+  - Any item addition, removal, quantity change, or discount alteration invalidates the confirmation with `400 Bad Request`.
+  - On successful checkout, confirmation is marked `status = "used"`.
+
+---
+
+## 8. Inventory Locking & Safe Rollbacks
+
+### Implementation
+- Preserved atomic file locking (`backend/app/services/file_lock.py`) using Windows `msvcrt.locking` and POSIX `fcntl.flock`.
+- **Two-Phase Inventory Commitment**:
+  - In-stock availability checked atomically.
+  - Decremented inside critical section.
+  - In the event of downstream payment gateway failure or integrity errors, inventory is automatically restored via `increment_inventory`.
+
+---
+
+## 9. Security Test Suite Matrix
+
+The security hardening test suite (`backend/tests/test_security_hardening.py`) validates every security control:
+
+| Test Case | Vulnerability / Control Verified |
+| :--- | :--- |
+| `test_auth_session_endpoint_issue_token` | Validates HMAC-SHA256 session token generation and format |
+| `test_auth_me_endpoint` | Verifies server-authoritative identity retrieval |
+| `test_missing_session_token_rejected_with_401` | Verifies all protected routes reject unauthenticated requests |
+| `test_forged_and_tampered_token_signature_rejected_with_401` | Verifies cryptographic rejection of tampered session tokens |
+| `test_expired_token_rejected_with_401` | Verifies expired session tokens cannot be used |
+| `test_client_cannot_impersonate_by_overriding_payload_customer_id` | Verifies client body customer_id cannot override authenticated token |
+| `test_cross_tenant_cart_manipulation_prevented` | Verifies full tenant isolation on cart operations (GET, POST, DELETE) |
+| `test_cross_tenant_order_manipulation_prevented` | Verifies tenant isolation on orders, tracking, status advancement, cancellation |
+| `test_cart_substitution_attack_rejected` | Verifies rejection when Razorpay order from ₹299 cart is applied to ₹8,998 cart |
+| `test_cross_customer_payment_order_usage_rejected` | Verifies Customer B cannot use Customer A's Razorpay payment intent |
+| `test_webhook_missing_signature_rejected` | Verifies rejection of unsigned Razorpay webhook requests |
+| `test_webhook_invalid_signature_rejected` | Verifies cryptographic signature verification on webhook endpoint |
+| `test_webhook_payment_captured_and_idempotency` | Verifies payment capture and deduplication of webhook replay attacks |
+| `test_webhook_refund_processed_restores_inventory` | Verifies webhook refund processing and automated inventory restocking |
+| `test_per_transaction_spending_limit` | Verifies enforcement of ₹10,000 per-transaction spend ceiling |
+| `test_daily_spending_limit` | Verifies enforcement of ₹25,000 daily spend ceiling |
+| `test_confirmation_gate_workflow_and_tamper_invalidation` | Verifies cart hash invalidation on mid-flight cart mutation |

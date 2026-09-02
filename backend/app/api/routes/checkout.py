@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from datetime import datetime
@@ -13,6 +13,7 @@ from app.schemas.order import (
     ReturnRequestSchema,
     ReturnItemSchema,
 )
+from app.services import auth_service, tracking_service
 
 router = APIRouter(prefix="/checkout", tags=["checkout"])
 
@@ -22,14 +23,14 @@ class AdvanceStatusRequest(BaseModel):
 
 
 class CancelOrderRequest(BaseModel):
-    customer_id: str
+    customer_id: str | None = None
 
 
 class ReturnRequestInput(BaseModel):
-    customer_id: str
     product_id: str
     quantity: int = 1
     reason: str | None = None
+    customer_id: str | None = None
 
 
 def map_order_to_schema(order: Order) -> OrderSchema:
@@ -73,19 +74,27 @@ def map_order_to_schema(order: Order) -> OrderSchema:
 
 
 @router.get("/orders", response_model=list[OrderSchema])
-def list_orders_endpoint(customer_id: str, db: Session = Depends(get_db)) -> list[OrderSchema]:
-    """Retrieve history of all orders placed by the current customer."""
-    orders = db.query(Order).filter(Order.customer_id == customer_id).order_by(Order.created_at.desc()).all()
+def list_orders_endpoint(
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
+    db: Session = Depends(get_db),
+) -> list[OrderSchema]:
+    """Retrieve history of all orders placed by the authenticated customer."""
+    orders = (
+        db.query(Order)
+        .filter(Order.customer_id == customer_id)
+        .order_by(Order.created_at.desc())
+        .all()
+    )
     return [map_order_to_schema(o) for o in orders]
 
 
 @router.get("/order/{order_id}", response_model=OrderSchema)
 def get_order_endpoint(
     order_id: str,
-    customer_id: str,
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
     db: Session = Depends(get_db),
 ) -> OrderSchema:
-    """Get single order details, verifying ownership via customer_id."""
+    """Get single order details, verifying ownership via authenticated customer."""
     order = db.query(Order).filter(Order.order_id == order_id).first()
     if not order:
         raise HTTPException(
@@ -103,10 +112,10 @@ def get_order_endpoint(
 @router.get("/order/by-cart/{cart_id}", response_model=OrderSchema)
 def get_order_by_cart_endpoint(
     cart_id: str,
-    customer_id: str,
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
     db: Session = Depends(get_db),
 ) -> OrderSchema:
-    """Get single order details matching a cart ID, verifying ownership via customer_id."""
+    """Get single order details matching a cart ID, verifying ownership via authenticated customer."""
     order = db.query(Order).filter(Order.cart_id == cart_id).first()
     if not order:
         raise HTTPException(
@@ -124,11 +133,10 @@ def get_order_by_cart_endpoint(
 @router.get("/order/{order_id}/tracking", response_model=TrackingSchema)
 def get_order_tracking_endpoint(
     order_id: str,
-    customer_id: str,
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
     db: Session = Depends(get_db),
 ) -> TrackingSchema:
     """Retrieve fulfillment timeline and tracking information for an order."""
-    from app.services import tracking_service
     try:
         tracking_info = tracking_service.get_order_tracking(order_id, db, customer_id)
         return TrackingSchema(**tracking_info)
@@ -142,16 +150,26 @@ def get_order_tracking_endpoint(
 def advance_status_endpoint(
     order_id: str,
     req: AdvanceStatusRequest | None = None,
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
     db: Session = Depends(get_db),
 ) -> OrderSchema:
-    """Advance order fulfillment state (sandbox sandbox helper)."""
-    from app.services import tracking_service
+    """
+    Advance order fulfillment state.
+    Strictly enforces customer ownership so Customer B cannot advance Customer A's order.
+    """
     next_status = req.next_status if req else None
     try:
-        order = tracking_service.advance_order_status(order_id, next_status, db)
+        order = tracking_service.advance_order_status(
+            order_id=order_id,
+            next_status=next_status,
+            db=db,
+            customer_id=customer_id,
+        )
         return map_order_to_schema(order)
     except tracking_service.OrderNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -159,12 +177,11 @@ def advance_status_endpoint(
 @router.post("/order/{order_id}/cancel", response_model=OrderSchema)
 def cancel_order_endpoint(
     order_id: str,
-    req: CancelOrderRequest,
+    req: CancelOrderRequest | None = None,
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
     db: Session = Depends(get_db),
 ) -> OrderSchema:
     """Cancel order, check ownership, restore stock inventory, and update payment status."""
-    from app.services import tracking_service
-    customer_id = req.customer_id
     try:
         order = tracking_service.cancel_order(order_id, db, customer_id)
         return map_order_to_schema(order)
@@ -180,10 +197,10 @@ def cancel_order_endpoint(
 def return_order_endpoint(
     order_id: str,
     req: ReturnRequestInput,
+    customer_id: str = Depends(auth_service.get_authenticated_customer_id),
     db: Session = Depends(get_db),
 ) -> ReturnRequestSchema:
-    """Submit a sandbox product item return request."""
-    from app.services import tracking_service
+    """Submit a sandbox product item return request under authenticated customer identity."""
     try:
         ret_req = tracking_service.request_return(
             order_id=order_id,
@@ -191,7 +208,7 @@ def return_order_endpoint(
             quantity=req.quantity,
             reason=req.reason,
             db=db,
-            customer_id=req.customer_id,
+            customer_id=customer_id,
         )
         items = [
             ReturnItemSchema(

@@ -39,7 +39,7 @@ class CartSchema(BaseModel):
 
 class CartCreateRequest(BaseModel):
     merchant_id: str
-    customer_id: str
+    customer_id: str | None = None
 
 
 class CartItemAddRequest(BaseModel):
@@ -62,3 +62,15 @@ class CartValidationIssue(BaseModel):
 class CartValidationResponse(BaseModel):
     valid: bool
     issues: list[CartValidationIssue]
+
+
+class ConfirmationResponseSchema(BaseModel):
+    confirmation_id: str
+    cart_id: str
+    customer_id: str
+    amount_inr: int
+    amount_paise: int
+    cart_hash: str
+    status: str
+    expires_at: datetime
+    created_at: datetime

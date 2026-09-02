@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Receipt } from "lucide-react";
-import { API_BASE_URL } from "../../lib/api";
+import { API_BASE_URL, getStoredSessionToken } from "../../lib/api";
 import { useCustomer } from "../../lib/customer";
 import type { Order } from "../../lib/types";
 
@@ -18,7 +18,12 @@ export default function OrdersPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/checkout/orders?customer_id=${customerId}`);
+        const token = getStoredSessionToken(customerId);
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+        const res = await fetch(`${API_BASE_URL}/checkout/orders`, { headers });
         if (!res.ok) {
           throw new Error("Failed to load order history.");
         }

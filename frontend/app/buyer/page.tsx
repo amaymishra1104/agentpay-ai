@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bot,
   ChevronRight,
@@ -23,9 +23,12 @@ import {
   getStoredCartId,
   setStoredCartId,
   clearStoredCartId,
+  getStoredSessionToken,
+  ensureSessionToken,
 } from "../../lib/api";
 import { useCustomer } from "../../lib/customer";
 import { CustomerSwitcher } from "../../components/ui/CustomerSwitcher";
+import { InventoryBadge } from "../../components/ui/InventoryBadge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -175,6 +178,29 @@ export default function BuyerPage() {
     );
   }, [cart]);
 
+  const getAuthHeaders = useCallback(() => {
+    const token = getStoredSessionToken(customerId);
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }, [customerId]);
+
+  const handleSelectProduct = useCallback(async (prod: Product) => {
+    setSelectedProduct(prod);
+    try {
+      const res = await fetch(`${API_BASE_URL}/catalog/products/${prod.product_id}`);
+      if (res.ok) {
+        const freshProd = await res.json();
+        setSelectedProduct((current) =>
+          current && current.product_id === prod.product_id
+            ? { ...current, availability: freshProd.availability }
+            : current
+        );
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     const activeSessionId = getSessionId();
     setSessionId(activeSessionId);
@@ -188,11 +214,11 @@ export default function BuyerPage() {
         const parsedMessages: Message[] = JSON.parse(cachedConversation);
         if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
           setMessages(parsedMessages);
-          const lastWithProducts = [...parsedMessages].reverse().find(
-            (m) => m.products && m.products.length > 0
-          );
-          if (lastWithProducts?.products) {
-            setProducts(lastWithProducts.products);
+          const latestAssistant = [...parsedMessages]
+            .reverse()
+            .find((m) => m.role === "assistant" && m.products && m.products.length > 0);
+          if (latestAssistant && latestAssistant.products) {
+            setProducts(latestAssistant.products);
           } else {
             setProducts([]);
           }
@@ -218,7 +244,8 @@ export default function BuyerPage() {
   async function restoreSessionFromBackend(activeSessionId: string) {
     try {
       const res = await fetch(
-        `${API_BASE_URL}/agent/sessions/${activeSessionId}?customer_id=${customerId}`
+        `${API_BASE_URL}/agent/sessions/${activeSessionId}`,
+        { headers: getAuthHeaders() }
       );
       if (!res.ok) return;
       const data = await res.json();
@@ -289,7 +316,8 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${storedCartId}?customer_id=${customerId}`,
+        `${API_BASE_URL}/cart/${storedCartId}`,
+        { headers: getAuthHeaders() }
       );
 
       if (!response.ok) {
@@ -314,7 +342,8 @@ export default function BuyerPage() {
 
   async function refreshCart(cartId: string) {
     const response = await fetch(
-      `${API_BASE_URL}/cart/${cartId}?customer_id=${customerId}`,
+      `${API_BASE_URL}/cart/${cartId}`,
+      { headers: getAuthHeaders() }
     );
 
     if (!response.ok) {
@@ -356,12 +385,10 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}?customer_id=${customerId}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}`,
         {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             quantity,
           }),
@@ -406,9 +433,10 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}?customer_id=${customerId}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}/items/${encodeURIComponent(productId)}`,
         {
           method: "DELETE",
+          headers: getAuthHeaders(),
         },
       );
 
@@ -450,9 +478,10 @@ export default function BuyerPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${customerId}`,
+        `${API_BASE_URL}/cart/${cart.cart_id}`,
         {
           method: "DELETE",
+          headers: getAuthHeaders(),
         },
       );
 
@@ -516,9 +545,7 @@ export default function BuyerPage() {
         `${API_BASE_URL}/agent/chat`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             session_id: sessionId,
             customer_id: customerId,
@@ -656,6 +683,7 @@ export default function BuyerPage() {
     setCardErrors(prev => ({ ...prev, [productId]: "" }));
 
     try {
+      await ensureSessionToken(customerId);
       let activeCartId = cart?.cart_id;
       if (cart?.status === "checked_out") {
         activeCartId = undefined;
@@ -671,12 +699,9 @@ export default function BuyerPage() {
       if (!activeCartId) {
         const createRes = await fetch(`${API_BASE_URL}/cart`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             merchant_id: "m_urbanrun",
-            customer_id: customerId,
           }),
         });
 
@@ -690,11 +715,9 @@ export default function BuyerPage() {
         setStoredCartId(newCartData.cart_id, sessionId, customerId);
       }
 
-      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items?customer_id=${customerId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           product_id: productId,
           quantity: 1,
@@ -1079,7 +1102,7 @@ function AssistantMessageMarkdown({ content }: { content: string }) {
                                   index={idx + 1}
                                   product={product}
                                   onSelect={() =>
-                                    setSelectedProduct(
+                                    void handleSelectProduct(
                                       product,
                                     )
                                   }
@@ -1288,7 +1311,7 @@ function AssistantMessageMarkdown({ content }: { content: string }) {
                         index={idx + 1}
                         product={product}
                         onSelect={() =>
-                          setSelectedProduct(product)
+                          void handleSelectProduct(product)
                         }
                         onAdd={() =>
                           handleAddToCartDirectly(product)
@@ -1419,16 +1442,8 @@ function AssistantMessageMarkdown({ content }: { content: string }) {
                 )}
 
                 {selectedProduct.availability && (
-                  <div
-                    className={`mt-3 text-sm font-medium ${
-                      selectedProduct.availability.in_stock
-                        ? "text-emerald-600"
-                        : "text-red-500"
-                    }`}
-                  >
-                    {selectedProduct.availability.in_stock
-                      ? `${selectedProduct.availability.quantity} in stock`
-                      : "Currently out of stock"}
+                  <div className="mt-3">
+                    <InventoryBadge availability={selectedProduct.availability} size="sm" />
                   </div>
                 )}
 
@@ -1776,9 +1791,7 @@ function ProductMiniCard({
               {product.brand || "UrbanRun"}
             </span>
             {product.availability && (
-              <span className={`text-[10px] font-semibold ${isOutOfStock ? 'text-red-500' : 'text-emerald-600'}`}>
-                {isOutOfStock ? "Out of stock" : `✓ In Stock (${product.availability.quantity})`}
-              </span>
+              <InventoryBadge availability={product.availability} size="xs" />
             )}
           </div>
 
@@ -1920,8 +1933,11 @@ function ProductPanelCard({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 gap-1">
             <span>{product.brand || "UrbanRun"}</span>
+            {product.availability && (
+              <InventoryBadge availability={product.availability} size="xs" />
+            )}
           </div>
 
           <button

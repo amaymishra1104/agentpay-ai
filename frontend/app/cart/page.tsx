@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { Cart, Order } from "../../lib/types";
 import {
@@ -8,6 +8,8 @@ import {
   getStoredCartId,
   setStoredCartId,
   clearStoredCartId,
+  getStoredSessionToken,
+  ensureSessionToken,
 } from "../../lib/api";
 import { useCustomer } from "../../lib/customer";
 
@@ -62,12 +64,21 @@ export default function CartPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [validating, setValidating] = useState(false);
+  const [confirmationId, setConfirmationId] = useState<string | null>(null);
 
   // New checkout state variables
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "review" | "success">("cart");
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "mock_upi" | "mock_card">("razorpay");
   const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
+
+  const getAuthHeaders = useCallback(() => {
+    const token = getStoredSessionToken(customerId);
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }, [customerId]);
 
   const loadRazorpayScript = (): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -93,8 +104,9 @@ export default function CartPage() {
     setActionError(null);
     setValidating(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${customerId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate`, {
         method: "POST",
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error("Validation check failed.");
       const result = (await res.json()) as ValidationResult;
@@ -103,6 +115,21 @@ export default function CartPage() {
         setActionError("Please resolve validation issues before checking out.");
         return;
       }
+
+      // Request Human Confirmation approval
+      try {
+        const confRes = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/confirm`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+        });
+        if (confRes.ok) {
+          const confData = await confRes.json();
+          setConfirmationId(confData.confirmation_id);
+        }
+      } catch (confErr) {
+        console.warn("Cart confirmation request warning:", confErr);
+      }
+
       setCheckoutStep("review");
     } catch (err) {
       setActionError(getErrorMessage(err, "Failed to validate cart."));
@@ -120,7 +147,7 @@ export default function CartPage() {
       if (paymentMethod === "razorpay") {
         const orderRes = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/payment/create-order`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ customer_id: customerId }),
         });
 
@@ -157,10 +184,11 @@ export default function CartPage() {
             try {
               const checkoutRes = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/checkout`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({
                   payment_method: "razorpay",
                   customer_id: customerId,
+                  confirmation_id: confirmationId,
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
@@ -210,10 +238,11 @@ export default function CartPage() {
       // Mock direct checkout fallback
       const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/checkout`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           payment_method: paymentMethod,
           customer_id: customerId,
+          confirmation_id: confirmationId,
         }),
       });
 
@@ -274,6 +303,7 @@ export default function CartPage() {
       setError(null);
       setActionError(null);
       try {
+        await ensureSessionToken(customerId);
         const sid = getSessionId();
         const storedId = getStoredCartId(sid, customerId);
         if (!storedId) {
@@ -282,10 +312,12 @@ export default function CartPage() {
           setCheckoutStep("cart");
         } else {
           // Fetch existing cart
-          const res = await fetch(`${API_BASE_URL}/cart/${storedId}?customer_id=${customerId}`);
+          const res = await fetch(`${API_BASE_URL}/cart/${storedId}`, {
+            headers: getAuthHeaders(),
+          });
           if (!res.ok) {
-            if (res.status === 404 || res.status === 403) {
-              // If stored cart ID does not exist or belongs to another customer, clear storage for this customer
+            if (res.status === 404 || res.status === 403 || res.status === 401) {
+              // If stored cart ID does not exist, unauthorized, or belongs to another customer, clear storage for this customer
               clearStoredCartId(sid, customerId);
               setCart(dummyEmptyCart(null));
               setCheckoutStep("cart");
@@ -308,7 +340,9 @@ export default function CartPage() {
           // Handle checked_out carts on page refresh/initial load
           if (data.status === "checked_out") {
             try {
-              const orderRes = await fetch(`${API_BASE_URL}/checkout/order/by-cart/${data.cart_id}?customer_id=${customerId}`);
+              const orderRes = await fetch(`${API_BASE_URL}/checkout/order/by-cart/${data.cart_id}`, {
+                headers: getAuthHeaders(),
+              });
               if (orderRes.ok) {
                 const orderData = (await orderRes.json()) as Order;
                 setPlacedOrder(orderData);
@@ -328,7 +362,7 @@ export default function CartPage() {
       }
     }
     initCart();
-  }, [customerId, getSessionId]);
+  }, [customerId, getSessionId, getAuthHeaders]);
 
   const updateQuantity = async (productId: string, newQty: number) => {
     if (!cart) return;
@@ -345,10 +379,9 @@ export default function CartPage() {
       if (!activeCartId) {
         const createRes = await fetch(`${API_BASE_URL}/cart`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             merchant_id: "m_urbanrun",
-            customer_id: customerId,
           }),
         });
         if (!createRes.ok) throw new Error("Failed to initialize server-side cart");
@@ -358,9 +391,9 @@ export default function CartPage() {
         activeCartId = createdData.cart_id;
       }
 
-      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}?customer_id=${customerId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${activeCartId}/items/${productId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ quantity: newQty }),
       });
 
@@ -388,8 +421,9 @@ export default function CartPage() {
     setActionError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}?customer_id=${customerId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/items/${productId}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
 
       if (!res.ok) {
@@ -416,8 +450,9 @@ export default function CartPage() {
     setActionError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}?customer_id=${customerId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
 
       if (!res.ok) {
@@ -445,8 +480,9 @@ export default function CartPage() {
     setValidating(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate?customer_id=${customerId}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cart.cart_id}/validate`, {
         method: "POST",
+        headers: getAuthHeaders(),
       });
 
       if (!res.ok) {

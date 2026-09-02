@@ -76,18 +76,75 @@ export class ApiError extends Error {
   }
 }
 
+export const SESSION_TOKEN_STORAGE_KEY_PREFIX = "agentpay_session_token:";
+
+export function getStoredSessionToken(customerId?: string | null): string | null {
+  if (typeof window === "undefined") return null;
+  const targetCust =
+    customerId ||
+    window.localStorage.getItem("agentpay_active_customer_id") ||
+    DEFAULT_CUSTOMER_ID;
+  return window.localStorage.getItem(`${SESSION_TOKEN_STORAGE_KEY_PREFIX}${targetCust}`);
+}
+
+export function setStoredSessionToken(token: string, customerId?: string | null): void {
+  if (typeof window === "undefined") return;
+  const targetCust =
+    customerId ||
+    window.localStorage.getItem("agentpay_active_customer_id") ||
+    DEFAULT_CUSTOMER_ID;
+  window.localStorage.setItem(`${SESSION_TOKEN_STORAGE_KEY_PREFIX}${targetCust}`, token);
+}
+
+export async function ensureSessionToken(customerId?: string | null): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const targetCust =
+    customerId ||
+    window.localStorage.getItem("agentpay_active_customer_id") ||
+    DEFAULT_CUSTOMER_ID;
+  const token = getStoredSessionToken(targetCust);
+  if (token) return token;
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customer_id: targetCust }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.access_token) {
+        setStoredSessionToken(data.access_token, targetCust);
+        return data.access_token as string;
+      }
+    }
+  } catch {
+    // Ignore network error on backend boot
+  }
+  return null;
+}
+
 export async function fetchApi<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
   let response: Response;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((init?.headers as Record<string, string>) ?? {}),
+  };
+
+  // Automatically attach server session token if available
+  if (!headers["Authorization"]) {
+    const token = getStoredSessionToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...(init?.headers ?? {}),
-      },
+      headers,
       cache: "no-store",
     });
   } catch (err: unknown) {

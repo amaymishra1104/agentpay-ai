@@ -97,13 +97,22 @@ def get_order_tracking(order_id: str, db: Session, customer_id: str) -> dict:
     }
 
 
-def advance_order_status(order_id: str, next_status: str | None, db: Session) -> Order:
+def advance_order_status(
+    order_id: str,
+    next_status: str | None,
+    db: Session,
+    customer_id: str | None = None,
+) -> Order:
     """
     Advance simulated order fulfillment status. If next_status is not provided, advance to the next state in sequence.
+    Verifies customer ownership if customer_id is provided.
     """
     order = db.query(Order).filter(Order.order_id == order_id).first()
     if not order:
         raise OrderNotFoundError(f"Order with ID {order_id} not found")
+
+    if customer_id and order.customer_id != customer_id:
+        raise PermissionError("Access denied: Order does not belong to this customer")
 
     if order.status == "cancelled":
         raise ValueError("Cannot advance status of a cancelled order")
@@ -265,7 +274,6 @@ def request_return(
         created_at=datetime.now(timezone.utc).replace(tzinfo=None),
         updated_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
-    db.add(ret_req)
 
     # Create ReturnItem
     ret_item = ReturnItem(
@@ -274,11 +282,13 @@ def request_return(
         quantity=quantity,
         reason=reason,
     )
-    db.add(ret_item)
+    ret_req.items.append(ret_item)
+    db.add(ret_req)
 
     # Update order state optionally
     order.status = "returned" if order.status != "returned" else order.status
     order.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
     db.commit()
+    db.refresh(ret_req)
     return ret_req
